@@ -42,6 +42,19 @@ namespace RalFsr.Widget
 
         protected override async void OnNavigatedTo(NavigationEventArgs e)
         {
+            try
+            {
+                await StartAsync(e);
+            }
+            catch (Exception ex)
+            {
+                CrashLog.Write("page start", ex);
+                CrashLog.Show("page start", ex);
+            }
+        }
+
+        private async Task StartAsync(NavigationEventArgs e)
+        {
             _widget = e.Parameter as XboxGameBarWidget;
             if (_widget != null)
             {

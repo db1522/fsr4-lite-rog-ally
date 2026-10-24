@@ -109,6 +109,16 @@ The output is `dist\FSR4Lite_x64.zip`.
   Armoury Crate SE (Update Center > Preview Updates), and the widget points there.
 - **Anything else:** installs are turned off.
 
+## If the widget won't open
+
+Errors while the widget starts are shown inside the widget and logged to `widget.log` in
+`%LOCALAPPDATA%\Packages\ROGAllyLife.FSR4Lite_<id>\LocalState`. The helper logs to
+`...\LocalCache\Local\RAL FSR Helper\helper.log` in the same package folder.
+
+The build registers the Game Bar SDK's private interfaces in the package manifest from the SDK it restores
+(`tools\GameBarProxyStub`). Without every one of them registered, Game Bar can't talk to the widget and shows
+"something isn't playing nice".
+
 ## Tested so far
 
 Tested in a Linux build environment against fake game folders: folder detection (Unreal and flat layouts),
@@ -126,6 +136,7 @@ RALFsr4Lite.sln
 .github\workflows\release.yml   GitHub build: publish a v* release, get the zip
 scripts\build.ps1              build, sign and zip a release (GitHub runs this)
 src\Installer\                 user installer, copied into the release zip as Install.cmd
+tools\GameBarProxyStub\        build step: registers the Game Bar SDK's interfaces in the manifest
 src\Core\                    install engine (shared, no UI)
 src\RalFsr.Host\             full-trust helper: app service, game detection, commands
 src\RalFsr.Widget\           Game Bar widget (UWP)

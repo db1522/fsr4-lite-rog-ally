@@ -1,4 +1,5 @@
 using System;
+using System.Threading.Tasks;
 using Microsoft.Gaming.XboxGameBar;
 using Windows.ApplicationModel.Activation;
 using Windows.ApplicationModel.AppService;
@@ -21,6 +22,18 @@ namespace RalFsr.Widget
         public App()
         {
             InitializeComponent();
+
+            UnhandledException += (s, e) =>
+            {
+                e.Handled = true; // keep the widget alive and show the error instead
+                CrashLog.Write("unhandled", e.Exception);
+                CrashLog.Show("unhandled", e.Exception);
+            };
+            TaskScheduler.UnobservedTaskException += (s, e) =>
+            {
+                CrashLog.Write("background task", e.Exception);
+                e.SetObserved();
+            };
         }
 
         /// <summary>Game Bar opens the widget through this activation.</summary>
@@ -29,12 +42,20 @@ namespace RalFsr.Widget
             var widgetArgs = args as XboxGameBarWidgetActivatedEventArgs;
             if (widgetArgs == null || !widgetArgs.IsLaunchActivation) return;
 
-            var frame = new Frame();
-            Window.Current.Content = frame;
-            _widget = new XboxGameBarWidget(widgetArgs, Window.Current.CoreWindow, frame);
-            frame.Navigate(typeof(WidgetPage), _widget);
-            Window.Current.Closed += (s, e) => { _widget = null; };
-            Window.Current.Activate();
+            try
+            {
+                var frame = new Frame();
+                Window.Current.Content = frame;
+                _widget = new XboxGameBarWidget(widgetArgs, Window.Current.CoreWindow, frame);
+                frame.Navigate(typeof(WidgetPage), _widget);
+                Window.Current.Closed += (s, e) => { _widget = null; };
+                Window.Current.Activate();
+            }
+            catch (Exception ex)
+            {
+                CrashLog.Write("widget start", ex);
+                CrashLog.Show("widget start", ex);
+            }
         }
 
         /// <summary>Opened from the Start menu instead of Game Bar: show the same page as a normal window.</summary>

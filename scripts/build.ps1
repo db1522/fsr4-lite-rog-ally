@@ -69,15 +69,39 @@ if (-not $cert) {
     Write-Host "  Using $($cert.Thumbprint)"
 }
 
-Step 'Building the widget package'
 $vswhere = Join-Path ${env:ProgramFiles(x86)} 'Microsoft Visual Studio\Installer\vswhere.exe'
 if (-not (Test-Path $vswhere)) { throw 'Visual Studio 2022 not found. Install it with the "Universal Windows Platform development" workload.' }
 $msbuild = & $vswhere -latest -requires Microsoft.Component.MSBuild -find 'MSBuild\**\Bin\MSBuild.exe' | Select-Object -First 1
 if (-not $msbuild) { throw 'MSBuild not found in the Visual Studio install.' }
+$widgetProject = Join-Path $widgetDir 'RalFsr.Widget.csproj'
 
+Step 'Restoring widget packages'
+& $msbuild $widgetProject /t:Restore /p:Configuration=$Configuration /p:Platform=x64 /v:minimal
+if ($LASTEXITCODE -ne 0) { throw 'Package restore failed.' }
+
+# Game Bar can only call into the widget through interfaces registered in the manifest, and every SDK version adds
+# some. Missing ones make the widget crash on open, so register exactly what the restored SDK contains.
+Step 'Registering Game Bar SDK interfaces'
+$assets = Get-Content (Join-Path $widgetDir 'obj\project.assets.json') -Raw | ConvertFrom-Json
+$sdk = $assets.libraries.PSObject.Properties | Where-Object { $_.Name -like 'Microsoft.Gaming.XboxGameBar/*' } | Select-Object -First 1
+if (-not $sdk) { throw 'The Game Bar SDK package was not restored.' }
+Write-Host "  Game Bar SDK $($sdk.Name.Split('/')[1])"
+$winmd = $null
+foreach ($folder in $assets.packageFolders.PSObject.Properties.Name) {
+    $candidate = Join-Path $folder $sdk.Value.path
+    $winmd = Get-ChildItem $candidate -Recurse -Filter 'Microsoft.Gaming.XboxGameBar.Private.winmd' -ErrorAction SilentlyContinue |
+        Select-Object -First 1
+    if ($winmd) { break }
+}
+if (-not $winmd) { throw 'Microsoft.Gaming.XboxGameBar.Private.winmd not found in the restored SDK.' }
+dotnet run --project (Join-Path $root 'tools\GameBarProxyStub\GameBarProxyStub.csproj') -c Release -- `
+    $winmd.FullName (Join-Path $widgetDir 'Package.appxmanifest')
+if ($LASTEXITCODE -ne 0) { throw 'Registering the Game Bar SDK interfaces failed.' }
+
+Step 'Building the widget package'
 $packageDir = Join-Path $dist 'packages\'
 if (Test-Path $packageDir) { Remove-Item $packageDir -Recurse -Force }
-& $msbuild (Join-Path $widgetDir 'RalFsr.Widget.csproj') /restore /m /v:minimal `
+& $msbuild $widgetProject /restore /m /v:minimal `
     /p:Configuration=$Configuration /p:Platform=x64 `
     /p:AppxPackageDir=$packageDir /p:UapAppxPackageBuildMode=SideloadOnly /p:AppxBundle=Never `
     /p:GenerateAppxPackageOnBuild=true /p:AppxPackageSigningEnabled=true `

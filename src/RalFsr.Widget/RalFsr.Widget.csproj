@@ -59,6 +59,7 @@
     <Compile Include="WidgetPage.xaml.cs">
       <DependentUpon>WidgetPage.xaml</DependentUpon>
     </Compile>
+    <Compile Include="CrashLog.cs" />
     <Compile Include="HostClient.cs" />
     <Compile Include="Json.cs" />
     <Compile Include="InstalledRow.cs" />
