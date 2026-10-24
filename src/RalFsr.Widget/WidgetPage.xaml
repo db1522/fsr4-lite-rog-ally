@@ -72,12 +72,9 @@
                 <TextBlock Text="Setup" FontFamily="{StaticResource DisplayFont}" FontSize="17" FontWeight="SemiBold" />
                 <TextBlock x:Name="OptiText" FontSize="13" TextWrapping="Wrap" />
                 <TextBlock x:Name="Fsr4Text" FontSize="13" TextWrapping="Wrap" />
-                <StackPanel Orientation="Horizontal" Spacing="8">
-                    <Button x:Name="ImportButton" Style="{StaticResource QuietButton}" Content="Import FSR 4 files"
-                            Click="Import_Click" />
-                    <HyperlinkButton Content="Where to get them" FontSize="13"
-                                     NavigateUri="https://github.com/optiscaler/OptiScaler" />
-                </StackPanel>
+                <!-- Fallback only: the files download automatically -->
+                <Button x:Name="ImportButton" Style="{StaticResource QuietButton}" Content="Import files manually"
+                        Click="Import_Click" />
                 <ToggleSwitch x:Name="OverlaySwitch" Header="Show FPS and render resolution in game"
                               Toggled="Overlay_Toggled" />
                 <ToggleSwitch x:Name="WatermarkSwitch" Header="Show the FSR 4 watermark in game"

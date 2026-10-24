@@ -17,6 +17,9 @@ public sealed class HostService
     private OptiPackage? _opti = OptiScalerSource.Cached();
     private Task? _optiTask;
     private string _optiStatus = "";
+    private Task? _fsr4Task;
+    private string _fsr4Status = "";
+    private DateTime _fsr4StartedAt;
 
     private List<GameEntry>? _catalog;
     private DateTime _catalogAt;
@@ -39,6 +42,7 @@ public sealed class HostService
             {
                 "state" => State(Arg(args, "targetName"), Arg(args, "targetIsGame") == "true"),
                 "prepare" => Prepare(),
+                "updateFsr4" => StartFsr4Download(force: true),
                 "install" => Install(Arg(args, "exeDir") ?? ""),
                 "remove" => Remove(Arg(args, "exeDir") ?? ""),
                 "removeAll" => RemoveAll(),
@@ -70,6 +74,12 @@ public sealed class HostService
     private object State(string? targetName, bool targetIsGame)
     {
         if (_opti is null && _optiTask is null) Prepare();
+        // Downloads the FSR 4 files if missing, otherwise a daily update check. A failed attempt retries every 30 s.
+        if (_fsr4Task is null ||
+            (_fsr4Task.IsCompleted && !Fsr4Library.Load().IsUsable && DateTime.Now - _fsr4StartedAt > TimeSpan.FromSeconds(30)))
+        {
+            StartFsr4Download(force: false);
+        }
 
         var fsr4 = Fsr4Library.Load();
         var game = CurrentGame(targetName, targetIsGame);
@@ -99,6 +109,8 @@ public sealed class HostService
             },
             fsr4 = new
             {
+                busy = _fsr4Task is not null && !_fsr4Task.IsCompleted,
+                status = _fsr4Status,
                 ready = fsr4.IsUsable,
                 version = fsr4.VersionLabel,
                 verified = fsr4.Dx12?.Signature == SignatureCheck.AmdVerified,
@@ -222,6 +234,29 @@ public sealed class HostService
             }
         });
         return new { ok = true };
+    }
+
+    /// <summary>
+    /// Runs the FSR 4 download in the background and reports progress through "state". After new files land,
+    /// every installed game gets them too.
+    /// </summary>
+    private object StartFsr4Download(bool force)
+    {
+        if (_fsr4Task is { IsCompleted: false }) return new { ok = true, message = "Already downloading." };
+
+        var progress = new Progress<string>(s => _fsr4Status = s);
+        _fsr4StartedAt = DateTime.Now;
+        _fsr4Task = Task.Run(async () =>
+        {
+            var result = await Fsr4Download.EnsureAsync(progress, force);
+            if (result.Changed)
+            {
+                var set = Fsr4Library.Load();
+                foreach (var dir in InstallRegistry.Load()) Installer.RefreshFsr4(dir, set);
+            }
+            _fsr4Status = result.Problem ?? "";
+        });
+        return new { ok = true, message = force ? "Checking for new FSR 4 files..." : "" };
     }
 
     private object Install(string exeDir)

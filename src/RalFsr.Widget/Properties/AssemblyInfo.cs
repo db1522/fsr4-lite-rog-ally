@@ -1,10 +1,10 @@
 using System.Reflection;
 using System.Runtime.InteropServices;
 
-[assembly: AssemblyTitle("FSR 4 Lite for ROG Ally")]
+[assembly: AssemblyTitle("FSR 4 Lite for ROG Ally and ROG Ally X")]
 [assembly: AssemblyDescription("Game Bar widget that installs FSR 4 Lite through OptiScaler")]
 [assembly: AssemblyCompany("ROG Ally Life")]
-[assembly: AssemblyProduct("FSR 4 Lite for ROG Ally")]
+[assembly: AssemblyProduct("FSR 4 Lite for ROG Ally and ROG Ally X")]
 [assembly: AssemblyVersion("0.1.0.0")]
 [assembly: AssemblyFileVersion("0.1.0.0")]
 [assembly: ComVisible(false)]

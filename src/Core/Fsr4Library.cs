@@ -78,6 +78,8 @@ public static class Fsr4Library
     private static Fsr4File? Describe(string path) =>
         File.Exists(path) ? new Fsr4File(path, ReadVersion(path), WinTrust.Check(path)) : null;
 
+    public static string ReadFileVersion(string path) => ReadVersion(path);
+
     private static string ReadVersion(string path)
     {
         try

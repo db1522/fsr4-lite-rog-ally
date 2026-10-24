@@ -1,4 +1,4 @@
-# FSR 4 Lite for ROG Ally (Game Bar widget)
+# FSR 4 Lite for ROG Ally and ROG Ally X (Game Bar widget)
 
 A free Xbox Game Bar widget from ROG Ally Life. Open Game Bar over a game on a ROG Ally or ROG Ally X,
 press **Install FSR 4 Lite**, restart the game, and turn on FSR in its graphics settings.
@@ -56,10 +56,13 @@ the game shows the FSR 4 watermark while it runs.
 
 ### What the widget never does
 
-- It doesn't bundle or download AMD's FSR 4 files. Users import them once from the OptiScaler Discord post,
-  the same way OptiScaler itself handles them. The widget checks on import that each file is a signed AMD driver file (WHQL or AMD signature, unmodified) and at least version 2.4.0.4370.
+- AMD's FSR 4 files aren't bundled in the package. The helper downloads them from
+  `https://media.rogallylife.com/fsr4/` (`amdxcffx64.dll` and `amdvkffx64.dll`; URLs in `src\Core\Fsr4Download.cs`).
+  Every download, like a manual import, must be a signed AMD driver file (WHQL or AMD signature, unmodified) and at
+  least version 2.4.0.4370, or it's discarded. Once a day the helper asks the host (with ETags) whether a file
+  changed, so uploading a newer DLL to the same URL updates every user and every installed game.
 - It doesn't bundle OptiScaler. It downloads it from OptiScaler's GitHub at runtime.
-- The only network access is the OptiScaler download from GitHub.
+- Network access: OptiScaler from GitHub, and the FSR 4 files from media.rogallylife.com.
 
 ## Installing (users)
 
@@ -69,9 +72,9 @@ the game shows the FSR 4 watermark while it runs.
    certificate.
 4. Press Win + G, open the Widgets menu and pick **FSR 4 Lite**. Pin it to keep it handy.
 
-In the widget, OptiScaler downloads by itself. Press **Import FSR 4 files** and pick the two files from the
-OptiScaler Discord: `Official_RDNA2_and_APUs_amdxcffx64.7z` and `FSR4_Vulkan_amdvkffx64.7z`. Then launch a game,
-open the widget over it and press **Install FSR 4 Lite**.
+In the widget, OptiScaler and the FSR 4.1.2 Lite files download by themselves the first time it opens. Then launch
+a game, open the widget over it and press **Install FSR 4 Lite**. **Import files manually** is only a fallback for
+offline setups.
 
 To update, download the new zip and run its Install.cmd. Settings and installed games carry over.
 

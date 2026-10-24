@@ -133,10 +133,15 @@ namespace RalFsr.Widget
             _setupReady = optiReady && fsr4Ready;
 
             OptiText.Text = (optiReady ? "Ready: " : "") + Json.Str(opti, "status", "Getting OptiScaler...");
-            Fsr4Text.Text = fsr4Ready
-                ? "Ready: FSR 4 files " + Json.Str(fsr4, "version") + (Json.Bool(fsr4, "verified") ? ", signed AMD driver file" : "")
-                : "Needed: the FSR 4.1.2 files (Official_RDNA2_and_APUs_amdxcffx64.7z) from the OptiScaler Discord. Download them, then import here.";
-            ImportButton.Content = fsr4Ready ? "Update FSR 4 files" : "Import FSR 4 files";
+            var fsr4Status = Json.Str(fsr4, "status");
+            var fsr4Busy = Json.Bool(fsr4, "busy");
+            if (fsr4Busy && !string.IsNullOrEmpty(fsr4Status))
+                Fsr4Text.Text = fsr4Status; // download progress
+            else if (fsr4Ready)
+                Fsr4Text.Text = "Ready: FSR 4.1.2 Lite files " + Json.Str(fsr4, "version") +
+                                (Json.Bool(fsr4, "verified") ? ", signed AMD driver files" : "");
+            else
+                Fsr4Text.Text = string.IsNullOrEmpty(fsr4Status) ? "Getting the FSR 4.1.2 Lite files..." : fsr4Status;
 
             _suppressOverlayEvent = true;
             OverlaySwitch.IsOn = Json.Bool(state, "overlay");
@@ -148,7 +153,7 @@ namespace RalFsr.Widget
 
             // Keep polling while downloading, or while an installed game isn't fully active yet / might change.
             var watchGame = game != null && Json.Bool(game, "installed");
-            if (Json.Bool(opti, "busy") || watchGame) _poll.Start(); else _poll.Stop();
+            if (Json.Bool(opti, "busy") || fsr4Busy || !fsr4Ready || watchGame) _poll.Start(); else _poll.Stop();
             RenderInstalled(Json.Arr(state, "installed"));
         }
 
