@@ -1,0 +1,103 @@
+<Page
+    x:Class="RalFsr.Widget.WidgetPage"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:local="using:RalFsr.Widget"
+    Background="{StaticResource SurfaceBrush}">
+
+    <ScrollViewer VerticalScrollBarVisibility="Auto">
+        <StackPanel Padding="20,16,20,20" Spacing="16">
+
+            <!-- Header -->
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <StackPanel Spacing="2">
+                    <TextBlock Text="FSR 4 Lite" FontFamily="{StaticResource DisplayFont}" FontSize="28" FontWeight="SemiBold" />
+                    <TextBlock x:Name="DeviceText" Text="Checking this handheld..." FontSize="12"
+                               Foreground="{StaticResource MutedBrush}" TextWrapping="Wrap" />
+                </StackPanel>
+                <Button x:Name="RefreshButton" Grid.Column="1" VerticalAlignment="Top" Style="{StaticResource QuietButton}"
+                        Content="Refresh" Click="Refresh_Click" />
+            </Grid>
+
+            <!-- Device problems (wrong device, or the official ASUS route applies) -->
+            <Border x:Name="DeviceBanner" Visibility="Collapsed" Padding="12" CornerRadius="4"
+                    Background="#33E8A23A" BorderBrush="{StaticResource WarnBrush}" BorderThickness="3,0,0,0">
+                <TextBlock x:Name="DeviceBannerText" TextWrapping="Wrap" FontSize="13" />
+            </Border>
+
+            <!-- The game under the overlay -->
+            <Border x:Name="GameCard" Padding="16" CornerRadius="6" Background="{StaticResource CardBrush}"
+                    BorderBrush="{StaticResource RalRedBrush}" BorderThickness="3,0,0,0">
+                <StackPanel Spacing="8">
+                    <TextBlock x:Name="GameName" Text="Looking for your game..." FontFamily="{StaticResource DisplayFont}"
+                               FontSize="22" TextWrapping="Wrap" />
+                    <TextBlock x:Name="GameMeta" FontSize="12" Foreground="{StaticResource MutedBrush}" TextWrapping="Wrap" />
+
+                    <!-- Live status: is FSR 4 Lite really running in the game right now -->
+                    <Border x:Name="ActiveBadge" Visibility="Collapsed" HorizontalAlignment="Left" Padding="10,5"
+                            CornerRadius="12" BorderThickness="1">
+                        <StackPanel Orientation="Horizontal" Spacing="8">
+                            <Ellipse x:Name="ActiveDot" Width="9" Height="9" VerticalAlignment="Center" />
+                            <TextBlock x:Name="ActiveText" FontSize="13" FontWeight="SemiBold" TextWrapping="Wrap" />
+                        </StackPanel>
+                    </Border>
+                    <TextBlock x:Name="GameStatus" FontSize="14" TextWrapping="Wrap" />
+                    <StackPanel x:Name="GameActions" Orientation="Horizontal" Spacing="8" Margin="0,4,0,0">
+                        <Button x:Name="PrimaryButton" Style="{StaticResource AccentButton}" Content="Install FSR 4 Lite"
+                                Click="Primary_Click" />
+                    </StackPanel>
+                </StackPanel>
+            </Border>
+
+            <!-- One-time setup -->
+            <StackPanel Spacing="8">
+                <TextBlock Text="Setup" FontFamily="{StaticResource DisplayFont}" FontSize="17" FontWeight="SemiBold" />
+                <TextBlock x:Name="OptiText" FontSize="13" TextWrapping="Wrap" />
+                <TextBlock x:Name="Fsr4Text" FontSize="13" TextWrapping="Wrap" />
+                <StackPanel Orientation="Horizontal" Spacing="8">
+                    <Button x:Name="ImportButton" Style="{StaticResource QuietButton}" Content="Import FSR 4 files"
+                            Click="Import_Click" />
+                    <HyperlinkButton Content="Where to get them" FontSize="13"
+                                     NavigateUri="https://github.com/optiscaler/OptiScaler" />
+                </StackPanel>
+                <ToggleSwitch x:Name="OverlaySwitch" Header="Show FPS and render resolution in game"
+                              Toggled="Overlay_Toggled" />
+                <ToggleSwitch x:Name="WatermarkSwitch" Header="Show the FSR 4 watermark in game"
+                              Toggled="Watermark_Toggled" />
+            </StackPanel>
+
+            <!-- Everything installed through the widget, removable without the game running -->
+            <StackPanel x:Name="InstalledPanel" Spacing="4" Visibility="Collapsed">
+                <TextBlock Text="Installed in" FontFamily="{StaticResource DisplayFont}" FontSize="17" FontWeight="SemiBold" />
+                <ItemsControl x:Name="InstalledList">
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate x:DataType="local:InstalledRow">
+                            <Grid Padding="0,6">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+                                <StackPanel VerticalAlignment="Center">
+                                    <TextBlock Text="{x:Bind Name}" FontSize="14" TextTrimming="CharacterEllipsis" />
+                                    <TextBlock Text="{x:Bind Note}" FontSize="12" Foreground="{StaticResource MutedBrush}" />
+                                </StackPanel>
+                                <Button Grid.Column="1" Style="{StaticResource QuietButton}" Content="Uninstall"
+                                        Tag="{x:Bind ExeDir}" Click="Remove_Click" />
+                            </Grid>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+            </StackPanel>
+
+            <TextBlock x:Name="StatusText" FontSize="13" TextWrapping="Wrap" Foreground="{StaticResource MutedBrush}" />
+
+            <!-- Clean uninstall: restore every game folder, then hand over to Windows to remove the widget -->
+            <Button x:Name="UninstallButton" Style="{StaticResource QuietButton}" Content="Uninstall FSR 4 Lite"
+                    Foreground="{StaticResource RalRedBrush}" Margin="0,8,0,0" Click="Uninstall_Click" />
+        </StackPanel>
+    </ScrollViewer>
+</Page>
