@@ -1,0 +1,41 @@
+# Builds and publishes the widget. Publish a release with a new tag like v0.1.0 and the download
+# (FSR4Lite_x64.zip) is attached to it a few minutes later. No setup, no local Visual Studio.
+# Each build is signed with a fresh self-signed "CN=ROG Ally Life" certificate; Install.cmd trusts it.
+name: Release
+
+on:
+  push:
+    tags: ['v*']
+  workflow_dispatch: # "Run workflow" button for a test build without a release
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: windows-2022
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+
+      - name: Build and sign
+        shell: powershell
+        run: |
+          $version = if ($env:GITHUB_REF_TYPE -eq 'tag') { $env:GITHUB_REF_NAME.TrimStart('v') } else { '0.0.1' }
+          .\scripts\build.ps1 -Version $version
+
+      - name: Keep the build (test runs)
+        uses: actions/upload-artifact@v4
+        with:
+          name: FSR4Lite_x64
+          path: dist/FSR4Lite_x64.zip
+
+      - name: Publish release
+        if: github.ref_type == 'tag'
+        uses: softprops/action-gh-release@v2
+        with:
+          files: dist/FSR4Lite_x64.zip
+          generate_release_notes: true
