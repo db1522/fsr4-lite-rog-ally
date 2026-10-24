@@ -15,7 +15,7 @@ public static class ArchiveUtil
         Directory.CreateDirectory(root);
         var rootWithSlash = root.EndsWith(Path.DirectorySeparatorChar) ? root : root + Path.DirectorySeparatorChar;
 
-        using var archive = ArchiveFactory.Open(archivePath);
+        using var archive = ArchiveFactory.OpenArchive(archivePath);
         foreach (var entry in archive.Entries)
         {
             if (entry.IsDirectory || string.IsNullOrEmpty(entry.Key)) continue;
