@@ -1,149 +1,178 @@
 using System.Net;
-using System.Net.Http.Headers;
-using System.Text.Json;
 
 namespace RalFsrHelper.Core;
 
 /// <summary>
-/// Downloads the FSR 4.1.2 driver files from ROG Ally Life's file host, so users never handle them by hand.
-/// A file is only used after it passes the same checks as a manual import: a valid AMD or WHQL signature on an AMD
-/// driver file, at least version 2.4.0.4370. Once a day the host is asked (with ETags) whether a file changed;
-/// uploading a newer DLL to the same URL updates every user.
+/// Downloads the FSR 4.1.2 driver files so users never handle them by hand, from the fsr4/ folder of ROG Ally Life's
+/// R2 bucket through its r2.dev address. (The media.rogallylife.com custom domain sits behind the zone's bot
+/// protection, which refuses the helper.)
+///
+/// Once a day the helper reads the files' ETags with two HEAD requests and downloads only if they changed, so
+/// uploading new DLLs over the old ones in fsr4/ updates every user.
+///
+/// Each DLL is used only after the same checks as a manual import: a valid AMD or WHQL signature on an AMD driver
+/// file, at least version 2.4.0.4370. Nothing replaces the current files unless every downloaded file passes.
 /// </summary>
 public static class Fsr4Download
 {
-    public static readonly IReadOnlyList<(string FileName, string Url)> Sources = new[]
-    {
-        (InstallConfig.Dx12Fsr4File, "https://media.rogallylife.com/fsr4/amdxcffx64.dll"),
-        (InstallConfig.VulkanFsr4File, "https://media.rogallylife.com/fsr4/amdvkffx64.dll"),
-    };
+    private const string R2Base = R2Files.Fsr4Folder;
 
     private static readonly TimeSpan CheckInterval = TimeSpan.FromHours(24);
-    private static string StatePath => Path.Combine(AppPaths.Fsr4Dir, "download-state.json");
+    private static string StatePath => Path.Combine(AppPaths.Fsr4Dir, "download-source.txt");
+    private static string CheckPath => Path.Combine(AppPaths.Fsr4Dir, "download-checked.txt");
 
-    private static readonly HttpClient Http = CreateClient();
+    private static readonly HttpClient Http = Create(followRedirects: true, TimeSpan.FromMinutes(30));
+    private static readonly HttpClient NoRedirect = Create(followRedirects: false, TimeSpan.FromSeconds(20));
 
-    private static HttpClient CreateClient()
+    private static HttpClient Create(bool followRedirects, TimeSpan timeout)
     {
-        var c = new HttpClient { Timeout = TimeSpan.FromMinutes(30) }; // ~80 MB per file on handheld Wi-Fi
-        c.DefaultRequestHeaders.UserAgent.Add(new ProductInfoHeaderValue("RALFsr4Lite", "0.1"));
+        var c = new HttpClient(new HttpClientHandler { AllowAutoRedirect = followRedirects }) { Timeout = timeout };
+        c.DefaultRequestHeaders.UserAgent.ParseAdd("Mozilla/5.0 (Windows NT 10.0; Win64; x64) RALFsr4Lite/0.1");
         return c;
     }
 
-    private sealed class State
-    {
-        public DateTime LastCheck { get; set; }
-        public Dictionary<string, string> ETags { get; set; } = new();
-    }
-
-    /// <summary>Result of a run: whether any file changed, plus a message when something went wrong.</summary>
     public sealed record Result(bool Changed, string? Problem);
 
-    /// <summary>
-    /// Downloads missing files, or checks for updated ones if a day has passed (or <paramref name="force"/>).
-    /// </summary>
     public static async Task<Result> EnsureAsync(IProgress<string> progress, bool force = false, CancellationToken ct = default)
     {
         AppPaths.Ensure();
-        var state = LoadState();
-        var missing = Sources.Any(s => !File.Exists(Path.Combine(AppPaths.Fsr4Dir, s.FileName)));
-        if (!missing && !force && DateTime.UtcNow - state.LastCheck < CheckInterval) return new Result(false, null);
+        var dx12 = Path.Combine(AppPaths.Fsr4Dir, InstallConfig.Dx12Fsr4File);
+        var haveFiles = File.Exists(dx12);
+        if (haveFiles && !force && DateTime.UtcNow - ReadTime(CheckPath) < CheckInterval) return new Result(false, null);
 
-        var changed = false;
-        string? problem = null;
+        var temp = Path.Combine(Path.GetTempPath(), "RalFsr4Download");
+        var recorded = ReadText(StatePath);
 
-        foreach (var (fileName, url) in Sources)
+        try
         {
-            var target = Path.Combine(AppPaths.Fsr4Dir, fileName);
-            var temp = target + ".download";
-            try
+            // Cheap fingerprint first: if it matches what we already have, there's nothing to download.
+            var fingerprint = await FingerprintAsync(ct);
+            if (haveFiles && fingerprint is not null && fingerprint == recorded)
             {
-                using var request = new HttpRequestMessage(HttpMethod.Get, url);
-                if (File.Exists(target) && state.ETags.TryGetValue(fileName, out var etag) &&
-                    EntityTagHeaderValue.TryParse(etag, out var tag))
-                {
-                    request.Headers.IfNoneMatch.Add(tag);
-                }
-
-                using var response = await Http.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, ct);
-                if (response.StatusCode == HttpStatusCode.NotModified) continue;
-                response.EnsureSuccessStatusCode();
-
-                await DownloadAsync(response, temp, fileName, progress, ct);
-
-                // Same checks as a manual import, before the file is used anywhere.
-                var signature = WinTrust.Check(temp);
-                if (signature != SignatureCheck.AmdVerified)
-                    throw new InvalidDataException($"{fileName} failed the AMD signature check, so it wasn't used.");
-                var version = Fsr4Library.ReadFileVersion(temp);
-                if (!Version.TryParse(version, out var v) || v < Fsr4Library.MinimumDx12Version)
-                    throw new InvalidDataException($"{fileName} is version {version}, older than FSR 4.1.2, so it wasn't used.");
-
-                File.Move(temp, target, overwrite: true);
-                if (response.Headers.ETag is { } newTag) state.ETags[fileName] = newTag.ToString();
-                changed = true;
-                Log.Info($"Downloaded {fileName} {version} from {url}");
+                WriteText(CheckPath, DateTime.UtcNow.ToString("o"));
+                return new Result(false, null);
             }
-            catch (Exception ex) when (ex is HttpRequestException or TaskCanceledException or InvalidDataException or IOException)
-            {
-                Log.Warn($"FSR 4 download failed for {fileName}: {ex.Message}");
-                problem ??= ex is InvalidDataException
-                    ? ex.Message
-                    : "Couldn't download the FSR 4 files. Check the connection and press Refresh.";
-            }
-            finally
-            {
-                try { if (File.Exists(temp)) File.Delete(temp); } catch { /* temp cleanup only */ }
-            }
+
+            if (Directory.Exists(temp)) Directory.Delete(temp, true);
+            var unpacked = Path.Combine(temp, "files");
+            Directory.CreateDirectory(unpacked);
+            await FetchAsync(unpacked, progress, ct);
+
+            progress.Report("Checking the FSR 4 files...");
+            var accepted = Validate(unpacked);
+
+            // Every file passed: only now replace the current ones.
+            foreach (var (file, name) in accepted)
+                File.Copy(file, Path.Combine(AppPaths.Fsr4Dir, name), overwrite: true);
+
+            if (fingerprint is not null) WriteText(StatePath, fingerprint);
+            WriteText(CheckPath, DateTime.UtcNow.ToString("o"));
+            Log.Info($"FSR 4 files updated from R2: {string.Join(", ", accepted.Select(a => a.Name))}");
+            return new Result(true, null);
         }
-
-        if (problem is null) state.LastCheck = DateTime.UtcNow; // retry soon after a failure
-        SaveState(state);
-        return new Result(changed, problem);
+        catch (Exception ex)
+        {
+            Log.Error("FSR 4 download failed", ex);
+            return new Result(false, ex is InvalidDataException
+                ? ex.Message
+                : $"Couldn't download the FSR 4 files ({OptiScalerSource.Describe(ex)}).");
+        }
+        finally
+        {
+            try { if (Directory.Exists(temp)) Directory.Delete(temp, true); } catch { /* temp cleanup only */ }
+        }
     }
 
-    private static async Task DownloadAsync(HttpResponseMessage response, string temp, string fileName,
-        IProgress<string> progress, CancellationToken ct)
+    private static readonly string[] Files = { InstallConfig.Dx12Fsr4File, InstallConfig.VulkanFsr4File };
+
+    /// <summary>Identifies the files currently on the host without downloading them.</summary>
+    private static async Task<string?> FingerprintAsync(CancellationToken ct)
     {
+        var tags = new List<string>();
+        foreach (var name in Files)
+        {
+            using var request = new HttpRequestMessage(HttpMethod.Head, R2Base + name);
+            using var response = await NoRedirect.SendAsync(request, ct);
+            if (!response.IsSuccessStatusCode)
+                throw new HttpRequestException(
+                    $"R2 answered HTTP {(int)response.StatusCode} {response.ReasonPhrase} for {name}", null, response.StatusCode);
+            tags.Add(response.Headers.ETag?.Tag ?? response.Content.Headers.ContentLength?.ToString() ?? "?");
+        }
+        return "r2:" + string.Join("|", tags);
+    }
+
+    /// <summary>Downloads the host's files and leaves the DLLs in <paramref name="unpacked"/>.</summary>
+    private static async Task FetchAsync(string unpacked, IProgress<string> progress, CancellationToken ct)
+    {
+        foreach (var name in Files)
+        {
+            var label = name == InstallConfig.VulkanFsr4File ? "Vulkan " : "DX12 ";
+            await DownloadAsync(R2Base + name, Path.Combine(unpacked, name), label, progress, ct);
+        }
+    }
+
+    private static List<(string File, string Name)> Validate(string unpacked)
+    {
+        var accepted = new List<(string, string)>();
+        foreach (var name in Files)
+        {
+            var file = Directory.GetFiles(unpacked, name, SearchOption.AllDirectories).FirstOrDefault();
+            if (file is null)
+            {
+                if (name == InstallConfig.Dx12Fsr4File)
+                    throw new InvalidDataException("The download doesn't contain amdxcffx64.dll.");
+                continue; // the Vulkan file is optional
+            }
+
+            if (WinTrust.Check(file) != SignatureCheck.AmdVerified)
+                throw new InvalidDataException($"{name} failed the AMD signature check, so the download wasn't used.");
+            var version = Fsr4Library.ReadFileVersion(file);
+            if (!Version.TryParse(version, out var v) || v < Fsr4Library.MinimumDx12Version)
+                throw new InvalidDataException($"{name} is version {version}, older than FSR 4.1.2, so the download wasn't used.");
+            accepted.Add((file, name));
+        }
+        return accepted;
+    }
+
+    private static async Task DownloadAsync(string url, string target, string label, IProgress<string> progress,
+        CancellationToken ct)
+    {
+        using var response = await Http.GetAsync(url, HttpCompletionOption.ResponseHeadersRead, ct);
+        if (!response.IsSuccessStatusCode)
+            throw new HttpRequestException(
+                $"{new Uri(url).Host} answered HTTP {(int)response.StatusCode} {response.ReasonPhrase}", null, response.StatusCode);
+
         var total = response.Content.Headers.ContentLength ?? 0;
         await using var input = await response.Content.ReadAsStreamAsync(ct);
-        await using var output = File.Create(temp);
+        await using var output = File.Create(target);
         var buffer = new byte[81920];
         long done = 0;
         int read, lastPercent = -1;
-        var label = fileName.Equals(InstallConfig.VulkanFsr4File, StringComparison.OrdinalIgnoreCase) ? "Vulkan" : "DX12";
         while ((read = await input.ReadAsync(buffer, ct)) > 0)
         {
             await output.WriteAsync(buffer.AsMemory(0, read), ct);
             done += read;
             var percent = total > 0 ? (int)(done * 100 / total) : -1;
-            if (percent != lastPercent)
-            {
-                lastPercent = percent;
-                progress.Report(percent >= 0
-                    ? $"Downloading FSR 4 files ({label})... {percent}%"
-                    : $"Downloading FSR 4 files ({label})... {done / (1024 * 1024)} MB");
-            }
+            if (percent == lastPercent) continue;
+            lastPercent = percent;
+            progress.Report(percent >= 0
+                ? $"Downloading FSR 4 {label}files... {percent}%"
+                : $"Downloading FSR 4 {label}files... {done / (1024 * 1024)} MB");
         }
     }
 
-    private static State LoadState()
+    private static string? ReadText(string path)
     {
-        try
-        {
-            return File.Exists(StatePath)
-                ? JsonSerializer.Deserialize<State>(File.ReadAllText(StatePath)) ?? new State()
-                : new State();
-        }
-        catch
-        {
-            return new State();
-        }
+        try { return File.Exists(path) ? File.ReadAllText(path).Trim() : null; }
+        catch { return null; }
     }
 
-    private static void SaveState(State state)
+    private static DateTime ReadTime(string path) =>
+        DateTime.TryParse(ReadText(path), null, System.Globalization.DateTimeStyles.RoundtripKind, out var t) ? t : DateTime.MinValue;
+
+    private static void WriteText(string path, string text)
     {
-        try { File.WriteAllText(StatePath, JsonSerializer.Serialize(state)); }
-        catch (Exception ex) { Log.Warn($"Couldn't save download state: {ex.Message}"); }
+        try { File.WriteAllText(path, text); }
+        catch (Exception ex) { Log.Warn($"Couldn't save {Path.GetFileName(path)}: {ex.Message}"); }
     }
 }

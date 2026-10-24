@@ -56,13 +56,14 @@ the game shows the FSR 4 watermark while it runs.
 
 ### What the widget never does
 
-- AMD's FSR 4 files aren't bundled in the package. The helper downloads them from
-  `https://media.rogallylife.com/fsr4/` (`amdxcffx64.dll` and `amdvkffx64.dll`; URLs in `src\Core\Fsr4Download.cs`).
-  Every download, like a manual import, must be a signed AMD driver file (WHQL or AMD signature, unmodified) and at
-  least version 2.4.0.4370, or it's discarded. Once a day the helper asks the host (with ETags) whether a file
-  changed, so uploading a newer DLL to the same URL updates every user and every installed game.
+- AMD's FSR 4 files aren't bundled in the package. The helper downloads `amdxcffx64.dll` and `amdvkffx64.dll` from
+  the `fsr4/` folder of ROG Ally Life's R2 bucket through its r2.dev address (URL in `src\Core\Fsr4Download.cs`).
+  Every file must be a signed AMD driver file (WHQL or AMD signature, unmodified) and at least version 2.4.0.4370,
+  or the download is discarded. Once a day the helper compares the files' ETags with two HEAD requests and downloads
+  only when they changed, so uploading new DLLs over the old ones in `fsr4/` updates every user and every installed
+  game.
 - It doesn't bundle OptiScaler. It downloads it from OptiScaler's GitHub at runtime.
-- Network access: OptiScaler from GitHub, and the FSR 4 files from media.rogallylife.com.
+- Network access: OptiScaler from its GitHub releases, and the FSR 4 files from ROG Ally Life's R2 bucket.
 
 ## Installing (users)
 

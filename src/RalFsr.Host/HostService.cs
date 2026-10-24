@@ -17,6 +17,8 @@ public sealed class HostService
     private OptiPackage? _opti = OptiScalerSource.Cached();
     private Task? _optiTask;
     private string _optiStatus = "";
+    private DateTime _optiStartedAt = DateTime.MinValue;
+    private static readonly TimeSpan RetryEvery = TimeSpan.FromMinutes(1);
     private Task? _fsr4Task;
     private string _fsr4Status = "";
     private DateTime _fsr4StartedAt;
@@ -73,10 +75,11 @@ public sealed class HostService
 
     private object State(string? targetName, bool targetIsGame)
     {
-        if (_opti is null && _optiTask is null) Prepare();
-        // Downloads the FSR 4 files if missing, otherwise a daily update check. A failed attempt retries every 30 s.
+        // Retry a failed OptiScaler download at most once a minute (GitHub limits unauthenticated requests).
+        if (_opti is null && _optiTask is null && DateTime.Now - _optiStartedAt > RetryEvery) Prepare();
+        // Downloads the FSR 4 files if missing, otherwise a daily update check. A failed attempt retries once a minute.
         if (_fsr4Task is null ||
-            (_fsr4Task.IsCompleted && !Fsr4Library.Load().IsUsable && DateTime.Now - _fsr4StartedAt > TimeSpan.FromSeconds(30)))
+            (_fsr4Task.IsCompleted && !Fsr4Library.Load().IsUsable && DateTime.Now - _fsr4StartedAt > RetryEvery))
         {
             StartFsr4Download(force: false);
         }
@@ -104,7 +107,7 @@ public sealed class HostService
             {
                 ready = _opti is not null,
                 build = _opti?.Build ?? "",
-                status = _opti is not null && _optiTask is null ? $"OptiScaler {ShortBuild(_opti.Build)}" : _optiStatus,
+                status = _opti is not null && _optiTask is null ? _opti.DisplayName : _optiStatus,
                 busy = _optiTask is not null,
             },
             fsr4 = new
@@ -218,7 +221,9 @@ public sealed class HostService
     private object Prepare()
     {
         if (_optiTask is not null) return new { ok = true };
-        var progress = new Progress<string>(s => _optiStatus = s);
+        _optiStartedAt = DateTime.Now;
+        var last = "";
+        var progress = new Progress<string>(s => { last = s; _optiStatus = s; });
         _optiStatus = "Getting OptiScaler...";
         _optiTask = Task.Run(async () =>
         {
@@ -226,10 +231,17 @@ public sealed class HostService
             {
                 var pkg = await OptiScalerSource.EnsureLatestAsync(progress);
                 if (pkg is not null) _opti = pkg;
-                else if (_opti is null) _optiStatus = "Couldn't download OptiScaler. Check the connection and press Refresh.";
+            }
+            catch (Exception ex)
+            {
+                Log.Error("OptiScaler setup failed", ex);
+                last = $"Couldn't download OptiScaler ({OptiScalerSource.Describe(ex)}).";
             }
             finally
             {
+                if (_opti is null)
+                    _optiStatus = (last.StartsWith("Couldn't", StringComparison.Ordinal) ? last : "Couldn't download OptiScaler.") +
+                                  " Retrying in a minute.";
                 _optiTask = null;
             }
         });
@@ -254,7 +266,7 @@ public sealed class HostService
                 var set = Fsr4Library.Load();
                 foreach (var dir in InstallRegistry.Load()) Installer.RefreshFsr4(dir, set);
             }
-            _fsr4Status = result.Problem ?? "";
+            _fsr4Status = result.Problem is null ? "" : result.Problem + " Retrying in a minute.";
         });
         return new { ok = true, message = force ? "Checking for new FSR 4 files..." : "" };
     }
@@ -485,8 +497,6 @@ public sealed class HostService
         }
     }
 
-    private static string ShortBuild(string build) =>
-        build.StartsWith("OptiScaler_", StringComparison.OrdinalIgnoreCase) ? build["OptiScaler_".Length..] : build;
 
     private static string? Arg(IReadOnlyDictionary<string, string> args, string key) =>
         args.TryGetValue(key, out var v) ? v : null;
