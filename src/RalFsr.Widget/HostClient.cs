@@ -21,7 +21,8 @@ namespace RalFsr.Widget
             try
             {
                 await FullTrustProcessLauncher.LaunchFullTrustProcessForCurrentAppAsync();
-                await Task.WhenAny(_connected.Task, Task.Delay(TimeSpan.FromSeconds(15)));
+                // Generous: the first start after an install or update unpacks the helper before it can connect.
+                await Task.WhenAny(_connected.Task, Task.Delay(TimeSpan.FromSeconds(45)));
                 return App.Connection != null;
             }
             catch (Exception)
@@ -43,7 +44,8 @@ namespace RalFsr.Widget
         public static async Task<JsonObject> SendAsync(string cmd, params string[] pairs)
         {
             if (!await EnsureConnectedAsync())
-                return Error("The helper didn't start. Close the widget and open it again.");
+                return Error("The helper didn't start. Close the widget and open it again. " +
+                             "If this keeps happening, restart the Ally and send ROG Ally Life the helper.log file.");
 
             var connection = App.Connection;
             if (connection == null) return Error("The helper disconnected. Close the widget and open it again.");
