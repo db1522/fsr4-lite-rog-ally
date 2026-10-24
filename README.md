@@ -27,7 +27,8 @@ When you install, the helper:
    Vanguard (Valorant, League of Legends), Valve Anti-Cheat (Counter-Strike 2, Dota 2), Blizzard (Overwatch 2)
    and HoYoverse games by exe name, since those systems live outside the game folder. The lists are in
    `src\Core\GameAnalyzer.cs`; detection is best effort, so new anti-cheat systems need adding as they appear.
-3. Copies the latest OptiScaler nightly (the v10 line, downloaded from OptiScaler's official GitHub release)
+3. Copies the latest OptiScaler nightly (the v10 line, downloaded from OptiScaler's official
+   `optiscaler/OptiScaler-nightly` releases on GitHub, checked at most once a day)
    into that folder. `OptiScaler.dll` is renamed to `dxgi.dll`, or to `winmm.dll` and so on if the game already
    ships a file with that name.
 4. Copies the FSR 4.1.2 files you imported into the `OptiScaler` subfolder.

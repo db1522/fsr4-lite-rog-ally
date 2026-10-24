@@ -10,8 +10,10 @@ public sealed record OptiPackage(string Build, string Dir)
 }
 
 /// <summary>
-/// Downloads OptiScaler straight from its official GitHub "nightly" release (the v10 line the FSR 4.1.2 files are
-/// built for), so users get each new nightly automatically.
+/// Downloads OptiScaler straight from its official nightly builds (the v10 line the FSR 4.1.2 files are built for),
+/// so users get each new nightly automatically. Nightlies live in the separate optiscaler/OptiScaler-nightly
+/// repository, one release per day (tags like nightly-20261024, assets like OptiScaler_v10.0.0-pre1_20261024.7z).
+/// The "nightly" release in the main repository is now only a pointer there.
 ///
 /// GitHub allows 60 unauthenticated API requests per hour per connection. Once a build is downloaded, the release is
 /// checked for a newer nightly at most once a day, and the helper retries a failed check at most once a minute.
@@ -19,7 +21,7 @@ public sealed record OptiPackage(string Build, string Dir)
 /// </summary>
 public static class OptiScalerSource
 {
-    private const string NightlyApi = "https://api.github.com/repos/optiscaler/OptiScaler/releases/tags/nightly";
+    private const string NightlyApi = "https://api.github.com/repos/optiscaler/OptiScaler-nightly/releases?per_page=10";
     private static readonly string LatestMarker = Path.Combine(AppPaths.OptiCache, "latest.txt");
     private static readonly string LastCheckMarker = Path.Combine(AppPaths.OptiCache, "last-check.txt");
     private static readonly TimeSpan CheckInterval = TimeSpan.FromHours(24);
@@ -47,7 +49,7 @@ public static class OptiScalerSource
             progress.Report("Checking for the latest OptiScaler nightly...");
             var asset = await GetLatestAssetAsync(ct);
             WriteText(LastCheckMarker, DateTime.UtcNow.ToString("o"));
-            if (asset is null) throw new InvalidDataException("no OptiScaler build on the nightly release");
+            if (asset is null) throw new InvalidDataException("no OptiScaler build in the recent nightly releases");
 
             var build = Path.GetFileNameWithoutExtension(asset.Value.Name);
             if (cached is not null && cached.Build == build) return cached;
@@ -127,19 +129,31 @@ public static class OptiScalerSource
                 $"GitHub answered HTTP {(int)response.StatusCode} {response.ReasonPhrase}", null, response.StatusCode);
 
         using var doc = JsonDocument.Parse(await response.Content.ReadAsStringAsync(ct));
-        if (!doc.RootElement.TryGetProperty("assets", out var assets)) return null;
+
+        // A list of releases, newest first. Look through all of them for the newest usable build, in case the
+        // latest release is still uploading or only has a debug build.
+        var releases = doc.RootElement.ValueKind == JsonValueKind.Array
+            ? doc.RootElement.EnumerateArray().ToList()
+            : new List<JsonElement> { doc.RootElement };
 
         (string Name, string Url, long Size, DateTime Created)? best = null;
-        foreach (var a in assets.EnumerateArray())
+        foreach (var release in releases)
         {
-            var name = a.GetProperty("name").GetString() ?? "";
-            if (!name.EndsWith(".7z", StringComparison.OrdinalIgnoreCase)) continue;
-            if (!name.StartsWith("OptiScaler", StringComparison.OrdinalIgnoreCase)) continue;
-            if (name.Contains("debug", StringComparison.OrdinalIgnoreCase)) continue;
+            if (release.TryGetProperty("draft", out var draft) && draft.ValueKind == JsonValueKind.True) continue;
+            if (!release.TryGetProperty("assets", out var assets)) continue;
 
-            var created = a.GetProperty("created_at").GetDateTime();
-            if (best is null || created > best.Value.Created)
-                best = (name, a.GetProperty("browser_download_url").GetString() ?? "", a.GetProperty("size").GetInt64(), created);
+            foreach (var a in assets.EnumerateArray())
+            {
+                var name = a.GetProperty("name").GetString() ?? "";
+                if (!name.EndsWith(".7z", StringComparison.OrdinalIgnoreCase)) continue;
+                if (!name.StartsWith("OptiScaler", StringComparison.OrdinalIgnoreCase)) continue;
+                if (name.Contains("debug", StringComparison.OrdinalIgnoreCase)) continue;
+                if (a.TryGetProperty("state", out var state) && state.GetString() != "uploaded") continue;
+
+                var created = a.GetProperty("created_at").GetDateTime();
+                if (best is null || created > best.Value.Created)
+                    best = (name, a.GetProperty("browser_download_url").GetString() ?? "", a.GetProperty("size").GetInt64(), created);
+            }
         }
         return best is null ? null : (best.Value.Name, best.Value.Url, best.Value.Size);
     }
