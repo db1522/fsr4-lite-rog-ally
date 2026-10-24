@@ -14,8 +14,9 @@
             <SolidColorBrush x:Key="WarnBrush" Color="#FFE8A23A" />
             <FontFamily x:Key="DisplayFont">Bahnschrift</FontFamily>
 
-            <Style x:Key="AccentButton" TargetType="Button" BasedOn="{StaticResource AccentButtonStyle}">
-                <Setter Property="Background" Value="{StaticResource RalRedBrush}" />
+            <!-- No BasedOn: the default Button template is used, and colours come from the button's own resources
+                 (WidgetPage.xaml), so hover and pressed states stay red instead of turning grey. -->
+            <Style x:Key="AccentButton" TargetType="Button">
                 <Setter Property="Foreground" Value="White" />
                 <Setter Property="FontFamily" Value="{StaticResource DisplayFont}" />
                 <Setter Property="FontSize" Value="15" />
@@ -23,7 +24,7 @@
                 <Setter Property="CornerRadius" Value="4" />
             </Style>
 
-            <Style x:Key="QuietButton" TargetType="Button" BasedOn="{StaticResource DefaultButtonStyle}">
+            <Style x:Key="QuietButton" TargetType="Button">
                 <Setter Property="FontSize" Value="14" />
                 <Setter Property="Padding" Value="14,8" />
                 <Setter Property="CornerRadius" Value="4" />
