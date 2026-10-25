@@ -193,6 +193,9 @@ namespace RalFsr.Widget
             ResolutionText.Text = resolution;
             ResolutionText.Visibility = string.IsNullOrEmpty(resolution) ? Visibility.Collapsed : Visibility.Visible;
 
+            var overrideNote = Json.Str(game, "overrideNote");
+            if (!string.IsNullOrEmpty(overrideNote)) GameStatus.Text = overrideNote;
+
             var autoFix = Json.Str(game, "autoFix");
             if (!string.IsNullOrEmpty(autoFix))
             {

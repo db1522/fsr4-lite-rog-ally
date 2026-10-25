@@ -57,8 +57,14 @@ inputs are the most reliable choice.
 
 Installed games get a **Render resolution** picker on the game card: Game decides (default), Native AA, Quality,
 Balanced or Performance. Anything but "Game decides" sets OptiScaler's upscale ratio override, so every
-render-resolution request from the game gets that ratio whichever preset the game asks for. This fixes games that
-stay on Native AA, such as Forza Horizon 6. The choice is saved per game and applies from the next launch.
+render-resolution request from the game gets that ratio whichever preset the game asks for. It works for games
+that ask the upscaler for their render resolution. The choice is saved per game and applies from the next launch.
+
+Some games pick their render size themselves. Forza Horizon 6 is one: through its FSR option it ignores the
+override (ratio 1), and through DLSS it declares the smaller size, "(800,450)(optimal)", but still hands over a
+full-size image, "color_in extents (0,0,1600,900)". Either way the GPU renders at full resolution, so FSR 4.1.2 Lite
+works as native anti-aliasing with no FPS gain. The widget reads the size a game really hands over (Streamline's
+color_in extents when present) and says so on the card when a game renders at full resolution.
 
 ### Automatic fixes
 

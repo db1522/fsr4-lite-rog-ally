@@ -100,6 +100,17 @@ public static class LoadedModules
     private static readonly System.Text.RegularExpressions.Regex WidthLine = new(
         @"renderWidth: (\d+), maxWidth: (\d+)", System.Text.RegularExpressions.RegexOptions.Compiled);
 
+    /// <summary>
+    /// Streamline (DLSS in many newer games) logs the size of the image the game really hands over each frame. A game
+    /// can declare a small render size yet still render at full size: Forza Horizon 6 logs "(800,450)(optimal)" but
+    /// "color_in extents (0,0,1600,900)". The extents are the truth.
+    /// </summary>
+    private static readonly System.Text.RegularExpressions.Regex ColorInLine = new(
+        @"color_in extents \((\d+),(\d+),(\d+),(\d+)\)", System.Text.RegularExpressions.RegexOptions.Compiled);
+
+    private static readonly System.Text.RegularExpressions.Regex ColorOutLine = new(
+        @"color_out extents \((\d+),(\d+),(\d+),(\d+)\)", System.Text.RegularExpressions.RegexOptions.Compiled);
+
     /// <summary>Returns a function that stamps the latest logged render/display size onto a status.</summary>
     private static Func<Status, Status> ParseResolution(string log)
     {
@@ -122,6 +133,20 @@ public static class LoadedModules
             if (dw > 0 && newDw == dw && rw > 0) rh = (int)Math.Round((double)rh * newRw / rw);
             else { rh = 0; dh = 0; }
             rw = newRw; dw = newDw;
+        }
+
+        // The real input size from Streamline wins over any declared size logged before it.
+        var colorIn = ColorInLine.Matches(log);
+        if (colorIn.Count > 0)
+        {
+            var m = colorIn[^1];
+            rw = int.Parse(m.Groups[3].Value); rh = int.Parse(m.Groups[4].Value);
+            var colorOut = ColorOutLine.Matches(log);
+            if (colorOut.Count > 0)
+            {
+                var o = colorOut[^1];
+                dw = int.Parse(o.Groups[3].Value); dh = int.Parse(o.Groups[4].Value);
+            }
         }
 
         return status => status with { RenderWidth = rw, RenderHeight = rh, DisplayWidth = dw, DisplayHeight = dh };
