@@ -36,7 +36,8 @@ When you install, the helper:
 5. Writes the settings that replace the in-game menu steps into `OptiScaler.ini`:
    `Dx12Upscaler=ffx`, `Dx11Upscaler=ffx_12`, `VulkanUpscaler=ffx_12` (Vulkan through the DX12 bridge, where FSR 4.1.2
    is listed first; OptiScaler's native Vulkan path lists FSR 3 first and would pick it), `Fsr4GpuSupport=4` (INT8 Lite),
-   `Fsr4Model=3` (INT8 Lite), and OptiScaler frame generation off.
+   `Fsr4Model=3` (INT8 Lite), OptiScaler frame generation off, and nothing on screen: no OptiScaler startup message
+   (`DisableSplash=true`) and no AMD FSR 4 watermark (`Fsr4EnableWatermark=false`).
 6. Records every file it added or replaced in `.ralfsr\manifest.json`, with backups of anything replaced.
    **Uninstall from this game** uses that record to put the folder back exactly as it was.
 

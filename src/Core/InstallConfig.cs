@@ -34,6 +34,10 @@ public static class InstallConfig
         // which amdxcffx64.dll was loaded and that the Lite model was hooked. Info is light; Trace is the heavy one.
         new IniValue("Log", "LogToFile", "true"),
         new IniValue("Log", "LogLevel", "2"),
+
+        // No startup message or watermark.
+        new IniValue("Menu", "DisableSplash", "true"),
+        new IniValue("FSR", "Fsr4EnableWatermark", "false"),
     };
 
     /// <summary>
@@ -76,10 +80,19 @@ public static class InstallConfig
         };
     }
 
-    public static IReadOnlyList<IniValue> Watermark(bool on) => new[]
+    /// <summary>
+    /// Nothing on screen unless the user asks for it: no OptiScaler startup message ("OptiScaler - Insert for menu")
+    /// and no AMD FSR 4 watermark. Notifications and the widget's badge confirm FSR 4.1 Lite instead. Written on
+    /// install and re-applied to every installed game each time the widget opens.
+    /// </summary>
+    public static readonly IReadOnlyList<IniValue> Quiet = new[]
     {
-        new IniValue("FSR", "Fsr4EnableWatermark", on ? "true" : "auto"),
+        new IniValue("Menu", "DisableSplash", "true"),
+        new IniValue("FSR", "Fsr4EnableWatermark", "false"),
     };
+
+    /// <summary>Kept for the existing call sites; the watermark is always off (see <see cref="Quiet"/>).</summary>
+    public static IReadOnlyList<IniValue> Watermark(bool on) => Quiet;
 
     /// <summary>Names OptiScaler can load under, in order of preference (same list as OptiScaler's setup script).</summary>
     public static readonly string[] ProxyNames =

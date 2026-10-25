@@ -7,7 +7,10 @@ public sealed class AppSettings
     /// <summary>Shows OptiScaler's FPS overlay with the live render to output resolution.</summary>
     public bool ShowResolutionOverlay { get; set; }
 
-    /// <summary>Shows AMD's FSR 4 watermark on screen while FSR 4 is running. Off by default; notifications replace it.</summary>
+    /// <summary>
+    /// Retired: AMD's on-screen FSR 4 watermark. Notifications replace it, and the switch is gone from the widget,
+    /// so it's always off (an older setting of true is ignored and cleared on load).
+    /// </summary>
     public bool ShowFsr4Watermark { get; set; }
 
     /// <summary>A notification when FSR 4.1 Lite is confirmed active (or isn't running) in a game. Starts with Windows.</summary>
@@ -21,7 +24,9 @@ public sealed class AppSettings
         {
             if (File.Exists(AppPaths.SettingsFile))
             {
-                return JsonSerializer.Deserialize<AppSettings>(File.ReadAllText(AppPaths.SettingsFile)) ?? new();
+                var loaded = JsonSerializer.Deserialize<AppSettings>(File.ReadAllText(AppPaths.SettingsFile)) ?? new();
+                loaded.ShowFsr4Watermark = false; // retired setting, see above
+                return loaded;
             }
         }
         catch (Exception ex)
