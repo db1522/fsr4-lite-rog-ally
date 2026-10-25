@@ -2,7 +2,7 @@ namespace RalFsrHelper.Core;
 
 /// <summary>
 /// Every OptiScaler.ini value the app writes, in one place.
-/// These replace the in-game menu steps (upscaler choice and FSR 4 model), so the game starts on FSR 4 Lite
+/// These replace the in-game menu steps (upscaler choice and FSR 4 model), so the game starts on FSR 4.1 Lite
 /// without the user opening the OptiScaler overlay.
 /// </summary>
 public static class InstallConfig
@@ -10,11 +10,11 @@ public static class InstallConfig
     public sealed record IniValue(string Section, string Key, string Value);
 
     /// <summary>
-    /// Vulkan games: with the Vulkan FSR 4 file (amdvkffx64.dll) imported, OptiScaler's native Vulkan FFX path loads it
-    /// directly. Without it, Vulkan games go through the DX12 bridge (ffx_12) and use amdxcffx64.dll instead.
+    /// Vulkan games go through OptiScaler's DX12 bridge (ffx_12). OptiScaler's native Vulkan path lists the driver
+    /// FSR 4 after the SDK's FSR 3 versions, so its default pick there is FSR 3. The DX12 list puts FSR 4.1.2 first,
+    /// so the bridge reliably runs FSR 4.1 Lite (from amdxcffx64.dll), at a small interop cost.
     /// </summary>
-    public static IniValue VulkanUpscaler(bool hasVulkanFile) =>
-        new("Upscalers", "VulkanUpscaler", hasVulkanFile ? "ffx" : "ffx_12");
+    public static IniValue VulkanUpscaler(bool hasVulkanFile) => new("Upscalers", "VulkanUpscaler", "ffx_12");
 
     public static IReadOnlyList<IniValue> Base(bool hasVulkanFile) => new[]
     {

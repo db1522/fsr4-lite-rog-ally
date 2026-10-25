@@ -6,7 +6,13 @@
     Background="{StaticResource SurfaceBrush}">
 
     <ScrollViewer VerticalScrollBarVisibility="Auto">
-        <StackPanel Padding="20,16,20,20" Spacing="16">
+        <StackPanel Padding="20,16,20,20" Spacing="16" XYFocusKeyboardNavigation="Enabled">
+            <StackPanel.ChildrenTransitions>
+                <TransitionCollection>
+                    <EntranceThemeTransition FromVerticalOffset="16" IsStaggeringEnabled="True" />
+                    <RepositionThemeTransition />
+                </TransitionCollection>
+            </StackPanel.ChildrenTransitions>
 
             <!-- Header -->
             <Grid>
@@ -14,10 +20,14 @@
                     <ColumnDefinition Width="*" />
                     <ColumnDefinition Width="Auto" />
                 </Grid.ColumnDefinitions>
-                <StackPanel Spacing="2">
-                    <TextBlock Text="FSR 4 Lite" FontFamily="{StaticResource DisplayFont}" FontSize="28" FontWeight="SemiBold" />
-                    <TextBlock x:Name="DeviceText" Text="Checking this handheld..." FontSize="12"
-                               Foreground="{StaticResource MutedBrush}" TextWrapping="Wrap" />
+                <StackPanel Orientation="Horizontal" Spacing="12">
+                    <Image Source="Assets/RalLogo.png" Width="48" Height="48" VerticalAlignment="Center"
+                           AutomationProperties.Name="ROG Ally Life" />
+                    <StackPanel Spacing="2" VerticalAlignment="Center">
+                        <TextBlock Text="FSR 4.1 Lite" FontFamily="{StaticResource DisplayFont}" FontSize="28" FontWeight="SemiBold" />
+                        <TextBlock x:Name="DeviceText" Text="Checking this handheld..." FontSize="12"
+                                   Foreground="{StaticResource MutedBrush}" TextWrapping="Wrap" />
+                    </StackPanel>
                 </StackPanel>
                 <Button x:Name="RefreshButton" Grid.Column="1" VerticalAlignment="Top" Style="{StaticResource QuietButton}"
                         Content="Refresh" Click="Refresh_Click" />
@@ -33,11 +43,16 @@
             <Border x:Name="GameCard" Padding="16" CornerRadius="6" Background="{StaticResource CardBrush}"
                     BorderBrush="{StaticResource RalRedBrush}" BorderThickness="3,0,0,0">
                 <StackPanel Spacing="8">
+                    <StackPanel.ChildrenTransitions>
+                        <TransitionCollection>
+                            <RepositionThemeTransition />
+                        </TransitionCollection>
+                    </StackPanel.ChildrenTransitions>
                     <TextBlock x:Name="GameName" Text="Looking for your game..." FontFamily="{StaticResource DisplayFont}"
                                FontSize="22" TextWrapping="Wrap" />
                     <TextBlock x:Name="GameMeta" FontSize="12" Foreground="{StaticResource MutedBrush}" TextWrapping="Wrap" />
 
-                    <!-- Live status: is FSR 4 Lite really running in the game right now -->
+                    <!-- Live status: is FSR 4.1 Lite really running in the game right now -->
                     <Border x:Name="ActiveBadge" Visibility="Collapsed" HorizontalAlignment="Left" Padding="10,5"
                             CornerRadius="12" BorderThickness="1">
                         <StackPanel Orientation="Horizontal" Spacing="8">
@@ -47,11 +62,18 @@
                     </Border>
                     <TextBlock x:Name="GameStatus" FontSize="14" TextWrapping="Wrap" />
 
+                    <TextBlock x:Name="ResolutionText" FontSize="12" Foreground="{StaticResource MutedBrush}"
+                               Visibility="Collapsed" />
+                    <Border x:Name="AutoFixBanner" Visibility="Collapsed" Padding="10" CornerRadius="4"
+                            Background="#2639C27A" BorderBrush="{StaticResource GoodBrush}" BorderThickness="3,0,0,0">
+                        <TextBlock x:Name="AutoFixText" FontSize="13" TextWrapping="Wrap" />
+                    </Border>
+
                     <!-- Per-game render resolution: fixes games that stay on Native AA whatever preset they're set to -->
                     <ComboBox x:Name="RenderScaleBox" Header="Render resolution" Visibility="Collapsed"
                               HorizontalAlignment="Stretch" SelectionChanged="RenderScale_Changed" />
                     <StackPanel x:Name="GameActions" Orientation="Horizontal" Spacing="8" Margin="0,4,0,0">
-                        <Button x:Name="PrimaryButton" Style="{StaticResource AccentButton}" Content="Install FSR 4 Lite"
+                        <Button x:Name="PrimaryButton" Style="{StaticResource AccentButton}" Content="Install FSR 4.1 Lite"
                                 Click="Primary_Click">
                             <Button.Resources>
                                 <SolidColorBrush x:Key="ButtonBackground" Color="#E50007" />
@@ -110,8 +132,26 @@
 
             <TextBlock x:Name="StatusText" FontSize="13" TextWrapping="Wrap" Foreground="{StaticResource MutedBrush}" />
 
+            <!-- Credits: the widget is a front end; OptiScaler does the work -->
+            <Border Padding="14" CornerRadius="6" Background="{StaticResource CardBrush}">
+                <StackPanel Spacing="6">
+                    <TextBlock Text="Powered by OptiScaler" FontFamily="{StaticResource DisplayFont}" FontSize="16"
+                               FontWeight="SemiBold" />
+                    <TextBlock FontSize="13" TextWrapping="Wrap" Foreground="{StaticResource MutedBrush}"
+                               Text="FSR 4.1 Lite installs and configures OptiScaler, the free, open-source upscaler tool created by cdozdil and the OptiScaler contributors (GPL-3.0). The widget downloads their official builds unmodified. All the upscaling work is theirs." />
+                    <TextBlock FontSize="13" TextWrapping="Wrap" Foreground="{StaticResource MutedBrush}"
+                               Text="FSR 4 is by AMD. Thanks to TheRazerMD for sharing the FSR 4.1 Lite driver files." />
+                    <StackPanel Orientation="Horizontal" Spacing="4">
+                        <HyperlinkButton Content="OptiScaler on GitHub" FontSize="13"
+                                         NavigateUri="https://github.com/optiscaler/OptiScaler" />
+                        <HyperlinkButton Content="Support the OptiScaler developer" FontSize="13"
+                                         NavigateUri="https://github.com/sponsors/cdozdil" />
+                    </StackPanel>
+                </StackPanel>
+            </Border>
+
             <!-- Clean uninstall: restore every game folder, then hand over to Windows to remove the widget -->
-            <Button x:Name="UninstallButton" Style="{StaticResource QuietButton}" Content="Uninstall FSR 4 Lite"
+            <Button x:Name="UninstallButton" Style="{StaticResource QuietButton}" Content="Uninstall FSR 4.1 Lite"
                     Foreground="{StaticResource RalRedBrush}" Margin="0,8,0,0" Click="Uninstall_Click" />
         </StackPanel>
     </ScrollViewer>

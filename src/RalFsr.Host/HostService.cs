@@ -124,9 +124,12 @@ public sealed class HostService
             device = new
             {
                 summary = _device.Summary,
-                supported = _device.Support == DeviceSupport.Supported,
+                supported = _device.CanInstall,
+                showNote = _device.Support != DeviceSupport.Supported,
                 officialDriver = _device.Support == DeviceSupport.OfficialDriver,
+                experimental = _device.Support == DeviceSupport.Experimental,
                 message = _device.Message,
+                gameBarHint = _device.GameBarHint,
             },
             opti = new
             {
@@ -168,6 +171,25 @@ public sealed class HostService
             ? LoadedModules.Check(window.ProcessId, exeDir, scan.Manifest)
             : new LoadedModules.Status(LoadedModules.Stage.None, "");
 
+        // Auto-fix: a game on "Game decides" that's rendering at full resolution isn't upscaling at all (Forza
+        // Horizon 6 stays on Native AA whatever its preset says). Switch it to Quality once; an explicit picker
+        // choice, including Native AA, is never overridden.
+        string? autoFix = null;
+        var manifest = InstallManifest.TryLoad(exeDir);
+        if (manifest is not null && manifest.RenderScale == "game" && !manifest.AutoFixedNativeAA &&
+            live.Stage == LoadedModules.Stage.Active && live.AtFullResolution)
+        {
+            Installer.ApplyRenderScale(exeDir, "quality");
+            manifest = InstallManifest.TryLoad(exeDir)!;
+            manifest.AutoFixedNativeAA = true;
+            manifest.Save(exeDir);
+            Forget(exeDir);
+            autoFix = $"Fixed: {scan.Game.Name} was rendering at full resolution " +
+                      $"({live.DisplayWidth}x{live.DisplayHeight}), so FSR 4 wasn't upscaling. Render resolution is now " +
+                      "Quality (1.5x). Restart the game to apply it.";
+            Log.Info($"Auto-fixed Native AA in {exeDir}");
+        }
+
         return new
         {
             name = scan.Game.Name,
@@ -179,7 +201,13 @@ public sealed class HostService
             canInstall = scan.State is GameState.Ready or GameState.NoUpscalerFound,
             installed = scan.State == GameState.Installed,
             upscalers = scan.Upscalers,
-            renderScale = scan.Manifest?.RenderScale ?? "game",
+            renderScale = manifest?.RenderScale ?? scan.Manifest?.RenderScale ?? "game",
+            autoFix = autoFix ?? "",
+            resolutionText = live.HasResolution
+                ? (live.RenderHeight > 0 && live.DisplayHeight > 0
+                    ? $"Rendering {live.RenderWidth}x{live.RenderHeight} → {live.DisplayWidth}x{live.DisplayHeight}"
+                    : $"Rendering {live.RenderWidth} → {live.DisplayWidth} pixels wide")
+                : "",
             renderScales = InstallConfig.RenderScales.Select(r => new { key = r.Key, label = r.Label }).ToList(),
             activeStage = live.Stage.ToString(),
             activeText = ActiveText(live, scan.Game.Name),
@@ -222,15 +250,18 @@ public sealed class HostService
     private static string ActiveText(LoadedModules.Status live, string game) => live.Stage switch
     {
         LoadedModules.Stage.Active => live.Confirmed
-            ? $"FSR 4.1.2 Lite active ({live.Api})"
-            : $"FSR 4.1.2 Lite loaded ({live.Api})",
+            ? $"FSR 4.1 Lite active ({live.Api})"
+            : $"FSR 4.1 Lite loaded ({live.Api})",
         LoadedModules.Stage.NotLite when live.Detail.Contains("DriverStore", StringComparison.OrdinalIgnoreCase) =>
             "FSR 4 is running, but not Lite: the game loaded the AMD driver's own FSR 4 file first. " +
             "Restart the game; if it happens again, this game isn't compatible with the Lite file yet.",
         LoadedModules.Stage.NotLite when live.Detail.Length > 0 && !live.Detail.Contains('\\') =>
-            $"FSR 4 Lite isn't running: {live.Detail}.",
+            $"FSR 4.1 Lite isn't running: {live.Detail}.",
         LoadedModules.Stage.NotLite => $"FSR 4 is running, but not Lite: it loaded {live.Detail}.",
         LoadedModules.Stage.WaitingForFsr => "OptiScaler running. Turn on FSR in the game's graphics settings.",
+        LoadedModules.Stage.Fsr3Fallback =>
+            "Running FSR 3, not FSR 4: the game's upscaler started, but the FSR 4 file didn't load. " +
+            "Uninstall from this game, install again, and restart it.",
         LoadedModules.Stage.NeedsRestart => $"Installed. Restart {game} to load it.",
         _ => "",
     };
@@ -245,7 +276,7 @@ public sealed class HostService
                 "No upscaler files found. Some engines build FSR in, so it may still work: install, restart the game " +
                 $"and turn on FSR in its settings.{xboxNote}",
             GameState.AntiCheat => $"{s.AntiCheat} found. Injecting OptiScaler could get your account banned, so installs are blocked.",
-            GameState.Installed => "FSR 4 Lite is installed. Turn on FSR in the game's settings.",
+            GameState.Installed => "FSR 4.1 Lite is installed. Turn on FSR in the game's settings.",
             GameState.ManualOptiScaler => "OptiScaler is already here from a manual install. Remove it by hand to manage this game here.",
             _ => "Couldn't find this game's files.",
         };
@@ -308,7 +339,7 @@ public sealed class HostService
 
     private object Install(string exeDir)
     {
-        if (_device.Support != DeviceSupport.Supported) return Fail(_device.Message);
+        if (!_device.CanInstall) return Fail(_device.Message);
         if (_opti is null) return Fail("OptiScaler is still downloading. Try again in a moment.");
         var fsr4 = Fsr4Library.Load();
         if (!fsr4.IsUsable) return Fail("Import the FSR 4.1.2 files first.");
@@ -325,7 +356,7 @@ public sealed class HostService
         {
             ok = true,
             message = $"Installed. Restart {scan.Game.Name}, then turn on FSR in its graphics settings. " +
-                      "FSR 4 Lite loads automatically, no OptiScaler menu needed.",
+                      "FSR 4.1 Lite loads automatically, no OptiScaler menu needed.",
         };
     }
 
@@ -349,7 +380,7 @@ public sealed class HostService
     }
 
     /// <summary>
-    /// First half of "Uninstall FSR 4 Lite": restores every game folder the widget touched.
+    /// First half of "Uninstall FSR 4.1 Lite": restores every game folder the widget touched.
     /// Running games are skipped, since their files are locked. The widget then opens Windows' uninstall page.
     /// </summary>
     private object RemoveAll()
@@ -392,7 +423,7 @@ public sealed class HostService
         {
             message = (skipped.Count > 0 ? $"Close {string.Join(", ", skipped)} first. " : "") +
                       (failed.Count > 0 ? $"Couldn't restore {string.Join(", ", failed)}. " : "") +
-                      "Then press Uninstall FSR 4 Lite again.";
+                      "Then press Uninstall FSR 4.1 Lite again.";
         }
         else
         {
@@ -461,7 +492,7 @@ public sealed class HostService
     private object RenderScale(string exeDir, string key)
     {
         var manifest = InstallManifest.TryLoad(exeDir);
-        if (manifest is null) return Fail("FSR 4 Lite isn't installed in this game.");
+        if (manifest is null) return Fail("FSR 4.1 Lite isn't installed in this game.");
 
         Installer.ApplyRenderScale(exeDir, key);
         Forget(exeDir); // the cached scan holds the old manifest

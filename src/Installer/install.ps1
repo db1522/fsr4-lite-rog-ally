@@ -1,6 +1,6 @@
 <#
 .SYNOPSIS
-    Installs or updates the FSR 4 Lite Game Bar widget from this folder.
+    Installs or updates the FSR 4.1 Lite Game Bar widget from this folder.
 
 .DESCRIPTION
     Trusts the ROG Ally Life signing certificate (one administrator prompt, first time only),
@@ -49,7 +49,7 @@ try {
     Add-AppxPackage -Path $msix.FullName -ForceApplicationShutdown -ForceUpdateFromAnyVersion
     Write-Host '  Installed' -ForegroundColor Green
 
-    Write-Host "`nOpen Game Bar with Win + G, open the Widgets menu and pick FSR 4 Lite." -ForegroundColor Green
+    Write-Host "`nOpen Game Bar (the Armoury Crate button on ROG handhelds, Win + G on others), open the Widgets menu and pick FSR 4.1 Lite." -ForegroundColor Green
     Write-Host 'Pin it if you want it to stay over your games.'
     Finish 0
 } catch {

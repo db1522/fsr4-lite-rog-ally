@@ -1,6 +1,6 @@
 <#
 .SYNOPSIS
-    Builds the FSR 4 Lite Game Bar widget into a signed, installable release zip.
+    Builds the FSR 4.1 Lite Game Bar widget into a signed, installable release zip.
 
     You normally don't run this yourself: GitHub runs it when you push a version tag
     (see .github/workflows/release.yml and the README). Run it locally only if you have

@@ -17,6 +17,10 @@
             <!-- No BasedOn: the default Button template is used, and colours come from the button's own resources
                  (WidgetPage.xaml), so hover and pressed states stay red instead of turning grey. -->
             <Style x:Key="AccentButton" TargetType="Button">
+                <Setter Property="FocusVisualPrimaryBrush" Value="White" />
+                <Setter Property="FocusVisualSecondaryBrush" Value="{StaticResource RalRedBrush}" />
+                <Setter Property="FocusVisualPrimaryThickness" Value="3" />
+                <Setter Property="FocusVisualSecondaryThickness" Value="1" />
                 <Setter Property="Foreground" Value="White" />
                 <Setter Property="FontFamily" Value="{StaticResource DisplayFont}" />
                 <Setter Property="FontSize" Value="15" />
@@ -25,6 +29,10 @@
             </Style>
 
             <Style x:Key="QuietButton" TargetType="Button">
+                <Setter Property="FocusVisualPrimaryBrush" Value="{StaticResource RalRedBrush}" />
+                <Setter Property="FocusVisualSecondaryBrush" Value="White" />
+                <Setter Property="FocusVisualPrimaryThickness" Value="3" />
+                <Setter Property="FocusVisualSecondaryThickness" Value="1" />
                 <Setter Property="FontSize" Value="14" />
                 <Setter Property="Padding" Value="14,8" />
                 <Setter Property="CornerRadius" Value="4" />

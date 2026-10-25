@@ -26,6 +26,7 @@ namespace RalFsr.Widget
         private string _exeDir;
         private bool _gameInstalled;
         private bool _deviceSupported;
+        private string _gameBarHint = "press Win + G to open Game Bar";
         private bool _setupReady;
         private bool _suppressOverlayEvent;
         private bool _suppressScaleEvent;
@@ -78,6 +79,12 @@ namespace RalFsr.Widget
             };
 
             await RefreshAsync(quiet: false);
+
+            // Controller users land on the main action straight away.
+            var first = PrimaryButton.Visibility == Visibility.Visible && GameActions.Visibility == Visibility.Visible
+                ? (Control)PrimaryButton
+                : RefreshButton;
+            first.Focus(FocusState.Programmatic);
         }
 
         // ---------------------------------------------------------------- refresh and render
@@ -124,7 +131,9 @@ namespace RalFsr.Widget
             var device = Json.Obj(state, "device");
             DeviceText.Text = Json.Str(device, "summary");
             _deviceSupported = Json.Bool(device, "supported");
-            DeviceBanner.Visibility = _deviceSupported ? Visibility.Collapsed : Visibility.Visible;
+            _gameBarHint = Json.Str(device, "gameBarHint", "press Win + G to open Game Bar");
+            // Shown for notes (official driver, experimental) as well as for unsupported devices.
+            DeviceBanner.Visibility = Json.Bool(device, "showNote") ? Visibility.Visible : Visibility.Collapsed;
             DeviceBannerText.Text = Json.Str(device, "message");
 
             // Setup
@@ -140,10 +149,10 @@ namespace RalFsr.Widget
             if (fsr4Busy && !string.IsNullOrEmpty(fsr4Status))
                 Fsr4Text.Text = fsr4Status; // download progress
             else if (fsr4Ready)
-                Fsr4Text.Text = "Ready: FSR 4.1.2 Lite files " + Json.Str(fsr4, "version") +
+                Fsr4Text.Text = "Ready: FSR 4.1 Lite files " + Json.Str(fsr4, "version") +
                                 (Json.Bool(fsr4, "verified") ? ", signed AMD driver files" : "");
             else
-                Fsr4Text.Text = string.IsNullOrEmpty(fsr4Status) ? "Getting the FSR 4.1.2 Lite files..." : fsr4Status;
+                Fsr4Text.Text = string.IsNullOrEmpty(fsr4Status) ? "Getting the FSR 4.1 Lite files..." : fsr4Status;
 
             _suppressOverlayEvent = true;
             OverlaySwitch.IsOn = Json.Bool(state, "overlay");
@@ -166,14 +175,27 @@ namespace RalFsr.Widget
                 _exeDir = null;
                 GameName.Text = "No game detected";
                 GameMeta.Text = "";
-                GameStatus.Text = "Start a game, then open Game Bar (Win + G) and this widget over it.";
+                GameStatus.Text = "Start a game, then " + _gameBarHint + " and open this widget over it.";
                 GameActions.Visibility = Visibility.Collapsed;
                 ActiveBadge.Visibility = Visibility.Collapsed;
                 RenderScaleBox.Visibility = Visibility.Collapsed;
+                ResolutionText.Visibility = Visibility.Collapsed;
+                AutoFixBanner.Visibility = Visibility.Collapsed;
                 return;
             }
 
             RenderBadge(Json.Str(game, "activeStage"), Json.Str(game, "activeText"));
+
+            var resolution = Json.Str(game, "resolutionText");
+            ResolutionText.Text = resolution;
+            ResolutionText.Visibility = string.IsNullOrEmpty(resolution) ? Visibility.Collapsed : Visibility.Visible;
+
+            var autoFix = Json.Str(game, "autoFix");
+            if (!string.IsNullOrEmpty(autoFix))
+            {
+                AutoFixText.Text = autoFix;
+                AutoFixBanner.Visibility = Visibility.Visible; // stays until the next game or widget session
+            }
 
             _exeDir = Json.Str(game, "exeDir");
             _gameInstalled = Json.Bool(game, "installed");
@@ -192,7 +214,7 @@ namespace RalFsr.Widget
             }
             else
             {
-                PrimaryButton.Content = "Install FSR 4 Lite";
+                PrimaryButton.Content = "Install FSR 4.1 Lite";
                 PrimaryButton.IsEnabled = Json.Bool(game, "canInstall") && _deviceSupported && _setupReady;
                 if (Json.Bool(game, "canInstall") && !_setupReady)
                     GameStatus.Text += " Finish setup below to install.";
@@ -251,7 +273,7 @@ namespace RalFsr.Widget
                 return;
             }
 
-            // Green when FSR 4 Lite is running, amber for "almost there" and "running, but not Lite".
+            // Green when FSR 4.1 Lite is running, amber for "almost there" and "running, but not Lite".
             var color = stage == "Active"
                 ? Color.FromArgb(255, 0x39, 0xC2, 0x7A)
                 : Color.FromArgb(255, 0xE8, 0xA2, 0x3A);
@@ -274,7 +296,7 @@ namespace RalFsr.Widget
                 {
                     Name = Json.Str(o, "name"),
                     ExeDir = Json.Str(o, "exeDir"),
-                    Note = Json.Bool(o, "running") ? "Running now, close it to uninstall" : "FSR 4 Lite installed",
+                    Note = Json.Bool(o, "running") ? "Running now, close it to uninstall" : "FSR 4.1 Lite installed",
                 });
             }
             InstalledList.ItemsSource = rows;
@@ -315,9 +337,9 @@ namespace RalFsr.Widget
             var games = _installedCount == 1 ? "1 game" : _installedCount + " games";
             var dialog = new ContentDialog
             {
-                Title = "Uninstall FSR 4 Lite?",
+                Title = "Uninstall FSR 4.1 Lite?",
                 Content = _installedCount > 0
-                    ? "This removes FSR 4 Lite from " + games + " and puts their folders back the way they were. " +
+                    ? "This removes FSR 4.1 Lite from " + games + " and puts their folders back the way they were. " +
                       "Then Windows Settings opens so you can uninstall the widget."
                     : "Windows Settings will open so you can uninstall the widget.",
                 PrimaryButtonText = "Uninstall",

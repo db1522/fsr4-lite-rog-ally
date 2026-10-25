@@ -43,7 +43,7 @@ namespace RalFsr.Widget
             {
                 var text = new TextBlock
                 {
-                    Text = "FSR 4 Lite hit an error (" + where + ").\n\n" +
+                    Text = "FSR 4.1 Lite hit an error (" + where + ").\n\n" +
                            ex.GetType().Name + ": " + ex.Message + "\n\n" +
                            "Details were saved to:\n" + LogPath,
                     TextWrapping = TextWrapping.Wrap,

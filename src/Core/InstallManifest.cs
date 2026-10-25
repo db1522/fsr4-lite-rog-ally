@@ -20,6 +20,9 @@ public sealed class InstallManifest
     /// <summary>Render resolution choice for this game, a key from InstallConfig.RenderScales.</summary>
     public string RenderScale { get; set; } = "game";
 
+    /// <summary>Set once the widget has auto-fixed a game stuck at full resolution, so it never overrides again.</summary>
+    public bool AutoFixedNativeAA { get; set; }
+
     /// <summary>Files the app created, relative to the exe folder.</summary>
     public List<string> CreatedFiles { get; set; } = new();
 
