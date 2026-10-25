@@ -293,6 +293,16 @@ public sealed class HostService
         _ => "",
     };
 
+    /// <summary>
+    /// DLSS or XeSS files but no FSR files: the game's FSR is built into the exe (No Man's Sky does this, on Vulkan),
+    /// which OptiScaler usually can't catch. Point the player at the options that work.
+    /// </summary>
+    private static string FsrTip(GameScan s) =>
+        s.Upscalers.Count > 0 && !s.Upscalers.Any(u => u.StartsWith("FSR", StringComparison.Ordinal))
+            ? " In this game, pick " + string.Join(" or ", s.Upscalers) +
+              " in its graphics settings: if it also has an FSR option, that one is built into the game and may not switch to FSR 4.1 Lite."
+            : "";
+
     private static string StateText(GameScan s)
     {
         var xboxNote = s.Game.Source == GameSource.Xbox
@@ -300,7 +310,7 @@ public sealed class HostService
             : "";
         return s.State switch
         {
-            GameState.Ready => $"{string.Join(", ", s.Upscalers)} found. Ready to install.{xboxNote}",
+            GameState.Ready => $"{string.Join(", ", s.Upscalers)} found. Ready to install.{FsrTip(s)}{xboxNote}",
             GameState.NoUpscalerFound =>
                 "No upscaler files found. Many games build FSR 2 or 3 into the game itself, so the widget will tell " +
                 "OptiScaler to search for it (that game loads a little slower). Install, restart the game and turn on FSR " +
