@@ -33,6 +33,7 @@ namespace RalFsr.Widget
         private readonly List<string> _scaleKeys = new List<string>();
         private bool _busy;
         private int _installedCount;
+        private bool _installedExpanded; // collapsed by default; the list can get long
 
         public WidgetPage()
         {
@@ -296,6 +297,19 @@ namespace RalFsr.Widget
             ActiveBadge.Visibility = Visibility.Visible;
         }
 
+        private void InstalledToggle_Click(object sender, RoutedEventArgs e)
+        {
+            _installedExpanded = !_installedExpanded;
+            UpdateInstalledToggle();
+        }
+
+        private void UpdateInstalledToggle()
+        {
+            var games = _installedCount == 1 ? "1 game" : _installedCount + " games";
+            InstalledToggleText.Text = "Installed in " + games + (_installedExpanded ? "  \u25BE" : "  \u25B8");
+            InstalledList.Visibility = _installedExpanded ? Visibility.Visible : Visibility.Collapsed;
+        }
+
         private void RenderInstalled(JsonArray installed)
         {
             var rows = new List<InstalledRow>();
@@ -312,6 +326,7 @@ namespace RalFsr.Widget
             }
             InstalledList.ItemsSource = rows;
             _installedCount = rows.Count;
+            UpdateInstalledToggle();
             InstalledPanel.Visibility = rows.Count > 0 ? Visibility.Visible : Visibility.Collapsed;
         }
 

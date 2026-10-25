@@ -113,8 +113,14 @@
 
             <!-- Everything installed through the widget, removable without the game running -->
             <StackPanel x:Name="InstalledPanel" Spacing="4" Visibility="Collapsed">
-                <TextBlock Text="Installed in" FontFamily="{StaticResource DisplayFont}" FontSize="17" FontWeight="SemiBold" />
-                <ItemsControl x:Name="InstalledList">
+                <!-- Collapsed by default: one line with the count, tap to show every installed game -->
+                <Button x:Name="InstalledToggle" Click="InstalledToggle_Click" HorizontalAlignment="Stretch"
+                        HorizontalContentAlignment="Left" Background="Transparent" BorderThickness="0" Padding="0,6"
+                        FocusVisualPrimaryBrush="{StaticResource RalRedBrush}" FocusVisualPrimaryThickness="3">
+                    <TextBlock x:Name="InstalledToggleText" Text="Installed in" FontFamily="{StaticResource DisplayFont}"
+                               FontSize="17" FontWeight="SemiBold" />
+                </Button>
+                <ItemsControl x:Name="InstalledList" Visibility="Collapsed">
                     <ItemsControl.ItemTemplate>
                         <DataTemplate x:DataType="local:InstalledRow">
                             <Grid Padding="0,6">
