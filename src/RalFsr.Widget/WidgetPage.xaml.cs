@@ -155,6 +155,11 @@ namespace RalFsr.Widget
             else
                 Fsr4Text.Text = string.IsNullOrEmpty(fsr4Status) ? "Getting the FSR 4.1 Lite files..." : fsr4Status;
 
+            // The manual import is a fallback: only offer it when the files aren't there and the download isn't running.
+            ImportButton.Visibility = !fsr4Ready && !fsr4Busy && !string.IsNullOrEmpty(fsr4Status)
+                ? Visibility.Visible
+                : Visibility.Collapsed;
+
             _suppressOverlayEvent = true;
             OverlaySwitch.IsOn = Json.Bool(state, "overlay");
             NotifySwitch.IsOn = Json.Bool(state, "notify");

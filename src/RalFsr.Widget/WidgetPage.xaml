@@ -100,9 +100,9 @@
                 <TextBlock Text="Setup" FontFamily="{StaticResource DisplayFont}" FontSize="17" FontWeight="SemiBold" />
                 <TextBlock x:Name="OptiText" FontSize="13" TextWrapping="Wrap" />
                 <TextBlock x:Name="Fsr4Text" FontSize="13" TextWrapping="Wrap" />
-                <!-- Fallback only: the files download automatically -->
+                <!-- Fallback only: shown when the automatic FSR 4 download hasn't worked (offline, blocked host) -->
                 <Button x:Name="ImportButton" Style="{StaticResource QuietButton}" Content="Import files manually"
-                        Click="Import_Click" />
+                        Visibility="Collapsed" Click="Import_Click" />
                 <ToggleSwitch x:Name="OverlaySwitch" Header="Show FPS and render resolution in game"
                               Toggled="Overlay_Toggled" />
                 <ToggleSwitch x:Name="NotifySwitch" Header="Notify me when FSR 4.1 Lite is active"

@@ -145,8 +145,8 @@ FSR 4.1 Lite is free. If it saves you time, you can
    pick **FSR 4.1 Lite**. Pin it to keep it handy.
 
 In the widget, OptiScaler and the FSR 4.1 Lite files download by themselves the first time it opens. Then launch
-a game, open the widget over it and press **Install FSR 4.1 Lite**. **Import files manually** is only a fallback for
-offline setups.
+a game, open the widget over it and press **Install FSR 4.1 Lite**. **Import files manually** only appears if that
+download fails (for example offline).
 
 To update, download the new zip and run its Install.cmd. Settings and installed games carry over.
 
