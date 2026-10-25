@@ -84,7 +84,8 @@ public static class OtherLaunchers
 
     /// <summary>
     /// Xbox app installs into an XboxGames folder on any drive, with the game files under Content.
-    /// Experimental: some Game Pass titles refuse to load injected DLLs.
+    /// Confirmed with Valor Mortis. The game reports its files under C:\Program Files\WindowsApps\..., which the
+    /// live checks handle by matching file names. A game that ignores dxgi.dll gets "Try another loader".
     /// </summary>
     private static IEnumerable<GameEntry> Xbox()
     {

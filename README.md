@@ -7,7 +7,8 @@ FSR 4.1 Lite loads automatically, with no OptiScaler menu to open.
 
 Works with games from any store: Steam, Epic, GOG, Ubisoft Connect, the EA app, Battle.net, itch.io or
 DRM-free installs. The widget works from the running game's exe, so the launcher doesn't matter.
-Xbox app / Game Pass games are experimental, because some of them block injected DLLs.
+Xbox app / Game Pass games work too (confirmed with Valor Mortis). If a game ignores OptiScaler's loader, the
+widget offers **Try another loader**.
 
 ## How it works
 
@@ -42,6 +43,15 @@ When you install, the helper:
    **Uninstall from this game** uses that record to put the folder back exactly as it was.
 
 All of these values live in `src\Core\InstallConfig.cs`.
+
+### FSR 2 games
+
+OptiScaler upgrades FSR 2 to FSR 4.1.2 Lite as well. At install the widget reads the running game's graphics API
+and sets what OptiScaler needs: `UseFsr2Dx11Inputs` for DX11 games and `UseFsr2VulkanInputs` for Vulkan games that
+ship an FSR 2 DLL. When no upscaler files are found at all (FSR 2 or 3 built into the exe), it turns on
+`Fsr2Pattern` and `Fsr3Pattern` so OptiScaler searches the exe; only those games load a little slower. FSR 1 can't
+be upgraded: it has no motion vectors or depth for FSR 4 to use. If a game offers DLSS or XeSS as well, those
+inputs are the most reliable choice.
 
 ### Render resolution
 

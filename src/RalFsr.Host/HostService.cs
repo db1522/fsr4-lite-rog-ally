@@ -31,6 +31,9 @@ public sealed class HostService
     /// <summary>The last game found under the overlay, keyed by its exe folder, so install acts on exactly what was shown.</summary>
     private readonly Dictionary<string, GameScan> _seen = new(StringComparer.OrdinalIgnoreCase);
 
+    /// <summary>Process id of the game under the overlay, by exe folder, for reading its graphics API at install.</summary>
+    private readonly Dictionary<string, int> _seenPid = new(StringComparer.OrdinalIgnoreCase);
+
     /// <summary>
     /// Folder scans are cached: the widget polls every couple of seconds for the live badge, and walking a large game
     /// folder that often would cost battery. Install and remove clear the entry.
@@ -168,7 +171,11 @@ public sealed class HostService
         var scan = CachedScan(exeDir) ?? ScanGame(exe, exeDir, targetName, targetIsGame);
         if (scan is null) return null; // not a game
 
-        lock (_seen) _seen[exeDir] = scan;
+        lock (_seen)
+        {
+            _seen[exeDir] = scan;
+            _seenPid[exeDir] = window.ProcessId;
+        }
 
         var live = scan.Manifest is not null
             ? LoadedModules.Check(window.ProcessId, exeDir, scan.Manifest)
@@ -276,13 +283,16 @@ public sealed class HostService
 
     private static string StateText(GameScan s)
     {
-        var xboxNote = s.Game.Source == GameSource.Xbox ? " Xbox app games are experimental: some block OptiScaler." : "";
+        var xboxNote = s.Game.Source == GameSource.Xbox
+            ? " Game Pass game: if OptiScaler doesn't load after a restart, use Try another loader."
+            : "";
         return s.State switch
         {
             GameState.Ready => $"{string.Join(", ", s.Upscalers)} found. Ready to install.{xboxNote}",
             GameState.NoUpscalerFound =>
-                "No upscaler files found. Some engines build FSR in, so it may still work: install, restart the game " +
-                $"and turn on FSR in its settings.{xboxNote}",
+                "No upscaler files found. Many games build FSR 2 or 3 into the game itself, so the widget will tell " +
+                "OptiScaler to search for it (that game loads a little slower). Install, restart the game and turn on FSR " +
+                $"in its settings. FSR 1 can't be upgraded.{xboxNote}",
             GameState.AntiCheat => $"{s.AntiCheat} found. Injecting OptiScaler could get your account banned, so installs are blocked.",
             GameState.Installed => "FSR 4.1 Lite is installed. Turn on FSR in the game's settings.",
             GameState.ManualOptiScaler => "OptiScaler is already here from a manual install. Remove it by hand to manage this game here.",
@@ -359,6 +369,18 @@ public sealed class HostService
 
         Installer.Install(scan, _opti, fsr4, _settings);
         InstallRegistry.Add(exeDir);
+
+        // FSR 2 games: pick OptiScaler's FSR 2 input settings for this game's graphics API.
+        int pid;
+        lock (_seen) _seenPid.TryGetValue(exeDir, out pid);
+        var api = pid > 0 ? LoadedModules.GraphicsApi(pid) : null;
+        var fsr2 = InstallConfig.Fsr2Inputs(api, scan.Upscalers.Contains("FSR 2"), scan.State == GameState.NoUpscalerFound);
+        if (fsr2.Count > 0)
+        {
+            IniFile.SetValues(Path.Combine(exeDir, "OptiScaler.ini"), fsr2);
+            Log.Info($"FSR 2 input settings for {scan.Game.Name} ({api ?? "unknown API"}): " +
+                     string.Join(", ", fsr2.Select(v => $"{v.Key}={v.Value}")));
+        }
         Forget(exeDir);
         return new
         {

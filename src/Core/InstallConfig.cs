@@ -81,6 +81,28 @@ public static class InstallConfig
     }
 
     /// <summary>
+    /// Extra OptiScaler input settings for FSR 2 games, chosen at install time from the game's graphics API
+    /// (DX12, DX11 or Vulkan, read from the running game) and from what the folder scan found:
+    ///   FSR 2 DLL in a DX11 game     UseFsr2Dx11Inputs=true    (OptiScaler hooks DX12 FSR 2 by default)
+    ///   FSR 2 DLL in a Vulkan game   UseFsr2VulkanInputs=true
+    ///   no upscaler files at all     Fsr2Pattern / Fsr3Pattern=true: search the exe for built-in FSR 2 / 3. Slows
+    ///                                loading a little, so it's only turned on for these games.
+    /// FSR 1 can't be upgraded: it has no motion vectors or depth for FSR 4 to work with.
+    /// </summary>
+    public static IReadOnlyList<IniValue> Fsr2Inputs(string? api, bool hasFsr2Dll, bool noUpscalerFound)
+    {
+        var values = new List<IniValue>();
+        if (hasFsr2Dll && api == "DX11") values.Add(new IniValue("Inputs", "UseFsr2Dx11Inputs", "true"));
+        if (hasFsr2Dll && api == "Vulkan") values.Add(new IniValue("Inputs", "UseFsr2VulkanInputs", "true"));
+        if (noUpscalerFound)
+        {
+            values.Add(new IniValue("Inputs", "Fsr2Pattern", "true"));
+            values.Add(new IniValue("Inputs", "Fsr3Pattern", "true"));
+        }
+        return values;
+    }
+
+    /// <summary>
     /// Nothing on screen unless the user asks for it: no OptiScaler startup message ("OptiScaler - Insert for menu")
     /// and no AMD FSR 4 watermark. Notifications and the widget's badge confirm FSR 4.1 Lite instead. Written on
     /// install and re-applied to every installed game each time the widget opens.

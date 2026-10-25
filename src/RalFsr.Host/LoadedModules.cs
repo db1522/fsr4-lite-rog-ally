@@ -158,6 +158,20 @@ public static class LoadedModules
         }
     }
 
+    /// <summary>
+    /// The game's graphics API from the system libraries it has loaded: "DX12", "Vulkan" or "DX11" (null if unknown).
+    /// DX12 games often load d3d11.dll too, so DX12 is checked first.
+    /// </summary>
+    public static string? GraphicsApi(int processId)
+    {
+        var names = List(processId).Select(Path.GetFileName).ToHashSet(StringComparer.OrdinalIgnoreCase);
+        if (names.Count == 0) return null;
+        if (names.Contains("d3d12.dll")) return "DX12";
+        if (names.Contains("vulkan-1.dll")) return "Vulkan";
+        if (names.Contains("d3d11.dll")) return "DX11";
+        return null;
+    }
+
     /// <summary>Full paths of every module in the process. Empty if it can't be read.</summary>
     public static List<string> List(int processId)
     {
