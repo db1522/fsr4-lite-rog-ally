@@ -156,7 +156,7 @@ namespace RalFsr.Widget
 
             _suppressOverlayEvent = true;
             OverlaySwitch.IsOn = Json.Bool(state, "overlay");
-            WatermarkSwitch.IsOn = Json.Bool(state, "watermark");
+            NotifySwitch.IsOn = Json.Bool(state, "notify");
             _suppressOverlayEvent = false;
 
             var game = Json.Obj(state, "game");
@@ -326,10 +326,35 @@ namespace RalFsr.Widget
             await RunCommandAsync("overlay", "on", OverlaySwitch.IsOn ? "true" : "false");
         }
 
-        private async void Watermark_Toggled(object sender, RoutedEventArgs e)
+        private async void Notify_Toggled(object sender, RoutedEventArgs e)
         {
             if (_suppressOverlayEvent) return;
-            await RunCommandAsync("watermark", "on", WatermarkSwitch.IsOn ? "true" : "false");
+            var on = NotifySwitch.IsOn;
+
+            // The watcher starts with Windows through the package's startup task.
+            var note = "";
+            try
+            {
+                var task = await StartupTask.GetAsync("FSR41LiteWatcher");
+                if (on)
+                {
+                    var state = await task.RequestEnableAsync();
+                    if (state == StartupTaskState.DisabledByUser || state == StartupTaskState.DisabledByPolicy)
+                        note = " Windows has it turned off as a startup app: turn on \"FSR 4.1 Lite notifications\" " +
+                               "in Settings > Apps > Startup so it also works after a restart.";
+                }
+                else
+                {
+                    task.Disable();
+                }
+            }
+            catch (Exception)
+            {
+                // Notifications still work this session through the running helper.
+            }
+
+            await RunCommandAsync("notify", "on", on ? "true" : "false");
+            if (note.Length > 0) StatusText.Text += note;
         }
 
         private async void Uninstall_Click(object sender, RoutedEventArgs e)
@@ -420,7 +445,7 @@ namespace RalFsr.Widget
             RefreshButton.IsEnabled = on;
             ImportButton.IsEnabled = on;
             OverlaySwitch.IsEnabled = on;
-            WatermarkSwitch.IsEnabled = on;
+            NotifySwitch.IsEnabled = on;
             UninstallButton.IsEnabled = on;
             RenderScaleBox.IsEnabled = on;
             if (!on) PrimaryButton.IsEnabled = false;

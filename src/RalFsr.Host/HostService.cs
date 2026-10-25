@@ -53,6 +53,7 @@ public sealed class HostService
                 "import" => Import(Arg(args, "paths") ?? "", Arg(args, "allowUnverified") == "true"),
                 "overlay" => Overlay(Arg(args, "on") == "true"),
                 "watermark" => Watermark(Arg(args, "on") == "true"),
+                "notify" => Notify(Arg(args, "on") == "true"),
                 "renderScale" => RenderScale(Arg(args, "exeDir") ?? "", Arg(args, "value") ?? "game"),
                 _ => Fail($"Unknown command: {cmd}"),
             };
@@ -149,6 +150,7 @@ public sealed class HostService
             },
             overlay = _settings.ShowResolutionOverlay,
             watermark = _settings.ShowFsr4Watermark,
+            notify = _settings.NotifyWhenActive,
             game,
             installed,
         };
@@ -504,6 +506,19 @@ public sealed class HostService
             message = key == "game"
                 ? $"{manifest.GameName} uses its own resolution setting again" + (running ? " after a restart." : ".")
                 : $"Render resolution set to {label}" + (running ? $". Restart {manifest.GameName} to apply it." : "."),
+        };
+    }
+
+    private object Notify(bool on)
+    {
+        _settings.NotifyWhenActive = on;
+        _settings.Save();
+        return new
+        {
+            ok = true,
+            message = on
+                ? "You'll get a notification when FSR 4.1 Lite is active in a game, or if it isn't running."
+                : "Notifications off. The background watcher stops.",
         };
     }
 

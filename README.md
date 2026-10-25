@@ -76,8 +76,21 @@ widget can read which file was loaded and which model was hooked.
 
 Folder scans are cached for 2 minutes so the polling stays light on battery; only the loaded-DLL check runs each time.
 
-For on-screen proof, the **Show the FSR 4 watermark in game** switch sets OptiScaler's `Fsr4EnableWatermark`, so
-the game shows the FSR 4 watermark while it runs.
+### Notifications
+
+With **Notify me when FSR 4.1 Lite is active** on (the default), a Windows notification confirms each game launch,
+for example "FSR 4.1 Lite active / Forza Horizon 6 · DX12 / Rendering 1280x720 → 1920x1080". If FSR 4.1 Lite isn't
+running (FSR 3 fallback, or the AMD driver's own file loaded), the notification says so and how to fix it.
+
+A small watcher does this in the background: the helper starts with Windows (startup task "FSR 4.1 Lite
+notifications") and, after the widget closes, keeps watching instead of exiting. Every 5 seconds it checks whether a
+game with FSR 4.1 Lite installed is running, then reads that game's loaded DLLs and OptiScaler.log. Turning the
+switch off stops the watcher and removes it from startup.
+
+Windows 11 turns on Do not disturb during fullscreen games and holds notifications until you exit. To see them in
+game, add **FSR 4.1 Lite by ROG Ally Life** under Settings > System > Notifications > Set priority notifications.
+
+AMD's on-screen FSR 4 watermark (`Fsr4EnableWatermark`) is no longer offered in the widget; notifications replace it.
 
 ### What the widget never does
 

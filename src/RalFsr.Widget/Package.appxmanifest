@@ -4,9 +4,10 @@
   xmlns:mp="http://schemas.microsoft.com/appx/2014/phone/manifest"
   xmlns:uap="http://schemas.microsoft.com/appx/manifest/uap/windows10"
   xmlns:uap3="http://schemas.microsoft.com/appx/manifest/uap/windows10/3"
+  xmlns:uap5="http://schemas.microsoft.com/appx/manifest/uap/windows10/5"
   xmlns:desktop="http://schemas.microsoft.com/appx/manifest/desktop/windows10"
   xmlns:rescap="http://schemas.microsoft.com/appx/manifest/foundation/windows10/restrictedcapabilities"
-  IgnorableNamespaces="uap uap3 mp desktop rescap">
+  IgnorableNamespaces="uap uap3 uap5 mp desktop rescap">
 
   <!-- Publisher must match the signing certificate subject made by scripts\build.ps1 (CN=ROG Ally Life).
        Keep Name and Publisher the same for every release so updates install over the previous version. -->
@@ -70,8 +71,18 @@
           <uap:AppService Name="com.rogallylife.fsr4lite" />
         </uap:Extension>
 
-        <!-- Full-trust helper that does the file work -->
-        <desktop:Extension Category="windows.fullTrustProcess" Executable="Host\RalFsr.Host.exe" />
+        <!-- Full-trust helper that does the file work. The widget starts it with the "Widget" parameter group, which passes the widget flag. -->
+        <desktop:Extension Category="windows.fullTrustProcess" Executable="Host\RalFsr.Host.exe">
+          <desktop:FullTrustProcess>
+            <desktop:ParameterGroup GroupId="Widget" Parameters="--widget" />
+          </desktop:FullTrustProcess>
+        </desktop:Extension>
+
+        <!-- Starts the helper at sign-in, without arguments, as the notification watcher.
+             Switched on and off from the widget ("Notify me when FSR 4.1 Lite is active"). -->
+        <uap5:Extension Category="windows.startupTask" Executable="Host\RalFsr.Host.exe" EntryPoint="Windows.FullTrustApplication">
+          <uap5:StartupTask TaskId="FSR41LiteWatcher" Enabled="true" DisplayName="FSR 4.1 Lite notifications" />
+        </uap5:Extension>
       </Extensions>
     </Application>
   </Applications>

@@ -20,7 +20,7 @@ namespace RalFsr.Widget
             App.ConnectionChanged += OnConnectionChanged;
             try
             {
-                await FullTrustProcessLauncher.LaunchFullTrustProcessForCurrentAppAsync();
+                await FullTrustProcessLauncher.LaunchFullTrustProcessForCurrentAppAsync("Widget"); // --widget
                 // Generous: the first start after an install or update unpacks the helper before it can connect.
                 await Task.WhenAny(_connected.Task, Task.Delay(TimeSpan.FromSeconds(45)));
                 return App.Connection != null;

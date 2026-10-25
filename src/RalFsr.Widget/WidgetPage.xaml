@@ -103,8 +103,10 @@
                         Click="Import_Click" />
                 <ToggleSwitch x:Name="OverlaySwitch" Header="Show FPS and render resolution in game"
                               Toggled="Overlay_Toggled" />
-                <ToggleSwitch x:Name="WatermarkSwitch" Header="Show the FSR 4 watermark in game"
-                              Toggled="Watermark_Toggled" />
+                <ToggleSwitch x:Name="NotifySwitch" Header="Notify me when FSR 4.1 Lite is active"
+                              Toggled="Notify_Toggled" />
+                <TextBlock FontSize="12" TextWrapping="Wrap" Foreground="{StaticResource MutedBrush}" Margin="0,-4,0,0"
+                           Text="Windows holds notifications during fullscreen games. To see them in game, add FSR 4.1 Lite in Settings &gt; System &gt; Notifications &gt; Set priority notifications." />
             </StackPanel>
 
             <!-- Everything installed through the widget, removable without the game running -->
