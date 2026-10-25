@@ -557,11 +557,15 @@ public sealed class HostService
             .FirstOrDefault();
     }
 
-    /// <summary>For Unreal games the exe sits in &lt;root&gt;\&lt;Project&gt;\Binaries\Win64, so the game root is three levels up.</summary>
+    /// <summary>
+    /// For Unreal games the exe sits in &lt;root&gt;\&lt;Project&gt;\Binaries\Win64 (Steam, Epic) or Binaries\WinGDK (Xbox app /
+    /// Game Pass builds), so the game root is three levels up.
+    /// </summary>
     private static string GuessRoot(string exeDir)
     {
         var dir = new DirectoryInfo(exeDir);
-        if (dir.Name.Equals("Win64", StringComparison.OrdinalIgnoreCase) &&
+        if ((dir.Name.Equals("Win64", StringComparison.OrdinalIgnoreCase) ||
+             dir.Name.Equals("WinGDK", StringComparison.OrdinalIgnoreCase)) &&
             dir.Parent?.Name.Equals("Binaries", StringComparison.OrdinalIgnoreCase) == true &&
             dir.Parent.Parent?.Parent is { } root)
         {

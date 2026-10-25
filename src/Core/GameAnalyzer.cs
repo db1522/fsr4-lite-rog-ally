@@ -127,7 +127,8 @@ public static class GameAnalyzer
     {
         var (exeDir, exeName, isUnreal) = game.ExePath is not null && File.Exists(game.ExePath)
             ? (Path.GetDirectoryName(game.ExePath), Path.GetFileName(game.ExePath),
-               game.ExePath.Contains(Path.Combine("Binaries", "Win64"), StringComparison.OrdinalIgnoreCase))
+               game.ExePath.Contains(Path.Combine("Binaries", "Win64"), StringComparison.OrdinalIgnoreCase) ||
+               game.ExePath.Contains(Path.Combine("Binaries", "WinGDK"), StringComparison.OrdinalIgnoreCase))
             : FindExeDir(game.InstallRoot);
         if (exeDir is null)
         {
@@ -166,15 +167,18 @@ public static class GameAnalyzer
     /// </summary>
     public static (string? Dir, string? Exe, bool IsUnreal) FindExeDir(string root)
     {
-        // 1. Unreal shipping exe anywhere in the expected place.
+        // 1. Unreal shipping exe anywhere in the expected place: Binaries\Win64 (Steam, Epic) or Binaries\WinGDK
+        //    (Xbox app / Game Pass builds).
         foreach (var project in SafeDirs(root))
         {
             if (Path.GetFileName(project).Equals("Engine", StringComparison.OrdinalIgnoreCase)) continue;
-            var win64 = Path.Combine(project, "Binaries", "Win64");
-            if (!Directory.Exists(win64)) continue;
-
-            var shipping = SafeFiles(win64, "*-Win64-Shipping.exe").FirstOrDefault();
-            if (shipping is not null) return (win64, Path.GetFileName(shipping), true);
+            foreach (var (folder, pattern) in new[] { ("Win64", "*-Win64-Shipping.exe"), ("WinGDK", "*-WinGDK-Shipping.exe") })
+            {
+                var bin = Path.Combine(project, "Binaries", folder);
+                if (!Directory.Exists(bin)) continue;
+                var shipping = SafeFiles(bin, pattern).FirstOrDefault();
+                if (shipping is not null) return (bin, Path.GetFileName(shipping), true);
+            }
         }
 
         // 2. Unreal layout without the -Shipping suffix.
