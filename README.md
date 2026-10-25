@@ -198,8 +198,8 @@ Support is decided by GPU family (`src\Core\DeviceCheck.cs`), so any AMD Radeon 
 - **Supported (RDNA 3 / 3.5):** ROG Ally and ROG Ally X (Z1, Z1 Extreme), Legion Go, Legion Go 2, MSI Claw A8, and
   GPD, AYANEO and OneXPlayer handhelds with Ryzen 7040/8040 or Ryzen AI 300 chips. Unknown Radeon chips are allowed
   too, with a note.
-- **Supported with a note:** ROG Xbox Ally X / X20. ASUS ships FSR 4.1 in Armoury Crate SE, but only for games with
-  FSR 3.1 or newer; the widget also covers DLSS and XeSS games.
+- **Supported with a note:** ROG Xbox Ally X / X20. ASUS ships FSR 4.1 in Armoury Crate SE, but its toggle only
+  upgrades games with FSR 3.1 or newer; the widget also covers games that only offer DLSS, XeSS or FSR 2.
 - **Experimental (RDNA 2):** ROG Xbox Ally (Z2 A), Legion Go S (Z2 Go), Steam Deck on Windows, Ryzen 6000 handhelds.
   Lite runs, but it costs more GPU time than FSR 3 on these chips, so some games may run slower.
 - **Not supported:** handhelds without AMD graphics (Intel MSI Claw models). FSR 4's INT8 models need an AMD GPU.

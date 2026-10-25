@@ -87,7 +87,8 @@ public static class DeviceCheck
         {
             return new DeviceInfo(model, cpu, gpu, DeviceSupport.OfficialDriver,
                 "ASUS offers FSR 4.1 for this handheld in Armoury Crate SE (Update Center > Preview Updates), but only " +
-                "for games with FSR 3.1 or newer. This widget also covers games that use DLSS or XeSS.", isAsus);
+                "for games with FSR 3.1 or newer. This widget also covers games that only offer DLSS, XeSS or FSR 2, " +
+                "which the Armoury Crate toggle can't upgrade.", isAsus);
         }
 
         // Everything else with Radeon graphics: RDNA 3 / 3.5 APUs by name, and unknown Radeon chips by default.
