@@ -71,7 +71,7 @@
     </AppxManifest>
   </ItemGroup>
   <ItemGroup>
-    <Content Include="Assets\*.png" />
+    <Content Include="Assets\**\*.png" />
     <Content Include="Properties\Default.rd.xml" />
     <!-- The full-trust helper. scripts\build.ps1 publishes RalFsr.Host here before packaging. -->
     <Content Include="Host\**\*" />
