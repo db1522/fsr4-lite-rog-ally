@@ -60,11 +60,11 @@ Balanced or Performance. Anything but "Game decides" sets OptiScaler's upscale r
 render-resolution request from the game gets that ratio whichever preset the game asks for. It works for games
 that ask the upscaler for their render resolution. The choice is saved per game and applies from the next launch.
 
-Some games pick their render size themselves. Forza Horizon 6 is one: through its FSR option it ignores the
-override (ratio 1), and through DLSS it declares the smaller size, "(800,450)(optimal)", but still hands over a
-full-size image, "color_in extents (0,0,1600,900)". Either way the GPU renders at full resolution, so FSR 4.1.2 Lite
-works as native anti-aliasing with no FPS gain. The widget reads the size a game really hands over (Streamline's
-color_in extents when present) and says so on the card when a game renders at full resolution.
+Some games only apply their upscaler preset after their display resolution changes. Forza Horizon 6 is one: after
+launch it kept the full-size upscaler it created at startup ("color_in extents (0,0,1600,900)", ratio 1) whichever
+preset was picked, then upscaled properly once the resolution was switched to 1080p and back to 900p. The widget reads
+the size a game really hands over (Streamline's color_in extents when present) and, when a game renders at full
+resolution, suggests changing the resolution once and back.
 
 ### Automatic fixes
 
@@ -179,24 +179,10 @@ The output is `dist\FSR4Lite_x64.zip`.
 
 ## Current limitations
 
-**FSR 4.1.2 Lite only exists in AMD's driver file for now.** AMD hasn't released the FSR 4.1.2 SDK, so there's no
-official `amd_fidelityfx_upscaler_dx12.dll` with Lite to drop into a game. OptiScaler loads the driver file
-(`amdxcffx64.dll`) and routes the game's upscaler through it. That works in most games (Valor Mortis renders at
-634x357 and upscales to 1920x1080), but a few FSR 3.1+ games lose their render resolution when OptiScaler routes their
-FSR calls. Forza Horizon 6 is one: through its FSR option it creates the upscaler at ratio 1, and through DLSS it hands
-over a full-size image ("color_in extents (0,0,1600,900)"), so FSR 4.1.2 Lite runs there as native anti-aliasing with
-no FPS gain. Tried and ruled out: the upscale ratio override (FH6 never asks), and letting the game's own FSR code talk
-to OptiScaler's stand-in driver (`EnableFfxInputs=false`, `EnableFsr3Inputs=false`), which falls back to FSR 3.
-
-**When the SDK ships**, games like FH6 could use AMD's signed upscaler DLL directly, the way the official driver and
-the ROG Xbox Ally X do, and the widget could add a direct mode for FSR 3.1+ games. For FSR 4, the SDK (FidelityFX SDK
-2.0, FSR 4.0.2) followed the driver by about five months. The SDK DLL may still check the GPU and fall back to FSR 3 on
-unsupported hardware, so it needs testing on a Z1 Extreme first.
-
-Also:
-
 - FSR 4.1.2 Lite costs more GPU time than FSR 3, so at the same preset it can be slower; the gain is image quality,
   or a lower preset that still looks good.
+- Some games only apply their upscaler preset after a display resolution change (Forza Horizon 6 needed this once).
+  The card says when a game renders at full resolution.
 - Needs a game with FSR 2, FSR 3, DLSS or XeSS. FSR 1 can't be upgraded (no motion vectors or depth).
 - Single-player only. Anti-cheat detection is best effort.
 - Some Game Pass games need **Try another loader**; games in the protected WindowsApps folder can't be changed.

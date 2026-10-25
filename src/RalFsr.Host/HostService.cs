@@ -200,14 +200,15 @@ public sealed class HostService
             Log.Info($"Auto-fixed Native AA in {exeDir}");
         }
 
-        // The game is rendering at full resolution even though FSR 4.1 Lite is running: it upscales nothing, so it
-        // works as native anti-aliasing. Read from the size the game really hands over (Streamline's color_in
-        // extents when present), not the size it declares. Forza Horizon 6 does this on every path tried so far.
+        // The game is rendering at full resolution even though FSR 4.1 Lite is running. Often the game simply hasn't
+        // applied its upscaler preset yet: Forza Horizon 6 keeps the full-size upscaler it created at startup until its
+        // display resolution changes. Switching resolution once (and back) makes it set the upscaler up again.
         var nativeOnly = live.Stage == LoadedModules.Stage.Active && live.AtFullResolution && autoFix is null;
         var overrideNote = nativeOnly
             ? $"{scan.Game.Name} is rendering at full resolution ({live.RenderWidth}x{live.RenderHeight}), so FSR 4.1 Lite " +
-              "is working as anti-aliasing: a sharper image, but no extra frames. Some games only render smaller through " +
-              "one of their upscaler options, so try the others (FSR, DLSS, XeSS) at Performance and restart."
+              "isn't upscaling yet. Fix: in the game's display settings, change the resolution once and then back. Some " +
+              "games, like Forza Horizon 6, only apply the upscaler preset after a resolution change. If it stays at full " +
+              "resolution, try the game's other upscaler options (FSR, DLSS, XeSS)."
             : "";
 
         return new
