@@ -177,6 +177,34 @@ name, which never changes. Users just approve the prompt again for each new vers
 development workload and the .NET 8 SDK, then run `powershell -ExecutionPolicy Bypass -File .\scripts\build.ps1`.
 The output is `dist\FSR4Lite_x64.zip`.
 
+## Current limitations
+
+**FSR 4.1.2 Lite only exists in AMD's driver file for now.** AMD hasn't released the FSR 4.1.2 SDK, so there's no
+official `amd_fidelityfx_upscaler_dx12.dll` with Lite to drop into a game. OptiScaler loads the driver file
+(`amdxcffx64.dll`) and routes the game's upscaler through it. That works in most games (Valor Mortis renders at
+634x357 and upscales to 1920x1080), but a few FSR 3.1+ games lose their render resolution when OptiScaler routes their
+FSR calls. Forza Horizon 6 is one: through its FSR option it creates the upscaler at ratio 1, and through DLSS it hands
+over a full-size image ("color_in extents (0,0,1600,900)"), so FSR 4.1.2 Lite runs there as native anti-aliasing with
+no FPS gain. Tried and ruled out: the upscale ratio override (FH6 never asks), and letting the game's own FSR code talk
+to OptiScaler's stand-in driver (`EnableFfxInputs=false`, `EnableFsr3Inputs=false`), which falls back to FSR 3.
+
+**When the SDK ships**, games like FH6 could use AMD's signed upscaler DLL directly, the way the official driver and
+the ROG Xbox Ally X do, and the widget could add a direct mode for FSR 3.1+ games. For FSR 4, the SDK (FidelityFX SDK
+2.0, FSR 4.0.2) followed the driver by about five months. The SDK DLL may still check the GPU and fall back to FSR 3 on
+unsupported hardware, so it needs testing on a Z1 Extreme first.
+
+Also:
+
+- FSR 4.1.2 Lite costs more GPU time than FSR 3, so at the same preset it can be slower; the gain is image quality,
+  or a lower preset that still looks good.
+- Needs a game with FSR 2, FSR 3, DLSS or XeSS. FSR 1 can't be upgraded (no motion vectors or depth).
+- Single-player only. Anti-cheat detection is best effort.
+- Some Game Pass games need **Try another loader**; games in the protected WindowsApps folder can't be changed.
+- Tested on the ROG Ally X. Other AMD handhelds are classified by chip; RDNA 2 handhelds are experimental.
+- OptiScaler nightlies update automatically and can occasionally break a game.
+- Install asks for administrator permission once (self-signed certificate), and Windows holds notifications during
+  fullscreen games unless the widget is a priority app.
+
 ## Device support
 
 Support is decided by GPU family (`src\Core\DeviceCheck.cs`), so any AMD Radeon handheld works:
