@@ -113,8 +113,11 @@ widget downloads OptiScaler's official nightly builds from
 licence files. If FSR 4.1 Lite helps you, consider
 [supporting the OptiScaler developer](https://github.com/sponsors/cdozdil).
 
-FSR 4 is by AMD. Thanks to **TheRazerMD** for sharing the FSR 4.1 Lite driver files, and to everyone OptiScaler
+FSR 4 is by AMD. Thanks to **TheRazerMD** for sharing the FSR 4.1.2 Lite driver files, and to everyone OptiScaler
 itself thanks in its README.
+
+FSR 4.1 Lite is free. If it saves you time, you can
+[support ROG Ally Life on Ko-fi](https://ko-fi.com/rogallylife).
 
 ## Installing (users)
 

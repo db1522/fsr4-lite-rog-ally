@@ -149,6 +149,10 @@
                         <HyperlinkButton Content="Support the OptiScaler developer" FontSize="13"
                                          NavigateUri="https://github.com/sponsors/cdozdil" />
                     </StackPanel>
+                    <TextBlock FontSize="13" TextWrapping="Wrap" Foreground="{StaticResource MutedBrush}" Margin="0,6,0,0"
+                               Text="FSR 4.1 Lite is free. If it saves you time, you can support ROG Ally Life too." />
+                    <HyperlinkButton Content="Support ROG Ally Life on Ko-fi" FontSize="13"
+                                     NavigateUri="https://ko-fi.com/rogallylife" />
                 </StackPanel>
             </Border>
 
