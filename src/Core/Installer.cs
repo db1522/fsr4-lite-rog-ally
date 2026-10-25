@@ -145,6 +145,23 @@ public static class Installer
         if (File.Exists(ini)) IniFile.SetValues(ini, InstallConfig.Overlay(on));
     }
 
+    /// <summary>Sets this game's render resolution (OptiScaler's upscale ratio override) and remembers it.</summary>
+    public static void ApplyRenderScale(string exeDir, string key)
+    {
+        if (InstallConfig.RenderScales.All(r => r.Key != key)) key = "game";
+        var manifest = InstallManifest.TryLoad(exeDir);
+        if (manifest is null) return;
+
+        var ini = Path.Combine(exeDir, "OptiScaler.ini");
+        if (File.Exists(ini)) IniFile.SetValues(ini, InstallConfig.RenderScale(key));
+
+        if (manifest.RenderScale != key)
+        {
+            manifest.RenderScale = key;
+            manifest.Save(exeDir);
+        }
+    }
+
     /// <summary>Changes only the watermark key in an installed game's ini.</summary>
     public static void ApplyWatermark(string exeDir, bool on)
     {

@@ -17,6 +17,9 @@ public sealed class InstallManifest
     public string Fsr4Version { get; set; } = "";
     public DateTime InstalledAt { get; set; } = DateTime.Now;
 
+    /// <summary>Render resolution choice for this game, a key from InstallConfig.RenderScales.</summary>
+    public string RenderScale { get; set; } = "game";
+
     /// <summary>Files the app created, relative to the exe folder.</summary>
     public List<string> CreatedFiles { get; set; } = new();
 

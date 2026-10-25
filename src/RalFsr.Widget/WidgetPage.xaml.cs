@@ -28,6 +28,8 @@ namespace RalFsr.Widget
         private bool _deviceSupported;
         private bool _setupReady;
         private bool _suppressOverlayEvent;
+        private bool _suppressScaleEvent;
+        private readonly List<string> _scaleKeys = new List<string>();
         private bool _busy;
         private int _installedCount;
 
@@ -167,6 +169,7 @@ namespace RalFsr.Widget
                 GameStatus.Text = "Start a game, then open Game Bar (Win + G) and this widget over it.";
                 GameActions.Visibility = Visibility.Collapsed;
                 ActiveBadge.Visibility = Visibility.Collapsed;
+                RenderScaleBox.Visibility = Visibility.Collapsed;
                 return;
             }
 
@@ -180,6 +183,8 @@ namespace RalFsr.Widget
             GameStatus.Text = Json.Str(game, "stateText");
             GameActions.Visibility = Visibility.Visible;
 
+            RenderScaleOptions(game);
+
             if (_gameInstalled)
             {
                 PrimaryButton.Content = "Uninstall from this game";
@@ -192,6 +197,50 @@ namespace RalFsr.Widget
                 if (Json.Bool(game, "canInstall") && !_setupReady)
                     GameStatus.Text += " Finish setup below to install.";
             }
+        }
+
+        /// <summary>Fills the render resolution picker for an installed game and selects its current choice.</summary>
+        private void RenderScaleOptions(JsonObject game)
+        {
+            if (!Json.Bool(game, "installed"))
+            {
+                RenderScaleBox.Visibility = Visibility.Collapsed;
+                return;
+            }
+
+            _suppressScaleEvent = true;
+            try
+            {
+                var options = Json.Arr(game, "renderScales");
+                if (RenderScaleBox.Items.Count != options.Count)
+                {
+                    RenderScaleBox.Items.Clear();
+                    _scaleKeys.Clear();
+                    foreach (var item in options)
+                    {
+                        if (item.ValueType != JsonValueType.Object) continue;
+                        var o = item.GetObject();
+                        _scaleKeys.Add(Json.Str(o, "key"));
+                        RenderScaleBox.Items.Add(Json.Str(o, "label"));
+                    }
+                }
+
+                var index = _scaleKeys.IndexOf(Json.Str(game, "renderScale", "game"));
+                RenderScaleBox.SelectedIndex = index >= 0 ? index : 0;
+                RenderScaleBox.Visibility = Visibility.Visible;
+            }
+            finally
+            {
+                _suppressScaleEvent = false;
+            }
+        }
+
+        private async void RenderScale_Changed(object sender, SelectionChangedEventArgs e)
+        {
+            if (_suppressScaleEvent || string.IsNullOrEmpty(_exeDir)) return;
+            var index = RenderScaleBox.SelectedIndex;
+            if (index < 0 || index >= _scaleKeys.Count) return;
+            await RunCommandAsync("renderScale", "exeDir", _exeDir, "value", _scaleKeys[index]);
         }
 
         private void RenderBadge(string stage, string text)
@@ -351,6 +400,7 @@ namespace RalFsr.Widget
             OverlaySwitch.IsEnabled = on;
             WatermarkSwitch.IsEnabled = on;
             UninstallButton.IsEnabled = on;
+            RenderScaleBox.IsEnabled = on;
             if (!on) PrimaryButton.IsEnabled = false;
         }
 

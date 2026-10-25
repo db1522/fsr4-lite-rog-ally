@@ -51,6 +51,31 @@ public static class InstallConfig
         new IniValue("Menu", "FpsOverlayHorizontal", on ? "false" : "auto"),
     };
 
+    /// <summary>
+    /// Per-game render resolution, through OptiScaler's upscale ratio override. Every render-resolution request from
+    /// the game gets this ratio, whichever quality preset the game asks for. Fixes games that stay on Native AA
+    /// (Forza Horizon 6). "game" leaves it to the game's own setting.
+    /// </summary>
+    public static readonly IReadOnlyList<(string Key, string Label, string Ratio)> RenderScales = new[]
+    {
+        ("game", "Game decides", ""),
+        ("native", "Native AA (1.0x)", "1.0"),
+        ("quality", "Quality (1.5x)", "1.5"),
+        ("balanced", "Balanced (1.7x)", "1.7"),
+        ("performance", "Performance (2.0x)", "2.0"),
+    };
+
+    public static IReadOnlyList<IniValue> RenderScale(string key)
+    {
+        var ratio = RenderScales.FirstOrDefault(r => r.Key == key).Ratio;
+        var on = !string.IsNullOrEmpty(ratio);
+        return new[]
+        {
+            new IniValue("UpscaleRatio", "UpscaleRatioOverrideEnabled", on ? "true" : "auto"),
+            new IniValue("UpscaleRatio", "UpscaleRatioOverrideValue", on ? ratio! : "auto"),
+        };
+    }
+
     public static IReadOnlyList<IniValue> Watermark(bool on) => new[]
     {
         new IniValue("FSR", "Fsr4EnableWatermark", on ? "true" : "auto"),

@@ -23,6 +23,8 @@ public sealed class HostService
     private string _fsr4Status = "";
     private DateTime _fsr4StartedAt;
 
+    private bool _settingsReapplied;
+
     private List<GameEntry>? _catalog;
     private DateTime _catalogAt;
 
@@ -51,6 +53,7 @@ public sealed class HostService
                 "import" => Import(Arg(args, "paths") ?? "", Arg(args, "allowUnverified") == "true"),
                 "overlay" => Overlay(Arg(args, "on") == "true"),
                 "watermark" => Watermark(Arg(args, "on") == "true"),
+                "renderScale" => RenderScale(Arg(args, "exeDir") ?? "", Arg(args, "value") ?? "game"),
                 _ => Fail($"Unknown command: {cmd}"),
             };
             return Task.FromResult(JsonSerializer.Serialize(result, Json));
@@ -77,6 +80,28 @@ public sealed class HostService
     {
         // Retry a failed OptiScaler download at most once a minute (GitHub limits unauthenticated requests).
         if (_opti is null && _optiTask is null && DateTime.Now - _optiStartedAt > RetryEvery) Prepare();
+
+        // OptiScaler can write its own settings back to OptiScaler.ini when a game closes. Re-apply the widget's
+        // overlay and watermark choices to every installed game that isn't running, once per widget session,
+        // so they're right before each game's next launch.
+        if (!_settingsReapplied)
+        {
+            _settingsReapplied = true;
+            foreach (var dir in InstallRegistry.Load())
+            {
+                if (ForegroundGame.AnyRunningFrom(dir)) continue;
+                try
+                {
+                    Installer.ApplyOverlay(dir, _settings.ShowResolutionOverlay);
+                    Installer.ApplyWatermark(dir, _settings.ShowFsr4Watermark);
+                    Installer.ApplyRenderScale(dir, InstallManifest.TryLoad(dir)?.RenderScale ?? "game");
+                }
+                catch (Exception ex)
+                {
+                    Log.Warn($"Couldn't re-apply settings in {dir}: {ex.Message}");
+                }
+            }
+        }
         // Downloads the FSR 4 files if missing, otherwise a daily update check. A failed attempt retries once a minute.
         if (_fsr4Task is null ||
             (_fsr4Task.IsCompleted && !Fsr4Library.Load().IsUsable && DateTime.Now - _fsr4StartedAt > RetryEvery))
@@ -154,6 +179,8 @@ public sealed class HostService
             canInstall = scan.State is GameState.Ready or GameState.NoUpscalerFound,
             installed = scan.State == GameState.Installed,
             upscalers = scan.Upscalers,
+            renderScale = scan.Manifest?.RenderScale ?? "game",
+            renderScales = InstallConfig.RenderScales.Select(r => new { key = r.Key, label = r.Label }).ToList(),
             activeStage = live.Stage.ToString(),
             activeText = ActiveText(live, scan.Game.Name),
         };
@@ -428,6 +455,24 @@ public sealed class HostService
             message = on
                 ? "Overlay on. Restart a game to see FPS and its render resolution."
                 : "Overlay off from the next game launch.",
+        };
+    }
+
+    private object RenderScale(string exeDir, string key)
+    {
+        var manifest = InstallManifest.TryLoad(exeDir);
+        if (manifest is null) return Fail("FSR 4 Lite isn't installed in this game.");
+
+        Installer.ApplyRenderScale(exeDir, key);
+        Forget(exeDir); // the cached scan holds the old manifest
+        var label = InstallConfig.RenderScales.FirstOrDefault(r => r.Key == key).Label ?? "Game decides";
+        var running = ForegroundGame.AnyRunningFrom(exeDir);
+        return new
+        {
+            ok = true,
+            message = key == "game"
+                ? $"{manifest.GameName} uses its own resolution setting again" + (running ? " after a restart." : ".")
+                : $"Render resolution set to {label}" + (running ? $". Restart {manifest.GameName} to apply it." : "."),
         };
     }
 

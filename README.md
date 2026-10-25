@@ -40,6 +40,13 @@ When you install, the helper:
 
 All of these values live in `src\Core\InstallConfig.cs`.
 
+### Render resolution
+
+Installed games get a **Render resolution** picker on the game card: Game decides (default), Native AA, Quality,
+Balanced or Performance. Anything but "Game decides" sets OptiScaler's upscale ratio override, so every
+render-resolution request from the game gets that ratio whichever preset the game asks for. This fixes games that
+stay on Native AA, such as Forza Horizon 6. The choice is saved per game and applies from the next launch.
+
 ### Is it active?
 
 The game card has a live status badge, refreshed every 2 seconds while the widget is open. The helper reads which
