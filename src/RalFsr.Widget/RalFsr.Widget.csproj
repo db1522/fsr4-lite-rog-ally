@@ -71,7 +71,9 @@
     </AppxManifest>
   </ItemGroup>
   <ItemGroup>
-    <Content Include="Assets\**\*.png" />
+    <!-- Square44x44Logo.altform-unplated_targetsize-24.png duplicates ...targetsize-24_altform-unplated.png (same
+         qualifiers in a different order), which stops packaging with PRI277. Excluded in case an old copy is still around. -->
+    <Content Include="Assets\**\*.png" Exclude="Assets\Square44x44Logo.altform-unplated_targetsize-24.png" />
     <Content Include="Properties\Default.rd.xml" />
     <!-- The full-trust helper. scripts\build.ps1 publishes RalFsr.Host here before packaging. -->
     <Content Include="Host\**\*" />
