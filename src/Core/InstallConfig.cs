@@ -29,13 +29,26 @@ public static class InstallConfig
 
         // Upscaling only. OptiScaler frame generation stays off by default (crash reports in Forza Horizon 6).
         new IniValue("FrameGen", "Enabled", "false"),
+
+        // Info-level log (OptiScaler.log next to the game exe, fresh each session). The widget reads it to confirm
+        // which amdxcffx64.dll was loaded and that the Lite model was hooked. Info is light; Trace is the heavy one.
+        new IniValue("Log", "LogToFile", "true"),
+        new IniValue("Log", "LogLevel", "2"),
     };
 
+    /// <summary>
+    /// OptiScaler's FPS overlay, sized for a 7" 1080p handheld: the "Simple" layout (FPS row with the upscaler name,
+    /// e.g. "FSR3 -> FSR 4.1.2", plus the render -> output resolution row) at 0.8 scale in the top left corner.
+    /// The "Detailed" layout at automatic scale runs off the ROG Ally's screen.
+    /// </summary>
     public static IReadOnlyList<IniValue> Overlay(bool on) => new[]
     {
         new IniValue("Menu", "ShowFps", on ? "true" : "auto"),
-        new IniValue("Menu", "FpsOverlayType", on ? "2" : "auto"),
+        new IniValue("Menu", "FpsOverlayType", on ? "1" : "auto"),
         new IniValue("Menu", "FpsOverlayShowRatio", on ? "true" : "auto"),
+        new IniValue("Menu", "FpsScale", on ? "0.8" : "auto"),
+        new IniValue("Menu", "FpsOverlayPos", on ? "0" : "auto"),
+        new IniValue("Menu", "FpsOverlayHorizontal", on ? "false" : "auto"),
     };
 
     public static IReadOnlyList<IniValue> Watermark(bool on) => new[]

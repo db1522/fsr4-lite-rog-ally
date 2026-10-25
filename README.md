@@ -47,8 +47,14 @@ DLLs the running game has loaded:
 
 - **Amber, "Restart the game":** installed, but the game started before the install, so OptiScaler isn't loaded.
 - **Amber, "Turn on FSR in the game's settings":** OptiScaler is loaded, but no FSR 4 library yet.
-- **Green, "FSR 4 Lite active (DX12 / Vulkan)":** the FSR 4.1.2 library from the game's `OptiScaler` folder is
-  loaded.
+- **Green, "FSR 4.1.2 Lite active (DX12 / Vulkan)":** the FSR 4.1.2 file from the game's `OptiScaler` folder is
+  loaded, and OptiScaler's log shows the Lite model being hooked. "Lite loaded" means the file is loaded but the log
+  hasn't confirmed it yet.
+- **Amber, "running, but not Lite":** FSR 4 came from another copy of the file, usually the AMD driver's own, which
+  has no Lite model. OptiScaler uses a copy that's already in memory before its own.
+
+Installs turn on OptiScaler's Info-level log (`OptiScaler.log` next to the game exe, fresh each session) so the
+widget can read which file was loaded and which model was hooked.
 
 Folder scans are cached for 2 minutes so the polling stays light on battery; only the loaded-DLL check runs each time.
 

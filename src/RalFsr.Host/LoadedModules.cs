@@ -20,11 +20,15 @@ public static class LoadedModules
         /// <summary>OptiScaler is loaded but no FSR 4 library yet, usually because FSR is off in the game.</summary>
         WaitingForFsr,
 
-        /// <summary>The FSR 4.1.2 library is loaded in the game.</summary>
+        /// <summary>FSR 4 is running from the widget's own file, so the Lite model is the one in use.</summary>
         Active,
+
+        /// <summary>FSR 4 is running, but from a copy without the Lite model (usually the AMD driver's own).</summary>
+        NotLite,
     }
 
-    public sealed record Status(Stage Stage, string Api);
+    /// <param name="Confirmed">OptiScaler's log shows the Lite model being hooked, not just the file loading.</param>
+    public sealed record Status(Stage Stage, string Api, bool Confirmed = false, string Detail = "");
 
     public static Status Check(int processId, string exeDir, InstallManifest manifest)
     {
@@ -35,30 +39,45 @@ public static class LoadedModules
         if (!modules.Any(m => m.Equals(proxy, StringComparison.OrdinalIgnoreCase)))
             return new Status(Stage.NeedsRestart, "");
 
+        var log = ReadOptiLog(exeDir);
+
         foreach (var (file, api) in new[] { (InstallConfig.Dx12Fsr4File, "DX12"), (InstallConfig.VulkanFsr4File, "Vulkan") })
         {
             var loaded = modules.FirstOrDefault(m => Path.GetFileName(m).Equals(file, StringComparison.OrdinalIgnoreCase));
             if (loaded is null) continue;
 
-            // Ours (from the game's OptiScaler folder), or any copy new enough to carry the Lite model.
+            // Only the widget's own copy (in the game's OptiScaler folder) carries the Lite model. OptiScaler uses any
+            // copy that's already in memory first, so a copy the AMD driver loaded earlier wins and has no Lite.
             var ours = Path.Combine(exeDir, InstallConfig.OptiSubfolder, file);
-            if (loaded.Equals(ours, StringComparison.OrdinalIgnoreCase) || IsNewEnough(loaded))
-                return new Status(Stage.Active, api);
+            if (!loaded.Equals(ours, StringComparison.OrdinalIgnoreCase))
+                return new Status(Stage.NotLite, api, Detail: loaded);
+
+            var liteHooked = log.Contains("ffxProvider_FSR4Lite_Int8", StringComparison.Ordinal);
+            return new Status(Stage.Active, api, Confirmed: liteHooked);
         }
+
+        if (log.Contains("can't run any FSR 4 model", StringComparison.Ordinal) ||
+            log.Contains("doesn't support FSR 4", StringComparison.Ordinal))
+            return new Status(Stage.NotLite, "", Detail: "OptiScaler reports the GPU can't run FSR 4 here");
 
         return new Status(Stage.WaitingForFsr, "");
     }
 
-    private static bool IsNewEnough(string path)
+    /// <summary>OptiScaler.log from this session (next to the game exe). Empty when logging is off or the file is busy.</summary>
+    private static string ReadOptiLog(string exeDir)
     {
+        var path = Path.Combine(exeDir, "OptiScaler.log");
         try
         {
-            var v = FileVersionInfo.GetVersionInfo(path);
-            return new Version(v.FileMajorPart, v.FileMinorPart, v.FileBuildPart, v.FilePrivatePart) >= Fsr4Library.MinimumDx12Version;
+            if (!File.Exists(path)) return "";
+            using var stream = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.ReadWrite | FileShare.Delete);
+            using var reader = new StreamReader(stream);
+            var text = reader.ReadToEnd();
+            return text.Length > 2_000_000 ? text[..2_000_000] : text; // the lines that matter are near the top
         }
         catch
         {
-            return false;
+            return "";
         }
     }
 

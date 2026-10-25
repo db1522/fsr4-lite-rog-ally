@@ -202,7 +202,7 @@ namespace RalFsr.Widget
                 return;
             }
 
-            // Green when FSR 4 Lite is running, amber for "almost there" states.
+            // Green when FSR 4 Lite is running, amber for "almost there" and "running, but not Lite".
             var color = stage == "Active"
                 ? Color.FromArgb(255, 0x39, 0xC2, 0x7A)
                 : Color.FromArgb(255, 0xE8, 0xA2, 0x3A);

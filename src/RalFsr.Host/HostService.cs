@@ -194,7 +194,15 @@ public sealed class HostService
 
     private static string ActiveText(LoadedModules.Status live, string game) => live.Stage switch
     {
-        LoadedModules.Stage.Active => $"FSR 4 Lite active ({live.Api})",
+        LoadedModules.Stage.Active => live.Confirmed
+            ? $"FSR 4.1.2 Lite active ({live.Api})"
+            : $"FSR 4.1.2 Lite loaded ({live.Api})",
+        LoadedModules.Stage.NotLite when live.Detail.Contains("DriverStore", StringComparison.OrdinalIgnoreCase) =>
+            "FSR 4 is running, but not Lite: the game loaded the AMD driver's own FSR 4 file first. " +
+            "Restart the game; if it happens again, this game isn't compatible with the Lite file yet.",
+        LoadedModules.Stage.NotLite when live.Detail.Length > 0 && !live.Detail.Contains('\\') =>
+            $"FSR 4 Lite isn't running: {live.Detail}.",
+        LoadedModules.Stage.NotLite => $"FSR 4 is running, but not Lite: it loaded {live.Detail}.",
         LoadedModules.Stage.WaitingForFsr => "OptiScaler running. Turn on FSR in the game's graphics settings.",
         LoadedModules.Stage.NeedsRestart => $"Installed. Restart {game} to load it.",
         _ => "",
