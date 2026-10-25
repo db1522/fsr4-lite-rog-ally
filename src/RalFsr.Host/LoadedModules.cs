@@ -17,6 +17,9 @@ public static class LoadedModules
         /// <summary>Installed, but the running game started before the install. Needs a restart.</summary>
         NeedsRestart,
 
+        /// <summary>The game started after the install and still didn't load OptiScaler: it ignores this loader name.</summary>
+        NotLoaded,
+
         /// <summary>OptiScaler is loaded but no FSR 4 library yet, usually because FSR is off in the game.</summary>
         WaitingForFsr,
 
@@ -48,9 +51,17 @@ public static class LoadedModules
         var modules = List(processId);
         if (modules.Count == 0) return new Status(Stage.None, "");
 
-        var proxy = Path.Combine(exeDir, manifest.ProxyName);
-        if (!modules.Any(m => m.Equals(proxy, StringComparison.OrdinalIgnoreCase)))
-            return new Status(Stage.NeedsRestart, "");
+        // Match by file name, not by full path. Xbox app / Game Pass games can report the same folder under
+        // C:\XboxGames\... and under C:\Program Files\WindowsApps\..., so an exact path comparison misses them.
+        var windowsDir = Environment.GetFolderPath(Environment.SpecialFolder.Windows);
+        var proxyLoaded = modules.Any(m =>
+            Path.GetFileName(m).Equals(manifest.ProxyName, StringComparison.OrdinalIgnoreCase) &&
+            !m.StartsWith(windowsDir, StringComparison.OrdinalIgnoreCase));
+        if (!proxyLoaded)
+        {
+            var startedAfterInstall = StartTime(processId) is DateTime started && started > manifest.InstalledAt;
+            return new Status(startedAfterInstall ? Stage.NotLoaded : Stage.NeedsRestart, "");
+        }
 
         var log = ReadOptiLog(exeDir);
         var res = ParseResolution(log);
@@ -62,8 +73,11 @@ public static class LoadedModules
 
             // Only the widget's own copy (in the game's OptiScaler folder) carries the Lite model. OptiScaler uses any
             // copy that's already in memory first, so a copy the AMD driver loaded earlier wins and has no Lite.
-            var ours = Path.Combine(exeDir, InstallConfig.OptiSubfolder, file);
-            if (!loaded.Equals(ours, StringComparison.OrdinalIgnoreCase))
+            // Compared by its folder, not the full path, for the same XboxGames / WindowsApps reason as above.
+            var parent = Path.GetFileName(Path.GetDirectoryName(loaded) ?? "");
+            var ours = parent.Equals(InstallConfig.OptiSubfolder, StringComparison.OrdinalIgnoreCase) &&
+                       !loaded.Contains("DriverStore", StringComparison.OrdinalIgnoreCase);
+            if (!ours)
                 return res(new Status(Stage.NotLite, api, Detail: loaded));
 
             var liteHooked = log.Contains("ffxProvider_FSR4Lite_Int8", StringComparison.Ordinal);
@@ -111,6 +125,19 @@ public static class LoadedModules
         }
 
         return status => status with { RenderWidth = rw, RenderHeight = rh, DisplayWidth = dw, DisplayHeight = dh };
+    }
+
+    private static DateTime? StartTime(int processId)
+    {
+        try
+        {
+            using var p = Process.GetProcessById(processId);
+            return p.StartTime;
+        }
+        catch
+        {
+            return null; // protected process: assume it may need a restart
+        }
     }
 
     /// <summary>OptiScaler.log from this session (next to the game exe). Empty when logging is off or the file is busy.</summary>

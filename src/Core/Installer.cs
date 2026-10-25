@@ -169,6 +169,36 @@ public static class Installer
         if (File.Exists(ini)) IniFile.SetValues(ini, InstallConfig.Watermark(on));
     }
 
+    /// <summary>
+    /// Renames OptiScaler's loader to the next name the game doesn't already use (dxgi.dll, winmm.dll, version.dll, ...).
+    /// Some games, often Game Pass ones, ignore one name and load another. Returns the new name.
+    /// </summary>
+    public static string SwitchProxy(string exeDir)
+    {
+        var manifest = InstallManifest.TryLoad(exeDir) ?? throw new InvalidOperationException("FSR 4.1 Lite isn't installed here.");
+        var names = InstallConfig.ProxyNames;
+        var start = Array.FindIndex(names, n => n.Equals(manifest.ProxyName, StringComparison.OrdinalIgnoreCase));
+        string? next = null;
+        for (var i = 1; i <= names.Length; i++)
+        {
+            var candidate = names[(start + i + names.Length) % names.Length];
+            if (candidate.Equals(manifest.ProxyName, StringComparison.OrdinalIgnoreCase)) continue;
+            if (!File.Exists(Path.Combine(exeDir, candidate))) { next = candidate; break; }
+        }
+        if (next is null) throw new InvalidOperationException("Every loader name is already used by the game.");
+
+        var from = Path.Combine(exeDir, manifest.ProxyName);
+        if (File.Exists(from)) File.Move(from, Path.Combine(exeDir, next));
+
+        var index = manifest.CreatedFiles.FindIndex(f => f.Equals(manifest.ProxyName, StringComparison.OrdinalIgnoreCase));
+        if (index >= 0) manifest.CreatedFiles[index] = next; else manifest.CreatedFiles.Add(next);
+        manifest.ProxyName = next;
+        manifest.InstalledAt = DateTime.Now; // the next launch counts as "after the change"
+        manifest.Save(exeDir);
+        Log.Info($"Switched OptiScaler loader in {exeDir} to {next}");
+        return next;
+    }
+
     /// <summary>First proxy name that doesn't clash with a file the game already ships.</summary>
     public static string PickProxyName(string exeDir) =>
         InstallConfig.ProxyNames.FirstOrDefault(n => !File.Exists(Path.Combine(exeDir, n)))

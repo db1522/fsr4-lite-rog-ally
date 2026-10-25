@@ -62,6 +62,8 @@
                     </Border>
                     <TextBlock x:Name="GameStatus" FontSize="14" TextWrapping="Wrap" />
 
+                    <Button x:Name="SwitchLoaderButton" Style="{StaticResource QuietButton}" Content="Try another loader"
+                            Visibility="Collapsed" Click="SwitchLoader_Click" />
                     <TextBlock x:Name="ResolutionText" FontSize="12" Foreground="{StaticResource MutedBrush}"
                                Visibility="Collapsed" />
                     <Border x:Name="AutoFixBanner" Visibility="Collapsed" Padding="10" CornerRadius="4"

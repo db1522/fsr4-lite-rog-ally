@@ -55,6 +55,7 @@ public sealed class HostService
                 "watermark" => Watermark(Arg(args, "on") == "true"),
                 "notify" => Notify(Arg(args, "on") == "true"),
                 "renderScale" => RenderScale(Arg(args, "exeDir") ?? "", Arg(args, "value") ?? "game"),
+                "switchLoader" => SwitchLoader(Arg(args, "exeDir") ?? ""),
                 _ => Fail($"Unknown command: {cmd}"),
             };
             return Task.FromResult(JsonSerializer.Serialize(result, Json));
@@ -211,6 +212,8 @@ public sealed class HostService
                     : $"Rendering {live.RenderWidth} → {live.DisplayWidth} pixels wide")
                 : "",
             renderScales = InstallConfig.RenderScales.Select(r => new { key = r.Key, label = r.Label }).ToList(),
+            canSwitchLoader = live.Stage == LoadedModules.Stage.NotLoaded,
+            loaderName = manifest?.ProxyName ?? "",
             activeStage = live.Stage.ToString(),
             activeText = ActiveText(live, scan.Game.Name),
         };
@@ -265,6 +268,9 @@ public sealed class HostService
             "Running FSR 3, not FSR 4: the game's upscaler started, but the FSR 4 file didn't load. " +
             "Uninstall from this game, install again, and restart it.",
         LoadedModules.Stage.NeedsRestart => $"Installed. Restart {game} to load it.",
+        LoadedModules.Stage.NotLoaded =>
+            $"OptiScaler didn't load in {game}. Some games, often Game Pass ones, ignore this loader. " +
+            "Press Try another loader, then restart the game.",
         _ => "",
     };
 
@@ -489,6 +495,15 @@ public sealed class HostService
                 ? "Overlay on. Restart a game to see FPS and its render resolution."
                 : "Overlay off from the next game launch.",
         };
+    }
+
+    private object SwitchLoader(string exeDir)
+    {
+        var manifest = InstallManifest.TryLoad(exeDir);
+        if (manifest is null) return Fail("FSR 4.1 Lite isn't installed in this game.");
+        var next = Installer.SwitchProxy(exeDir);
+        Forget(exeDir);
+        return new { ok = true, message = $"OptiScaler now loads as {next}. Restart {manifest.GameName} to try it." };
     }
 
     private object RenderScale(string exeDir, string key)

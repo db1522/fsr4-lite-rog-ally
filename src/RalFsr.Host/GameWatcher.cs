@@ -94,6 +94,12 @@ public sealed class GameWatcher
                         t.Notified = true;
                         break;
 
+                    case LoadedModules.Stage.NotLoaded when held >= ProblemGrace:
+                        Toasts.Show($"FSR 4.1 Lite didn't load in {t.Game}",
+                            "This game ignores OptiScaler's loader. Open the widget, press Try another loader and restart the game.");
+                        t.Notified = true;
+                        break;
+
                     case LoadedModules.Stage.Fsr3Fallback when held >= ProblemGrace:
                         Toasts.Show($"FSR 4.1 Lite isn't running in {t.Game}",
                             "The game is using FSR 3. Open the widget, uninstall from this game, install again and restart it.");

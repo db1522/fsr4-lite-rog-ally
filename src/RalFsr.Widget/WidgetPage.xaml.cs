@@ -181,10 +181,13 @@ namespace RalFsr.Widget
                 RenderScaleBox.Visibility = Visibility.Collapsed;
                 ResolutionText.Visibility = Visibility.Collapsed;
                 AutoFixBanner.Visibility = Visibility.Collapsed;
+                SwitchLoaderButton.Visibility = Visibility.Collapsed;
                 return;
             }
 
             RenderBadge(Json.Str(game, "activeStage"), Json.Str(game, "activeText"));
+
+            SwitchLoaderButton.Visibility = Json.Bool(game, "canSwitchLoader") ? Visibility.Visible : Visibility.Collapsed;
 
             var resolution = Json.Str(game, "resolutionText");
             ResolutionText.Text = resolution;
@@ -255,6 +258,11 @@ namespace RalFsr.Widget
             {
                 _suppressScaleEvent = false;
             }
+        }
+
+        private async void SwitchLoader_Click(object sender, RoutedEventArgs e)
+        {
+            if (!string.IsNullOrEmpty(_exeDir)) await RunCommandAsync("switchLoader", "exeDir", _exeDir);
         }
 
         private async void RenderScale_Changed(object sender, SelectionChangedEventArgs e)
