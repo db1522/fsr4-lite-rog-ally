@@ -15,7 +15,7 @@
 </p>
 
 <p align="center">
-  <a href="https://rogallylife.com/2026/10/25/fsr-4-1-2-lite-on-the-rog-ally/">Full guide on ROG Ally Life</a> ·
+  <a href="https://rogallylife.com/2026/10/26/fsr-4-1-2-lite-on-the-rog-ally/">Full guide on ROG Ally Life</a> ·
   <a href="#install">Install</a> ·
   <a href="#tested-games">Tested games</a> ·
   <a href="#faq">FAQ</a> ·
