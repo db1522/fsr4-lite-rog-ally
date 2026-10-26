@@ -20,6 +20,7 @@ public sealed class HostService
     private string _optiStatus = "";
     private DateTime _optiStartedAt = DateTime.MinValue;
     private static readonly TimeSpan RetryEvery = TimeSpan.FromMinutes(1);
+    private static readonly TimeSpan UpdateLookEvery = TimeSpan.FromHours(1);
     private Task? _fsr4Task;
     private string _fsr4Status = "";
     private DateTime _fsr4StartedAt;
@@ -85,8 +86,10 @@ public sealed class HostService
 
     private object State(string? targetName, bool targetIsGame)
     {
-        // Retry a failed OptiScaler download at most once a minute (GitHub limits unauthenticated requests).
-        if (_opti is null && _optiTask is null && DateTime.Now - _optiStartedAt > RetryEvery) Prepare();
+        // OptiScaler: retry a failed download at most once a minute, and once one is cached, look for a newer nightly when
+        // the widget opens and hourly while it stays open. OptiScalerSource only asks GitHub once a day (its own marker),
+        // so the hourly look is free; without it a cached build was used forever and "Update N games" never appeared.
+        if (_optiTask is null && DateTime.Now - _optiStartedAt > (_opti is null ? RetryEvery : UpdateLookEvery)) Prepare();
 
         // OptiScaler's community compatibility list: refreshed at most once a day, in the background.
         if (!_compatRefreshStarted)
@@ -366,7 +369,7 @@ public sealed class HostService
         _optiStartedAt = DateTime.Now;
         var last = "";
         var progress = new Progress<string>(s => { last = s; _optiStatus = s; });
-        _optiStatus = "Getting OptiScaler...";
+        _optiStatus = _opti is null ? "Getting OptiScaler..." : "Checking for a newer OptiScaler...";
         _optiTask = Task.Run(async () =>
         {
             try

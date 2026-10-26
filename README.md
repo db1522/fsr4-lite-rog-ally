@@ -55,7 +55,8 @@ name with edition words removed, so "Ghost of Tsushima" finds the DIRECTOR'S CUT
 
 ### Updating OptiScaler in installed games
 
-New OptiScaler nightlies download automatically, but games keep the build they were installed with until they're
+The widget looks for a newer OptiScaler nightly when it opens and hourly while it stays open; GitHub itself is only
+asked once a day. New builds download automatically, but games keep the build they were installed with until they're
 updated. When installed games are on an older build, the Installed section shows **Update N games**, and a
 notification says so once per new build. Updating copies the new package over the old files, keeps each game's
 loader name, and never replaces `OptiScaler.ini`, so each game keeps its own settings. Running games are skipped.
