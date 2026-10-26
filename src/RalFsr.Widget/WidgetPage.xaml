@@ -110,6 +110,8 @@
                               Toggled="Overlay_Toggled" />
                 <ToggleSwitch x:Name="NotifySwitch" Header="Notify me when FSR 4.1 Lite is active"
                               Toggled="Notify_Toggled" />
+                <ToggleSwitch x:Name="AutoUpdateSwitch" Header="Update games automatically"
+                              Toggled="AutoUpdate_Toggled" />
                 <TextBlock FontSize="12" TextWrapping="Wrap" Foreground="{StaticResource MutedBrush}" Margin="0,-4,0,0"
                            Text="Windows holds notifications during fullscreen games. To see them in game, add FSR 4.1 Lite in Settings &gt; System &gt; Notifications &gt; Set priority notifications." />
             </StackPanel>

@@ -16,6 +16,12 @@ public sealed class AppSettings
     /// <summary>A notification when FSR 4.1 Lite is confirmed active (or isn't running) in a game. Starts with Windows.</summary>
     public bool NotifyWhenActive { get; set; } = true;
 
+    /// <summary>
+    /// Update installed games to each new OptiScaler build automatically (games that aren't running; each keeps its own
+    /// settings). On by default. Off: the widget offers "Update N games" and a notification instead.
+    /// </summary>
+    public bool AutoUpdateGames { get; set; } = true;
+
     /// <summary>The OptiScaler build the "updates ready" notification was last shown for, so it's shown once per build.</summary>
     public string LastUpdateNoticeBuild { get; set; } = "";
 

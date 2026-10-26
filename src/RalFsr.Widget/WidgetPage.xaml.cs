@@ -163,6 +163,7 @@ namespace RalFsr.Widget
             _suppressOverlayEvent = true;
             OverlaySwitch.IsOn = Json.Bool(state, "overlay");
             NotifySwitch.IsOn = Json.Bool(state, "notify");
+            AutoUpdateSwitch.IsOn = Json.Bool(state, "autoUpdate");
             _suppressOverlayEvent = false;
 
             var game = Json.Obj(state, "game");
@@ -399,6 +400,12 @@ namespace RalFsr.Widget
             await RunCommandAsync("overlay", "on", OverlaySwitch.IsOn ? "true" : "false");
         }
 
+        private async void AutoUpdate_Toggled(object sender, RoutedEventArgs e)
+        {
+            if (_suppressOverlayEvent) return;
+            await RunCommandAsync("autoUpdate", "on", AutoUpdateSwitch.IsOn ? "true" : "false");
+        }
+
         private async void Notify_Toggled(object sender, RoutedEventArgs e)
         {
             if (_suppressOverlayEvent) return;
@@ -519,6 +526,7 @@ namespace RalFsr.Widget
             ImportButton.IsEnabled = on;
             OverlaySwitch.IsEnabled = on;
             NotifySwitch.IsEnabled = on;
+            AutoUpdateSwitch.IsEnabled = on;
             UninstallButton.IsEnabled = on;
             RenderScaleBox.IsEnabled = on;
             if (!on) PrimaryButton.IsEnabled = false;

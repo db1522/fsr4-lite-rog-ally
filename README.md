@@ -57,8 +57,11 @@ name with edition words removed, so "Ghost of Tsushima" finds the DIRECTOR'S CUT
 
 The widget looks for a newer OptiScaler nightly when it opens and hourly while it stays open; GitHub itself is only
 asked once a day. New builds download automatically, but games keep the build they were installed with until they're
-updated. When installed games are on an older build, the Installed section shows **Update N games**, and a
-notification says so once per new build. Updating copies the new package over the old files, keeps each game's
+updated. With **Update games automatically** on (the default), every installed game that isn't running is updated
+in the background as soon as a new build downloads, and again every few minutes while the widget is open, so games that
+were running catch up once they're closed; one notification per build says how many games were updated. With it off,
+the Installed section shows **Update N games** and a notification says an update is ready. Turning it off is the
+safety valve if a nightly ever breaks a game. Updating copies the new package over the old files, keeps each game's
 loader name, and never replaces `OptiScaler.ini`, so each game keeps its own settings. Running games are skipped.
 Uninstall still restores the folder byte for byte.
 

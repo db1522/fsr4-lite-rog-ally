@@ -21,6 +21,9 @@ public sealed class HostService
     private DateTime _optiStartedAt = DateTime.MinValue;
     private static readonly TimeSpan RetryEvery = TimeSpan.FromMinutes(1);
     private static readonly TimeSpan UpdateLookEvery = TimeSpan.FromHours(1);
+    private static readonly TimeSpan AutoUpdateLookEvery = TimeSpan.FromMinutes(5);
+    private DateTime _autoUpdateLookedAt = DateTime.MinValue;
+    private Task? _autoUpdateTask;
     private Task? _fsr4Task;
     private string _fsr4Status = "";
     private DateTime _fsr4StartedAt;
@@ -62,6 +65,7 @@ public sealed class HostService
                 "renderScale" => RenderScale(Arg(args, "exeDir") ?? "", Arg(args, "value") ?? "game"),
                 "switchLoader" => SwitchLoader(Arg(args, "exeDir") ?? ""),
                 "updateAll" => UpdateAll(),
+                "autoUpdate" => SetAutoUpdate(Arg(args, "on") == "true"),
                 _ => Fail($"Unknown command: {cmd}"),
             };
             return Task.FromResult(JsonSerializer.Serialize(result, Json));
@@ -90,6 +94,14 @@ public sealed class HostService
         // the widget opens and hourly while it stays open. OptiScalerSource only asks GitHub once a day (its own marker),
         // so the hourly look is free; without it a cached build was used forever and "Update N games" never appeared.
         if (_optiTask is null && DateTime.Now - _optiStartedAt > (_opti is null ? RetryEvery : UpdateLookEvery)) Prepare();
+
+        // Automatic game updates: also retried every few minutes while the widget is open, so a game that was running
+        // when a new build arrived is updated once it's closed.
+        if (DateTime.Now - _autoUpdateLookedAt > AutoUpdateLookEvery)
+        {
+            _autoUpdateLookedAt = DateTime.Now;
+            StartAutoUpdate();
+        }
 
         // OptiScaler's community compatibility list: refreshed at most once a day, in the background.
         if (!_compatRefreshStarted)
@@ -157,6 +169,7 @@ public sealed class HostService
                 gameBarHint = _device.GameBarHint,
             },
             updatesAvailable,
+            autoUpdate = _settings.AutoUpdateGames,
             opti = new
             {
                 ready = _opti is not null,
@@ -378,7 +391,8 @@ public sealed class HostService
                 if (pkg is not null)
                 {
                     _opti = pkg;
-                    NotifyUpdatesReady();
+                    if (_settings.AutoUpdateGames) StartAutoUpdate();
+                    else NotifyUpdatesReady();
                 }
             }
             catch (Exception ex)
@@ -596,6 +610,8 @@ public sealed class HostService
     private object UpdateAll()
     {
         if (_opti is null) return Fail("OptiScaler is still downloading. Try again in a moment.");
+        if (_autoUpdateTask is { IsCompleted: false })
+            return new { ok = true, message = "Games are already updating in the background." };
         int updated = 0, running = 0, failed = 0;
         foreach (var dir in InstallRegistry.Load())
         {
@@ -621,6 +637,57 @@ public sealed class HostService
         return new { ok = failed == 0, message = string.Join(" ", parts) };
 
         static string Games(int n) => n == 1 ? "1 game" : $"{n} games";
+    }
+
+    private object SetAutoUpdate(bool on)
+    {
+        _settings.AutoUpdateGames = on;
+        _settings.Save();
+        if (on) StartAutoUpdate();
+        return new
+        {
+            ok = true,
+            message = on
+                ? "Games will update to each new OptiScaler build automatically, keeping their settings."
+                : "Automatic updates off. When a new OptiScaler build arrives, use Update in the Installed section.",
+        };
+    }
+
+    /// <summary>
+    /// Updates every installed game that isn't running to the current OptiScaler build, in the background, then sends
+    /// one notification per build. Does nothing when automatic updates are off or everything is current.
+    /// </summary>
+    private void StartAutoUpdate()
+    {
+        if (!_settings.AutoUpdateGames || _opti is null || _optiTask is not null) return;
+        if (_autoUpdateTask is { IsCompleted: false }) return;
+        var opti = _opti;
+        _autoUpdateTask = Task.Run(() =>
+        {
+            var updated = 0;
+            foreach (var dir in InstallRegistry.Load())
+            {
+                try
+                {
+                    if (!IsOutdated(InstallManifest.TryLoad(dir)) || ForegroundGame.AnyRunningFrom(dir)) continue;
+                    if (Installer.UpdateOpti(dir, opti)) updated++;
+                    Forget(dir);
+                }
+                catch (Exception ex)
+                {
+                    Log.Error($"Automatic update failed for {dir}", ex);
+                }
+            }
+            if (updated == 0) return;
+            Log.Info($"Automatically updated {updated} game(s) to {opti.Build}");
+            if (!_settings.LastUpdateNoticeBuild.Equals(opti.Build, StringComparison.OrdinalIgnoreCase))
+            {
+                _settings.LastUpdateNoticeBuild = opti.Build;
+                _settings.Save();
+                Toasts.Show("Games updated",
+                    $"{(updated == 1 ? "1 game" : $"{updated} games")} now use {opti.DisplayName}. Their settings are unchanged.");
+            }
+        });
     }
 
     /// <summary>One notification per new OptiScaler build when installed games are on an older one.</summary>

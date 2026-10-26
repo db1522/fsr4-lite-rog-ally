@@ -16,7 +16,9 @@ public static class Toasts
                 .Select(l => $"<text>{SecurityElement.Escape(l)}</text>"));
             var xml = new XmlDocument();
             xml.LoadXml(
-                "<toast><visual><binding template=\"ToastGeneric\">" +
+                // Clicking opens Game Bar (where the widget lives) instead of launching the widget's app on its own,
+                // which showed its splash screen and a full-screen window.
+                "<toast activationType=\"protocol\" launch=\"ms-gamebar:\"><visual><binding template=\"ToastGeneric\">" +
                 $"<text>{SecurityElement.Escape(title)}</text>{body}" +
                 "</binding></visual><audio silent=\"true\"/></toast>");
 
