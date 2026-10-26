@@ -1,260 +1,278 @@
-# FSR 4.1 Lite by ROG Ally Life (Game Bar widget)
+<p align="center">
+  <img src="src/RalFsr.Widget/Assets/Square150x150Logo.png" width="120" alt="ROG Ally Life logo" />
+</p>
 
-A free Xbox Game Bar widget from ROG Ally Life. Open Game Bar over a game on a ROG Ally, Legion Go or any other
-AMD Radeon handheld,
-press **Install FSR 4.1 Lite**, restart the game, and turn on FSR in its graphics settings.
-FSR 4.1 Lite loads automatically, with no OptiScaler menu to open.
+<h1 align="center">FSR 4.1 Lite by ROG Ally Life</h1>
 
-Works with games from any store: Steam, Epic, GOG, Ubisoft Connect, the EA app, Battle.net, itch.io or
-DRM-free installs. The widget works from the running game's exe, so the launcher doesn't matter.
-Xbox app / Game Pass games work too (confirmed with Valor Mortis). If a game ignores OptiScaler's loader, the
-widget offers **Try another loader**.
+<p align="center">
+  <strong>FSR 4.1.2 Lite in any game on your ROG Ally, ROG Ally X or other AMD handheld. One tap, from Game Bar.</strong>
+</p>
 
-## How it works
+<p align="center">
+  <a href="https://github.com/db1522/fsr4-lite-rog-ally/releases/latest/download/FSR4Lite_x64.zip"><img src="https://img.shields.io/badge/Download-FSR4Lite__x64.zip-E50007?style=for-the-badge" alt="Download" /></a>
+  <a href="https://github.com/db1522/fsr4-lite-rog-ally/releases/latest"><img src="https://img.shields.io/github/v/release/db1522/fsr4-lite-rog-ally?style=for-the-badge&label=version&color=333" alt="Latest version" /></a>
+  <a href="https://github.com/db1522/fsr4-lite-rog-ally/releases"><img src="https://img.shields.io/github/downloads/db1522/fsr4-lite-rog-ally/total?style=for-the-badge&color=333" alt="Downloads" /></a>
+</p>
+
+<p align="center">
+  <a href="https://rogallylife.com/2026/10/25/fsr-4-1-2-lite-on-the-rog-ally/">Full guide on ROG Ally Life</a> ·
+  <a href="#install">Install</a> ·
+  <a href="#tested-games">Tested games</a> ·
+  <a href="#faq">FAQ</a> ·
+  <a href="https://ko-fi.com/rogallylife">Support on Ko-fi</a>
+</p>
+
+---
+
+AMD's FSR 4.1 arrived on the ROG Xbox Ally X as an official preview, and the original ROG Ally and ROG Ally X were
+left out. You can run FSR 4.1.2 Lite on them through OptiScaler, but by hand that means copying files, renaming a DLL,
+editing an ini file and picking the model in an in-game menu, for every game.
+
+**FSR 4.1 Lite does all of that for you.** Open Game Bar over a game, press **Install FSR 4.1 Lite**, restart the
+game, and pick its upscaler. That's it.
+
+<!-- Screenshot suggestion: docs/widget.png, the widget over a game with the green "FSR 4.1 Lite active" badge -->
+
+## What you get
+
+- **One-tap install per game.** It finds the right folder (including Unreal Engine's `Binaries\Win64`) and sets
+  everything up, with no OptiScaler menu to open.
+- **FSR, DLSS and XeSS games.** Whichever upscaler the game offers, including FSR 2 and games with no FSR at all,
+  becomes FSR 4.1.2 Lite.
+- **Any store.** Steam, Epic, GOG, Ubisoft Connect, the EA app, Battle.net and Game Pass. It works from the running
+  game, so the launcher doesn't matter.
+- **A live status badge.** Green **FSR 4.1 Lite active** only once the game has really loaded the Lite model, with
+  the live render resolution, for example `Rendering 960x540 → 1920x1080`.
+- **Community compatibility at a glance.** Each game card shows which upscalers work in that game, from OptiScaler's
+  community Compatibility List.
+- **Always up to date.** OptiScaler's newest build and the FSR 4.1.2 Lite files download by themselves, and your
+  installed games update automatically, each keeping its own settings.
+- **Notifications.** A notification confirms FSR 4.1 Lite each time a game starts with it, or tells you what to fix.
+- **Nothing on screen you didn't ask for.** No startup message, no watermark. An optional FPS and resolution overlay
+  is one switch away.
+- **Clean uninstall.** Remove it from one game or all of them, and every game folder goes back exactly as it was.
+
+## Install
+
+1. **[Download FSR4Lite_x64.zip](https://github.com/db1522/fsr4-lite-rog-ally/releases/latest/download/FSR4Lite_x64.zip)**
+   and unzip it.
+2. Double-click **Install.cmd**. Windows asks for administrator permission once, to trust the ROG Ally Life
+   certificate. The widget is free, so it's signed with ROG Ally Life's own certificate rather than a paid one.
+3. Open Game Bar (the **Armoury Crate** button on ROG handhelds, **Win + G** elsewhere), open the **Widgets** menu
+   and pick **FSR 4.1 Lite**. Pin it to keep it close.
+
+The first time it opens, the widget downloads OptiScaler and the FSR 4.1.2 Lite files on its own.
+
+**Updating the widget:** download the new zip and run its Install.cmd. Your settings and installed games carry over.
+
+## Use it in a game
+
+1. Start the game, open Game Bar and the widget. It picks up the game you're playing.
+2. Press **Install FSR 4.1 Lite**.
+3. Restart the game and turn on its upscaler. Pick **FSR** when the card says FSR was found; if it tells you to pick
+   **DLSS** or **XeSS**, use that, because that game's FSR is built in.
+
+Once it's running, the badge turns green and a notification confirms it.
+
+**Want proof on screen?** Press **Insert** in the game to open the OptiScaler menu: the FSR4 model reads
+**INT8 Lite**. The widget's **Show FPS and render resolution in game** switch adds a small overlay too.
+
+> [!TIP]
+> If the card says a game is rendering at full resolution, change the game's resolution once and back. Some games,
+> like Forza Horizon 6, only apply their upscaler preset after a resolution change.
+
+## Tested games
+
+Confirmed on the ROG Ally X:
+
+| Game | Store | Upscaler picked in the game |
+| --- | --- | --- |
+| Forza Horizon 6 | Steam | FSR |
+| 007 First Light | Steam | FSR |
+| Ghost of Tsushima | Steam | FSR |
+| God of War | Steam | FSR 2.0 |
+| Control Ultimate Edition | Steam | DLSS (the game has no FSR) |
+| Valor Mortis | Game Pass | FSR |
+| Forza Motorsport | Game Pass | DLSS |
+| No Man's Sky | Game Pass | DLSS (its FSR is built into the game) |
+
+Hundreds more games work with OptiScaler; see the community
+[Compatibility List](https://github.com/optiscaler/OptiScaler/wiki/Compatibility-List).
+
+## Supported handhelds
+
+Support is decided by the graphics chip, so it isn't limited to ROG hardware.
+
+| | Handhelds |
+| --- | --- |
+| ✅ **Supported** | ROG Ally, ROG Ally X, Legion Go, Legion Go 2, MSI Claw A8, and GPD, AYANEO and OneXPlayer handhelds with Ryzen 7040/8040 or Ryzen AI 300 chips |
+| ✅ **Supported, with a note** | ROG Xbox Ally X / X20. ASUS's Armoury Crate FSR 4.1 toggle only upgrades games with FSR 3.1 or newer; the widget also covers DLSS, XeSS and FSR 2 games |
+| ⚠️ **Experimental** | ROG Xbox Ally, Legion Go S, Steam Deck on Windows and other RDNA 2 handhelds. Lite runs, but can be slower than FSR 3 on these chips |
+| ❌ **Not supported** | Handhelds without AMD graphics, such as Intel-based MSI Claw models |
+
+## Anti-cheat and online games
+
+FSR 4.1 Lite works by loading OptiScaler into the game, and anti-cheat treats that as a possible cheat, which can get
+your account banned. The widget checks every game before installing and refuses when it finds Easy Anti-Cheat,
+BattlEye, EA Javelin, Ricochet, nProtect GameGuard, XIGNCODE3, Anti-Cheat Expert, EQU8, PunkBuster or HoYoverse's
+anti-cheat, and it recognises games protected by Riot Vanguard, Valve Anti-Cheat and Blizzard by name.
+
+> [!WARNING]
+> No list catches everything. **Use FSR 4.1 Lite in single-player games only**, and don't install it into anything
+> you play online.
+
+## Current limitations
+
+- **Image quality first.** FSR 4.1.2 Lite costs more GPU time than FSR 3, so at the same preset it can be a little
+  slower. A lower preset with Lite usually looks as good as or better than FSR 3 at a higher one.
+- **The game needs an upscaler:** FSR 2, FSR 3, DLSS or XeSS. FSR 1 can't be upgraded.
+- **Some Game Pass games need a nudge.** If OptiScaler doesn't load after a restart, press **Try another loader**.
+  Games in Windows' protected WindowsApps folder can't be changed.
+- **Tested on the ROG Ally X so far.** Other AMD handhelds are supported by chip.
+- **OptiScaler nightlies** update automatically and can occasionally break a game. If that happens, turn off
+  **Update games automatically** and let me know.
+- **Notifications during fullscreen games** are held by Windows unless you add FSR 4.1 Lite under Settings > System >
+  Notifications > Set priority notifications.
+
+## Uninstall
+
+- **One game:** press **Uninstall from this game** on its card, or find it under **Installed in**.
+- **Everything:** press **Uninstall FSR 4.1 Lite** at the bottom of the widget. It restores every game folder, then
+  opens Windows Settings for the final click.
+
+> [!IMPORTANT]
+> Use the button rather than uninstalling from Settings first, or OptiScaler stays behind in your game folders.
+
+## FAQ
+
+<details>
+<summary><strong>Is it safe?</strong></summary>
+
+It only downloads OptiScaler's official builds from OptiScaler's GitHub, unmodified, and AMD's FSR 4.1.2 files, which
+must pass a check that they're signed, unmodified AMD driver files or they're discarded. Every file it adds to a game
+is recorded, and anything it replaces is backed up, so uninstalling restores the folder byte for byte. It never
+installs into Windows, launchers or the Xbox app.
+</details>
+
+<details>
+<summary><strong>Do I still need it on the ROG Xbox Ally X?</strong></summary>
+
+ASUS's Armoury Crate toggle covers games that ship FSR 3.1 or newer. FSR 4.1 Lite also covers games that only offer
+DLSS (like Control), XeSS or FSR 2 (like God of War).
+</details>
+
+<details>
+<summary><strong>Why does Windows ask for administrator permission?</strong></summary>
+
+Once per install, to trust the ROG Ally Life certificate the widget is signed with. A paid code-signing certificate
+would skip this; the widget is free, so it uses its own.
+</details>
+
+<details>
+<summary><strong>My game says "Restart the game to load it" after I restarted.</strong></summary>
+
+Press **Try another loader** if it appears, then restart again. Some games, often Game Pass ones, ignore OptiScaler's
+default loader name.
+</details>
+
+<details>
+<summary><strong>Something isn't working. How do I report it?</strong></summary>
+
+Email [contact@rogallylife.com](mailto:contact@rogallylife.com) with the game name and `helper.log`, found at
+`%LOCALAPPDATA%\Packages\ROGAllyLife.FSR4Lite_...\LocalCache\Local\RAL FSR Helper\helper.log`. The game's own
+`OptiScaler.log`, next to its exe, helps too.
+</details>
+
+## Credits
+
+FSR 4.1 Lite is the front end. The upscaling is done by **[OptiScaler](https://github.com/optiscaler/OptiScaler)**, the
+free, open-source tool created by **cdozdil** and the OptiScaler contributors, released under GPL-3.0. The widget
+downloads their official [nightly builds](https://github.com/optiscaler/OptiScaler-nightly) unmodified. If FSR 4.1 Lite
+helps you, please consider [supporting the OptiScaler developer](https://github.com/sponsors/cdozdil).
+
+FSR 4 is by AMD. Thanks to **TheRazerMD** for sharing the FSR 4.1.2 Lite driver files, and to the OptiScaler community
+for the [Compatibility List](https://github.com/optiscaler/OptiScaler/wiki/Compatibility-List) shown on game cards.
+
+<p align="center">
+  <strong>FSR 4.1 Lite is free and always will be.</strong><br />
+  If it saves you time, you can <a href="https://ko-fi.com/rogallylife">support ROG Ally Life on Ko-fi</a>.<br /><br />
+  <a href="https://rogallylife.com">rogallylife.com</a> · tested settings guides for the ROG Ally family
+</p>
+
+---
+
+## For developers
+
+<details>
+<summary><strong>How it works</strong></summary>
 
 The package holds two programs:
 
 - **RalFsr.Widget**, a UWP Game Bar widget. It is only the interface.
-- **RalFsr.Host**, a full-trust helper that starts with the widget and stops when it closes. It finds the game
-  under the overlay, downloads OptiScaler, and installs or removes files. It talks to the widget over an
-  in-package app service.
+- **RalFsr.Host**, a full-trust helper. It finds the game under the overlay, downloads OptiScaler and the FSR 4 files,
+  installs and removes files, and talks to the widget over an in-package app service. It runs a Windows message loop
+  and exits when Windows asks programs to close, so installers (such as Xbox Service's repair) never wait on it. With
+  notifications on, it also starts with Windows as a small watcher.
 
-When you install, the helper:
+When you install into a game, the helper:
 
-1. Finds the game window under Game Bar and the folder holding its exe. For Unreal Engine games that is
-   `<Project>\Binaries\Win64`, next to the `-Shipping.exe`.
-2. Blocks games with anti-cheat, and leaves alone any game that already has a manual OptiScaler install.
-   Detected: Easy Anti-Cheat, BattlEye, EA Javelin, Ricochet (Call of Duty), nProtect GameGuard, XIGNCODE3,
-   Anti-Cheat Expert (ACE), EQU8, PunkBuster and HoYoverse's anti-cheat from files in the game folder; plus Riot
-   Vanguard (Valorant, League of Legends), Valve Anti-Cheat (Counter-Strike 2, Dota 2), Blizzard (Overwatch 2)
-   and HoYoverse games by exe name, since those systems live outside the game folder. The lists are in
-   `src\Core\GameAnalyzer.cs`; detection is best effort, so new anti-cheat systems need adding as they appear.
-3. Copies the latest OptiScaler nightly (the v10 line, downloaded from OptiScaler's official
-   `optiscaler/OptiScaler-nightly` releases on GitHub, checked at most once a day)
-   into that folder. `OptiScaler.dll` is renamed to `dxgi.dll`, or to `winmm.dll` and so on if the game already
-   ships a file with that name.
-4. Copies the FSR 4.1.2 files you imported into the `OptiScaler` subfolder.
-5. Writes the settings that replace the in-game menu steps into `OptiScaler.ini`:
-   `Dx12Upscaler=ffx`, `Dx11Upscaler=ffx_12`, `VulkanUpscaler=ffx_12` (Vulkan through the DX12 bridge, where FSR 4.1.2
-   is listed first; OptiScaler's native Vulkan path lists FSR 3 first and would pick it), `Fsr4GpuSupport=4` (INT8 Lite),
-   `Fsr4Model=3` (INT8 Lite), OptiScaler frame generation off, and nothing on screen: no OptiScaler startup message
-   (`DisableSplash=true`) and no AMD FSR 4 watermark (`Fsr4EnableWatermark=false`).
-6. Records every file it added or replaced in `.ralfsr\manifest.json`, with backups of anything replaced.
-   **Uninstall from this game** uses that record to put the folder back exactly as it was.
+1. Finds the game window under Game Bar and the folder holding its exe (`<Project>\Binaries\Win64` or `WinGDK` for
+   Unreal Engine games). Launchers, the Xbox app and Windows apps are never treated as games.
+2. Blocks games with anti-cheat, and leaves alone games with a manual OptiScaler install.
+3. Copies the current OptiScaler nightly into that folder, with `OptiScaler.dll` renamed to `dxgi.dll` (or the next
+   free loader name).
+4. Copies the FSR 4.1.2 files (`amdxcffx64.dll`, `amdvkffx64.dll`) into the `OptiScaler` subfolder.
+5. Writes `OptiScaler.ini`: `Dx12Upscaler=ffx`, `Dx11Upscaler=ffx_12`, `VulkanUpscaler=ffx_12` (Vulkan through the
+   DX12 bridge, where FSR 4.1.2 is listed first), `Fsr4GpuSupport=4` and `Fsr4Model=3` (INT8 Lite), frame generation
+   off, `DisableSplash=true` and `Fsr4EnableWatermark=false`. FSR 2 games also get `UseFsr2Dx11Inputs` or
+   `UseFsr2VulkanInputs` for their graphics API, and games with no upscaler files get `Fsr2Pattern` / `Fsr3Pattern`.
+6. Records every added or replaced file in `.ralfsr\manifest.json`, with backups, so Uninstall restores the folder
+   exactly.
 
-All of these values live in `src\Core\InstallConfig.cs`.
+Values live in `src\Core\InstallConfig.cs`; anti-cheat lists in `src\Core\GameAnalyzer.cs`.
 
-### Game compatibility notes
+**Status badge.** The helper reads the running game's loaded DLLs and `OptiScaler.log` (Info level, fresh each
+session). Green means the widget's own FSR 4.1.2 file is loaded and the log shows the Lite model hooked. The render
+resolution comes from Streamline's `color_in extents` when present (the size really handed over), otherwise from
+OptiScaler's feature setup.
 
-Each game card shows one line from OptiScaler's community
-[Compatibility List](https://github.com/optiscaler/OptiScaler/wiki/Compatibility-List) when the game is in it: the
-upscalers that work, for example "Works with: DLSS, FSR3.1, XeSS", or a warning for the few games marked as not
-working. The widget downloads the list's raw Markdown once a day and caches it (`compat-list.md`), matching games by
-name with edition words removed, so "Ghost of Tsushima" finds the DIRECTOR'S CUT entry but "Control" never matches
-"CONTROL Resonant".
+**Updates.** OptiScaler: looked for when the widget opens and hourly, GitHub asked once a day. FSR 4 files: ETag
+check against ROG Ally Life's R2 bucket once a day. Compatibility list: raw wiki Markdown once a day. Game updates
+copy the new OptiScaler package over the old one, keep each game's loader name and never replace `OptiScaler.ini`.
 
-### Updating OptiScaler in installed games
+**Network access:** OptiScaler's GitHub releases, ROG Ally Life's R2 bucket (FSR 4 files), and OptiScaler's wiki
+(compatibility list). Nothing else, and no telemetry.
+</details>
 
-The widget looks for a newer OptiScaler nightly when it opens and hourly while it stays open; GitHub itself is only
-asked once a day. New builds download automatically, but games keep the build they were installed with until they're
-updated. With **Update games automatically** on (the default), every installed game that isn't running is updated
-in the background as soon as a new build downloads, and again every few minutes while the widget is open, so games that
-were running catch up once they're closed; one notification per build says how many games were updated. With it off,
-the Installed section shows **Update N games** and a notification says an update is ready. Turning it off is the
-safety valve if a nightly ever breaks a game. Updating copies the new package over the old files, keeps each game's
-loader name, and never replaces `OptiScaler.ini`, so each game keeps its own settings. Running games are skipped.
-Uninstall still restores the folder byte for byte.
+<details>
+<summary><strong>Building and releasing</strong></summary>
 
-### FSR 2 games
+GitHub builds, signs and packages the widget. Publish a release with a new tag (`v1.0.3`, and so on) and
+**FSR4Lite_x64.zip** is attached a few minutes later; progress and errors show in the Actions tab. Each build is
+signed with a fresh self-signed `CN=ROG Ally Life` certificate; updates install over older versions because Windows
+matches the publisher name.
 
-OptiScaler upgrades FSR 2 to FSR 4.1.2 Lite as well. At install the widget reads the running game's graphics API
-and sets what OptiScaler needs: `UseFsr2Dx11Inputs` for DX11 games and `UseFsr2VulkanInputs` for Vulkan games that
-ship an FSR 2 DLL. When no upscaler files are found at all (FSR 2 or 3 built into the exe), it turns on
-`Fsr2Pattern` and `Fsr3Pattern` so OptiScaler searches the exe; only those games load a little slower. FSR 1 can't
-be upgraded: it has no motion vectors or depth for FSR 4 to use. If a game offers DLSS or XeSS as well, those
-inputs are the most reliable choice.
+To build locally: Visual Studio 2022 with the Universal Windows Platform workload and the .NET 8 SDK, then
+`powershell -ExecutionPolicy Bypass -File .\scripts\build.ps1`. Output: `dist\FSR4Lite_x64.zip`.
 
-### Render resolution
+The build registers the Game Bar SDK's private interfaces in the package manifest from the restored SDK
+(`tools\GameBarProxyStub`). Without all of them, Game Bar shows "something isn't playing nice".
 
-Installed games get a **Render resolution** picker on the game card: Game decides (default), Native AA, Quality,
-Balanced or Performance. Anything but "Game decides" sets OptiScaler's upscale ratio override, so every
-render-resolution request from the game gets that ratio whichever preset the game asks for. It works for games
-that ask the upscaler for their render resolution. The choice is saved per game and applies from the next launch.
+Logs: `widget.log` in `%LOCALAPPDATA%\Packages\ROGAllyLife.FSR4Lite_<id>\LocalState`, and `helper.log` in
+`...\LocalCache\Local\RAL FSR Helper`.
+</details>
 
-Some games only apply their upscaler preset after their display resolution changes. Forza Horizon 6 is one: after
-launch it kept the full-size upscaler it created at startup ("color_in extents (0,0,1600,900)", ratio 1) whichever
-preset was picked, then upscaled properly once the resolution was switched to 1080p and back to 900p. The widget reads
-the size a game really hands over (Streamline's color_in extents when present) and, when a game renders at full
-resolution, suggests changing the resolution once and back.
-
-### Automatic fixes
-
-- **Stuck at full resolution:** if a game on "Game decides" renders at its display resolution (OptiScaler's log
-  shows render size equal to display size), FSR 4 isn't upscaling. The widget switches that game to Quality (1.5x)
-  once and says so on the card. An explicit choice in the picker, including Native AA, is never overridden.
-- **FSR 3 instead of FSR 4:** if the game's upscaler started but no FSR 4 file loaded, the badge says FSR 3 is
-  running and how to fix it.
-- The card shows the live render resolution, e.g. "Rendering 1280x720 → 1920x1080".
-
-### Is it active?
-
-The game card has a live status badge, refreshed every 2 seconds while the widget is open. The helper reads which
-DLLs the running game has loaded:
-
-- **Amber, "Restart the game":** installed, but the game started before the install, so OptiScaler isn't loaded.
-- **Amber, "Turn on FSR in the game's settings":** OptiScaler is loaded, but no FSR 4 library yet.
-- **Green, "FSR 4.1 Lite active (DX12 / Vulkan)":** the FSR 4.1.2 file from the game's `OptiScaler` folder is
-  loaded, and OptiScaler's log shows the Lite model being hooked. "Lite loaded" means the file is loaded but the log
-  hasn't confirmed it yet.
-- **Amber, "running, but not Lite":** FSR 4 came from another copy of the file, usually the AMD driver's own, which
-  has no Lite model. OptiScaler uses a copy that's already in memory before its own.
-
-Installs turn on OptiScaler's Info-level log (`OptiScaler.log` next to the game exe, fresh each session) so the
-widget can read which file was loaded and which model was hooked.
-
-Folder scans are cached for 2 minutes so the polling stays light on battery; only the loaded-DLL check runs each time.
-
-### Notifications
-
-With **Notify me when FSR 4.1 Lite is active** on (the default), a Windows notification confirms each game launch,
-for example "FSR 4.1 Lite active / Forza Horizon 6 · DX12 / Rendering 1280x720 → 1920x1080". If FSR 4.1 Lite isn't
-running (FSR 3 fallback, or the AMD driver's own file loaded), the notification says so and how to fix it.
-
-A small watcher does this in the background: the helper starts with Windows (startup task "FSR 4.1 Lite
-notifications") and, after the widget closes, keeps watching instead of exiting. Every 5 seconds it checks whether a
-game with FSR 4.1 Lite installed is running, then reads that game's loaded DLLs and OptiScaler.log. Turning the
-switch off stops the watcher and removes it from startup.
-
-Windows 11 turns on Do not disturb during fullscreen games and holds notifications until you exit. To see them in
-game, add **FSR 4.1 Lite by ROG Ally Life** under Settings > System > Notifications > Set priority notifications.
-
-AMD's on-screen FSR 4 watermark (`Fsr4EnableWatermark`) is no longer offered in the widget; notifications replace it.
-
-### What the widget never does
-
-- AMD's FSR 4 files aren't bundled in the package. The helper downloads `amdxcffx64.dll` and `amdvkffx64.dll` from
-  the `fsr4/` folder of ROG Ally Life's R2 bucket through its r2.dev address (URL in `src\Core\Fsr4Download.cs`).
-  Every file must be a signed AMD driver file (WHQL or AMD signature, unmodified) and at least version 2.4.0.4370,
-  or the download is discarded. Once a day the helper compares the files' ETags with two HEAD requests and downloads
-  only when they changed, so uploading new DLLs over the old ones in `fsr4/` updates every user and every installed
-  game.
-- It doesn't bundle OptiScaler. It downloads it from OptiScaler's GitHub at runtime.
-- Network access: OptiScaler from its GitHub releases, and the FSR 4 files from ROG Ally Life's R2 bucket.
-
-## Credits
-
-FSR 4.1 Lite is a front end. The upscaling is done by **[OptiScaler](https://github.com/optiscaler/OptiScaler)**,
-the free, open-source tool created by **cdozdil** and the OptiScaler contributors, released under GPL-3.0. The
-widget downloads OptiScaler's official nightly builds from
-[optiscaler/OptiScaler-nightly](https://github.com/optiscaler/OptiScaler-nightly) unmodified, along with their
-licence files. If FSR 4.1 Lite helps you, consider
-[supporting the OptiScaler developer](https://github.com/sponsors/cdozdil).
-
-FSR 4 is by AMD. Thanks to **TheRazerMD** for sharing the FSR 4.1.2 Lite driver files, to the OptiScaler
-community for the [Compatibility List](https://github.com/optiscaler/OptiScaler/wiki/Compatibility-List) shown on
-game cards, and to everyone OptiScaler itself thanks in its README.
-
-FSR 4.1 Lite is free. If it saves you time, you can
-[support ROG Ally Life on Ko-fi](https://ko-fi.com/rogallylife).
-
-## Installing (users)
-
-1. Download **FSR4Lite_x64.zip** from the Releases page.
-2. Unzip it.
-3. Double-click **Install.cmd**. Windows asks for administrator permission once, to trust the ROG Ally Life
-   certificate.
-4. Open Game Bar (the **Armoury Crate** button on ROG handhelds, **Win + G** on others), open the Widgets menu and
-   pick **FSR 4.1 Lite**. Pin it to keep it handy.
-
-In the widget, OptiScaler and the FSR 4.1 Lite files download by themselves the first time it opens. Then launch
-a game, open the widget over it and press **Install FSR 4.1 Lite**. **Import files manually** only appears if that
-download fails (for example offline).
-
-To update, download the new zip and run its Install.cmd. Settings and installed games carry over.
-
-To uninstall, press **Uninstall FSR 4.1 Lite** at the bottom of the widget. It removes FSR 4.1 Lite from every game it
-installed into (restoring each folder), then opens the widget's page in Windows Settings for the final Uninstall
-click. Running games are skipped with a note to close them first. Uninstalling from Settings directly would leave
-OptiScaler in game folders, so use the button.
-
-## Publishing a release (you)
-
-GitHub builds the widget, so you don't need Visual Studio or git, and there's nothing to set up for signing.
-
-**Once:** create a public repository on github.com, click "uploading an existing file", and drag in everything
-inside this folder, including `.github`. Commit.
-
-**Each release:** Releases > Draft a new release > Choose a tag > type a new tag such as `v0.1.0` > Create new tag
-> Publish release. A few minutes later **FSR4Lite_x64.zip** is attached to the release. Share that link. Progress
-and any errors show in the Actions tab.
-
-To change code later, edit or upload the changed files in the browser, then publish a release with the next tag
-(`v0.1.1`, and so on).
-
-Signing is automatic: each build is signed with a fresh self-signed "CN=ROG Ally Life" certificate, and Install.cmd
-asks users to approve it. Updates still install over older versions, because Windows matches them by the publisher
-name, which never changes. Users just approve the prompt again for each new version.
-
-**Building on your own PC instead** (optional): install Visual Studio 2022 with the Universal Windows Platform
-development workload and the .NET 8 SDK, then run `powershell -ExecutionPolicy Bypass -File .\scripts\build.ps1`.
-The output is `dist\FSR4Lite_x64.zip`.
-
-## Current limitations
-
-- FSR 4.1.2 Lite costs more GPU time than FSR 3, so at the same preset it can be slower; the gain is image quality,
-  or a lower preset that still looks good.
-- Some games only apply their upscaler preset after a display resolution change (Forza Horizon 6 needed this once).
-  The card says when a game renders at full resolution.
-- Needs a game with FSR 2, FSR 3, DLSS or XeSS. FSR 1 can't be upgraded (no motion vectors or depth).
-- Single-player only. Anti-cheat detection is best effort.
-- Some Game Pass games need **Try another loader**; games in the protected WindowsApps folder can't be changed.
-- Tested on the ROG Ally X. Other AMD handhelds are classified by chip; RDNA 2 handhelds are experimental.
-- OptiScaler nightlies update automatically and can occasionally break a game.
-- Install asks for administrator permission once (self-signed certificate), and Windows holds notifications during
-  fullscreen games unless the widget is a priority app.
-
-## Device support
-
-Support is decided by GPU family (`src\Core\DeviceCheck.cs`), so any AMD Radeon handheld works:
-
-- **Supported (RDNA 3 / 3.5):** ROG Ally and ROG Ally X (Z1, Z1 Extreme), Legion Go, Legion Go 2, MSI Claw A8, and
-  GPD, AYANEO and OneXPlayer handhelds with Ryzen 7040/8040 or Ryzen AI 300 chips. Unknown Radeon chips are allowed
-  too, with a note.
-- **Supported with a note:** ROG Xbox Ally X / X20. ASUS ships FSR 4.1 in Armoury Crate SE, but its toggle only
-  upgrades games with FSR 3.1 or newer; the widget also covers games that only offer DLSS, XeSS or FSR 2.
-- **Experimental (RDNA 2):** ROG Xbox Ally (Z2 A), Legion Go S (Z2 Go), Steam Deck on Windows, Ryzen 6000 handhelds.
-  Lite runs, but it costs more GPU time than FSR 3 on these chips, so some games may run slower.
-- **Not supported:** handhelds without AMD graphics (Intel MSI Claw models). FSR 4's INT8 models need an AMD GPU.
-
-## If the widget won't open
-
-Errors while the widget starts are shown inside the widget and logged to `widget.log` in
-`%LOCALAPPDATA%\Packages\ROGAllyLife.FSR4Lite_<id>\LocalState`. The helper logs to
-`...\LocalCache\Local\RAL FSR Helper\helper.log` in the same package folder.
-
-The build registers the Game Bar SDK's private interfaces in the package manifest from the SDK it restores
-(`tools\GameBarProxyStub`). Without every one of them registered, Game Bar can't talk to the widget and shows
-"something isn't playing nice".
-
-## Tested so far
-
-Tested in a Linux build environment against fake game folders: folder detection (Unreal and flat layouts),
-anti-cheat blocking, proxy-name choice when a game ships its own `dxgi.dll`, ini editing, and a byte-for-byte
-restore on Remove. The helper's logic and the widget's C# 7.3 syntax were compile-checked.
-
-Not yet tested, because it needs Windows: the UWP build itself, Game Bar registration, the helper/widget
-connection, foreground game detection, the live status badge (loaded-DLL check), the launcher readers (Epic, GOG, Ubisoft, Xbox) and the signature check.
-The first build and a run on an Ally will show whether anything needs fixing.
-
-## Layout
+<details>
+<summary><strong>Project layout</strong></summary>
 
 ```
 RALFsr4Lite.sln
-.github\workflows\release.yml   GitHub build: publish a v* release, get the zip
-scripts\build.ps1              build, sign and zip a release (GitHub runs this)
-src\Installer\                 user installer, copied into the release zip as Install.cmd
-tools\GameBarProxyStub\        build step: registers the Game Bar SDK's interfaces in the manifest
-src\Core\                    install engine (shared, no UI)
-src\RalFsr.Host\             full-trust helper: app service, game detection, commands
-src\RalFsr.Widget\           Game Bar widget (UWP)
+.github\workflows\release.yml   GitHub build: publish a release, get the zip
+scripts\build.ps1               build, sign and zip a release
+src\Installer\                  user installer, copied into the zip as Install.cmd
+tools\GameBarProxyStub\         registers the Game Bar SDK's interfaces in the manifest
+src\Core\                       install engine (no UI)
+src\RalFsr.Host\                full-trust helper: app service, detection, downloads, updates
+src\RalFsr.Widget\              Game Bar widget (UWP)
 ```
+</details>
