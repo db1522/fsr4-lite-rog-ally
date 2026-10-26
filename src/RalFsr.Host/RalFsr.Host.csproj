@@ -22,6 +22,9 @@
     <IncludeNativeLibrariesForSelfExtract>true</IncludeNativeLibrariesForSelfExtract>
     <EnableCompressionInSingleFile>true</EnableCompressionInSingleFile>
     <EnableWindowsTargeting>true</EnableWindowsTargeting>
+    <!-- Only for Application.Run: a real message loop keeps any hidden window the helper owns responsive, so it can
+         never stall Windows when it broadcasts to every window (driver installs, settings changes). -->
+    <UseWindowsForms>true</UseWindowsForms>
   </PropertyGroup>
 
   <ItemGroup>

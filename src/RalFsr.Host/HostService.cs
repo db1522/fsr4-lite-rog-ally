@@ -387,6 +387,11 @@ public sealed class HostService
         GameScan? scan;
         lock (_seen) _seen.TryGetValue(exeDir, out scan);
         if (scan is null) return Fail("Open the widget over the game again, then install.");
+
+        // Last line of defence: never put OptiScaler next to a launcher or a Microsoft app (the Xbox app broke when it
+        // was treated as a game on the ROG Xbox Ally X).
+        if (ForegroundGame.IsProtectedAppPath(exeDir) || exeDir.StartsWith(Environment.GetFolderPath(Environment.SpecialFolder.Windows), StringComparison.OrdinalIgnoreCase))
+            return Fail("That's a Windows or Xbox app, not a game, so FSR 4.1 Lite won't install there.");
         if (scan.State is not (GameState.Ready or GameState.NoUpscalerFound)) return Fail(StateText(scan));
 
         Installer.Install(scan, _opti, fsr4, _settings);

@@ -37,9 +37,10 @@ public sealed class GameWatcher
         Log.Info("Game watcher started");
         while (keepRunning(this))
         {
-            try { Tick(); }
+            // Scans run on the thread pool, never on the message-loop thread, so the loop always answers Windows.
+            try { await Task.Run(Tick).ConfigureAwait(false); }
             catch (Exception ex) { Log.Warn($"Watcher tick failed: {ex.Message}"); }
-            await Task.Delay(Interval);
+            await Task.Delay(Interval).ConfigureAwait(false);
         }
         Log.Info("Game watcher stopped");
     }

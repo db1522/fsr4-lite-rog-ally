@@ -26,11 +26,49 @@ internal static class Program
     /// <summary>After the widget closes with notifications off, keep watching only while a game runs.</summary>
     private static readonly TimeSpan WatchAfterLastGame = TimeSpan.FromMinutes(2);
 
-    private static async Task Main(string[] args)
+    /// <summary>
+    /// Runs the helper on a thread with a Windows message loop. Windows components the helper uses (the app service
+    /// connection, notifications) can create hidden windows, and Windows sends some messages to every window and waits
+    /// for an answer: device and driver installs, settings changes. A helper that never pumped messages showed up as
+    /// "RalFsr.Host.exe stopped interacting with Windows", and on the ROG Xbox Ally X that stalled the Xbox Service
+    /// controller driver install (error 1722), which stopped the Xbox app opening.
+    /// </summary>
+    [STAThread]
+    private static void Main(string[] args)
     {
         AppPaths.Ensure();
-        if (args.Contains("--widget", StringComparer.OrdinalIgnoreCase)) await RunForWidgetAsync();
-        else await RunWatcherOnlyAsync();
+        System.Windows.Forms.Application.SetHighDpiMode(System.Windows.Forms.HighDpiMode.SystemAware);
+        var loop = new System.Windows.Forms.ApplicationContext();
+        var context = new System.Windows.Forms.WindowsFormsSynchronizationContext();
+        SynchronizationContext.SetSynchronizationContext(context);
+
+        context.Post(async _ =>
+        {
+            try
+            {
+                if (args.Contains("--widget", StringComparer.OrdinalIgnoreCase)) await RunForWidgetAsync();
+                else await RunWatcherOnlyAsync();
+            }
+            catch (Exception ex)
+            {
+                Log.Error("Helper stopped with an error", ex);
+            }
+            finally
+            {
+                loop.ExitThread();
+            }
+        }, null);
+
+        // When Windows asks programs to close (Restart Manager during an install such as Xbox Service's repair, sign-out,
+        // shutdown), exit straight away. The helper has nothing to save, and staying put is what made the Xbox Service
+        // installer time out ("HangType: Quiesce"). It starts again the next time the widget opens.
+        Microsoft.Win32.SystemEvents.SessionEnding += (_, e) =>
+        {
+            Log.Info($"Windows asked the helper to close ({e.Reason}); exiting");
+            Environment.Exit(0);
+        };
+
+        System.Windows.Forms.Application.Run(loop); // pumps messages until the helper is done
     }
 
     /// <summary>Started at sign-in: watch games for notifications, unless they're turned off.</summary>
@@ -164,11 +202,27 @@ internal static class Program
     private static void StopOtherHelpers()
     {
         var self = Environment.ProcessId;
+        DateTime myStart;
+        try { using var me = Process.GetCurrentProcess(); myStart = me.StartTime; }
+        catch { myStart = DateTime.Now; }
+
         foreach (var other in Process.GetProcessesByName(Path.GetFileNameWithoutExtension(Environment.ProcessPath ?? "RalFsr.Host")))
         {
             using (other)
             {
                 if (other.Id == self) continue;
+
+                // Only close helpers that really are older. If two start in the same moment, they'd otherwise close
+                // each other; the one with the lower process id steps aside instead.
+                DateTime otherStart;
+                try { otherStart = other.StartTime; } catch { otherStart = DateTime.MinValue; }
+                var sameMoment = Math.Abs((otherStart - myStart).TotalSeconds) < 2;
+                if (otherStart > myStart || (sameMoment && other.Id > self))
+                {
+                    Log.Info($"A newer helper is starting (pid {other.Id}); this one exits");
+                    Environment.Exit(0);
+                }
+
                 try
                 {
                     Log.Info($"Closing an older helper (pid {other.Id})");

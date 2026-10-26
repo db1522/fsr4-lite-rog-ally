@@ -12,7 +12,18 @@ namespace RalFsr.Widget
     {
         private static TaskCompletionSource<bool> _connected;
 
-        public static async Task<bool> EnsureConnectedAsync()
+        /// <summary>The launch in progress, shared by every caller, so the helper is only ever started once at a time.</summary>
+        private static Task<bool> _launching;
+
+        public static Task<bool> EnsureConnectedAsync()
+        {
+            if (App.Connection != null) return Task.FromResult(true);
+            if (_launching != null && !_launching.IsCompleted) return _launching;
+            _launching = LaunchAsync();
+            return _launching;
+        }
+
+        private static async Task<bool> LaunchAsync()
         {
             if (App.Connection != null) return true;
 

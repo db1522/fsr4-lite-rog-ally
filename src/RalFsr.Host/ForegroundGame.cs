@@ -19,7 +19,32 @@ public static class ForegroundGame
         "SearchHost.exe", "SearchApp.exe", "TextInputHost.exe", "LockApp.exe", "SystemSettings.exe",
         "RalFsr.Host.exe", "RalFsr.Widget.exe", "ArmouryCrateSE.exe", "ArmouryCrate.exe", "steamwebhelper.exe",
         "Taskmgr.exe", "dwm.exe",
+
+        // Launchers and store apps: never games, and OptiScaler must never be installed next to them.
+        // The Xbox app can be the fullscreen window on the ROG Xbox Ally X (full screen experience).
+        "XboxPcApp.exe", "XboxApp.exe", "Xbox.exe", "XboxPcAppFT.exe", "GamingServices.exe", "GameBarPresenceWriter.exe",
+        "steam.exe", "EpicGamesLauncher.exe", "GalaxyClient.exe", "upc.exe", "UbisoftConnect.exe", "EADesktop.exe",
+        "EABackgroundService.exe", "Battle.net.exe", "Agent.exe", "RiotClientServices.exe", "Playnite.DesktopApp.exe",
+        "Playnite.FullscreenApp.exe", "LegionSpace.exe", "LegionGo.exe", "MSI Center M.exe", "HandheldCompanion.exe",
+        "ArmouryCrateSESvc.exe", "msedge.exe", "chrome.exe", "firefox.exe", "Discord.exe",
     };
+
+    /// <summary>
+    /// Microsoft's own app packages under WindowsApps: the Xbox app (Microsoft.GamingApp), Game Bar, Gaming Services,
+    /// the Store and other system apps. Never games. Matched by package name, because Microsoft's Game Pass games
+    /// (Forza Motorsport, Forza Horizon, Halo) also install under WindowsApps\Microsoft.* and must stay allowed.
+    /// </summary>
+    private static readonly string[] ProtectedPackages =
+    {
+        "Microsoft.GamingApp_", "Microsoft.XboxApp_", "Microsoft.XboxGamingOverlay_", "Microsoft.GamingServices_",
+        "Microsoft.Xbox.TCUI_", "Microsoft.XboxIdentityProvider_", "Microsoft.XboxSpeechToTextOverlay_",
+        "Microsoft.XboxGameCallableUI_", "Microsoft.WindowsStore_", "Microsoft.StorePurchaseApp_",
+        "Microsoft.MicrosoftEdge", "Microsoft.Windows", "Microsoft.UI.", "Microsoft.VCLibs", "Microsoft.NET.",
+        "MicrosoftCorporationII.", "MicrosoftWindows.",
+    };
+
+    public static bool IsProtectedAppPath(string path) =>
+        ProtectedPackages.Any(p => path.Contains(@"\WindowsApps\" + p, StringComparison.OrdinalIgnoreCase));
 
     public static Window? Find()
     {
@@ -36,6 +61,7 @@ public static class ForegroundGame
             var exe = ProcessPath((int)pid);
             if (exe is null) return true;
             if (SkipExes.Contains(Path.GetFileName(exe))) return true;
+            if (IsProtectedAppPath(exe)) return true;
             if (exe.StartsWith(windowsDir, StringComparison.OrdinalIgnoreCase)) return true;
 
             found = new Window((int)pid, exe, Title(hwnd));
