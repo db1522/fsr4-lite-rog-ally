@@ -217,6 +217,11 @@ namespace RalFsr.Widget
             var overrideNote = Json.Str(game, "overrideNote"); // full-resolution note wins over the status text
             if (!string.IsNullOrEmpty(overrideNote)) GameStatus.Text = overrideNote;
             RenderCompat(Json.Obj(game, "compat"));
+
+            // Which OptiScaler build this game has, so it's clear whether "Update" did its job.
+            var optiBuild = Json.Str(game, "optiBuild");
+            if (_gameInstalledFromState(game) && !string.IsNullOrEmpty(optiBuild) && string.IsNullOrEmpty(overrideNote))
+                GameStatus.Text += " Using " + optiBuild + (Json.Bool(game, "optiOutdated") ? ", and a newer build is available." : ".");
             GameActions.Visibility = Visibility.Visible;
 
             RenderScaleOptions(game);
@@ -304,6 +309,8 @@ namespace RalFsr.Widget
             ActiveBadge.Visibility = Visibility.Visible;
         }
 
+        private static bool _gameInstalledFromState(JsonObject game) => Json.Bool(game, "installed");
+
         private void RenderCompat(JsonObject compat)
         {
             var text = Json.Str(compat, "text");
@@ -340,6 +347,16 @@ namespace RalFsr.Widget
             InstalledList.Visibility = _installedExpanded ? Visibility.Visible : Visibility.Collapsed;
         }
 
+        /// <summary>"OptiScaler v10.0.0-pre1 (Oct 25, 2026) · update available", or that it's running.</summary>
+        private static string InstalledNote(JsonObject o)
+        {
+            var build = Json.Str(o, "build");
+            var note = string.IsNullOrEmpty(build) ? "FSR 4.1 Lite installed" : build;
+            if (Json.Bool(o, "outdated")) note += " \u00B7 update available";
+            if (Json.Bool(o, "running")) note += " \u00B7 running now";
+            return note;
+        }
+
         private void RenderInstalled(JsonArray installed)
         {
             var rows = new List<InstalledRow>();
@@ -351,7 +368,7 @@ namespace RalFsr.Widget
                 {
                     Name = Json.Str(o, "name"),
                     ExeDir = Json.Str(o, "exeDir"),
-                    Note = Json.Bool(o, "running") ? "Running now, close it to uninstall" : "FSR 4.1 Lite installed",
+                    Note = InstalledNote(o),
                 });
             }
             InstalledList.ItemsSource = rows;

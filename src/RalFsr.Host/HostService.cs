@@ -135,6 +135,7 @@ public sealed class HostService
                 exeDir = dir,
                 running = ForegroundGame.AnyRunningFrom(dir),
                 outdated = IsOutdated(m),
+                build = OptiPackage.Label(m?.OptiBuild ?? ""),
             };
         }).OrderBy(i => i.name, StringComparer.OrdinalIgnoreCase).ToList();
         var updatesAvailable = installed.Count(i => i.outdated);
@@ -255,6 +256,8 @@ public sealed class HostService
                     : $"Rendering {live.RenderWidth} → {live.DisplayWidth} pixels wide")
                 : "",
             renderScales = InstallConfig.RenderScales.Select(r => new { key = r.Key, label = r.Label }).ToList(),
+            optiBuild = manifest is null ? "" : OptiPackage.Label(manifest.OptiBuild),
+            optiOutdated = IsOutdated(manifest),
             canSwitchLoader = live.Stage == LoadedModules.Stage.NotLoaded,
             loaderName = manifest?.ProxyName ?? "",
             activeStage = live.Stage.ToString(),
@@ -349,7 +352,7 @@ public sealed class HostService
                 "OptiScaler to search for it (that game loads a little slower). Install, restart the game and turn on FSR " +
                 $"in its settings. FSR 1 can't be upgraded.{xboxNote}",
             GameState.AntiCheat => $"{s.AntiCheat} found. Injecting OptiScaler could get your account banned, so installs are blocked.",
-            GameState.Installed => "FSR 4.1 Lite is installed. Turn on FSR in the game's settings.",
+            GameState.Installed => "FSR 4.1 Lite is installed.",
             GameState.ManualOptiScaler => "OptiScaler is already here from a manual install. Remove it by hand to manage this game here.",
             _ => "Couldn't find this game's files.",
         };

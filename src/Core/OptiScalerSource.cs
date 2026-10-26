@@ -4,9 +4,23 @@ namespace RalFsrHelper.Core;
 
 public sealed record OptiPackage(string Build, string Dir)
 {
-    /// <summary>"OptiScaler v0.10.0-pre1_20261024" style label for the widget.</summary>
-    public string DisplayName =>
-        Build.StartsWith("OptiScaler_", StringComparison.OrdinalIgnoreCase) ? "OptiScaler " + Build["OptiScaler_".Length..] : Build;
+    /// <summary>"OptiScaler v10.0.0-pre1 (Oct 25, 2026)" style label for the widget.</summary>
+    public string DisplayName => Label(Build);
+
+    /// <summary>
+    /// Readable label for a build name like "OptiScaler_v10.0.0-pre1_20261025". Nightlies share a version number, so
+    /// the build date is what tells them apart and is shown in full.
+    /// </summary>
+    public static string Label(string build)
+    {
+        if (string.IsNullOrWhiteSpace(build)) return "";
+        var name = build.StartsWith("OptiScaler_", StringComparison.OrdinalIgnoreCase) ? build["OptiScaler_".Length..] : build;
+        var cut = name.LastIndexOf('_');
+        if (cut > 0 && DateTime.TryParseExact(name[(cut + 1)..], "yyyyMMdd", System.Globalization.CultureInfo.InvariantCulture,
+                System.Globalization.DateTimeStyles.None, out var date))
+            return $"OptiScaler {name[..cut]} ({date.ToString("MMM d, yyyy", System.Globalization.CultureInfo.InvariantCulture)})";
+        return "OptiScaler " + name;
+    }
 }
 
 /// <summary>
