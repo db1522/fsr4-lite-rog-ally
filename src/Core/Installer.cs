@@ -199,6 +199,37 @@ public static class Installer
         return next;
     }
 
+    /// <summary>
+    /// Brings an installed game up to a newer OptiScaler build: copies the package's files over the old ones, keeping the
+    /// game's loader name. OptiScaler.ini is never replaced, so the game keeps its settings (render resolution, loader,
+    /// FSR 2 inputs); the FSR 4 files aren't part of the package and stay as they are. Files the game shipped itself are
+    /// backed up first, exactly like a fresh install, so Uninstall still restores the folder byte for byte.
+    /// The game must not be running. Returns false when it was already on this build.
+    /// </summary>
+    public static bool UpdateOpti(string exeDir, OptiPackage opti)
+    {
+        var manifest = InstallManifest.TryLoad(exeDir) ?? throw new InvalidOperationException("FSR 4.1 Lite isn't installed here.");
+        if (manifest.OptiBuild.Equals(opti.Build, StringComparison.OrdinalIgnoreCase)) return false;
+
+        foreach (var source in Directory.GetFiles(opti.Dir, "*", SearchOption.AllDirectories))
+        {
+            var rel = Path.GetRelativePath(opti.Dir, source);
+            var name = Path.GetFileName(rel);
+            if (InstallConfig.SkipPackageFiles.Contains(name, StringComparer.OrdinalIgnoreCase)) continue;
+            if (name.StartsWith("!!", StringComparison.Ordinal)) continue;
+            if (rel.Equals("OptiScaler.ini", StringComparison.OrdinalIgnoreCase)) continue; // keep the game's settings
+
+            if (rel.Equals("OptiScaler.dll", StringComparison.OrdinalIgnoreCase)) rel = manifest.ProxyName;
+            PlaceFile(source, exeDir, rel, manifest);
+        }
+
+        var previous = manifest.OptiBuild;
+        manifest.OptiBuild = opti.Build;
+        manifest.Save(exeDir);
+        Log.Info($"Updated OptiScaler in {exeDir}: {previous} -> {opti.Build}");
+        return true;
+    }
+
     /// <summary>First proxy name that doesn't clash with a file the game already ships.</summary>
     public static string PickProxyName(string exeDir) =>
         InstallConfig.ProxyNames.FirstOrDefault(n => !File.Exists(Path.Combine(exeDir, n)))

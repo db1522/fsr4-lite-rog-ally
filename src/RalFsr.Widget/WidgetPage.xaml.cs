@@ -172,6 +172,7 @@ namespace RalFsr.Widget
             var watchGame = game != null && Json.Bool(game, "installed");
             if (Json.Bool(opti, "busy") || fsr4Busy || !fsr4Ready || watchGame) _poll.Start(); else _poll.Stop();
             RenderInstalled(Json.Arr(state, "installed"));
+            RenderUpdates(Json.Num(state, "updatesAvailable"));
         }
 
         private void RenderGame(JsonObject game)
@@ -188,6 +189,7 @@ namespace RalFsr.Widget
                 ResolutionText.Visibility = Visibility.Collapsed;
                 AutoFixBanner.Visibility = Visibility.Collapsed;
                 SwitchLoaderButton.Visibility = Visibility.Collapsed;
+                CompatText.Visibility = Visibility.Collapsed;
                 return;
             }
 
@@ -198,9 +200,6 @@ namespace RalFsr.Widget
             var resolution = Json.Str(game, "resolutionText");
             ResolutionText.Text = resolution;
             ResolutionText.Visibility = string.IsNullOrEmpty(resolution) ? Visibility.Collapsed : Visibility.Visible;
-
-            var overrideNote = Json.Str(game, "overrideNote");
-            if (!string.IsNullOrEmpty(overrideNote)) GameStatus.Text = overrideNote;
 
             var autoFix = Json.Str(game, "autoFix");
             if (!string.IsNullOrEmpty(autoFix))
@@ -215,6 +214,9 @@ namespace RalFsr.Widget
             GameName.Text = Json.Str(game, "name");
             GameMeta.Text = Json.Str(game, "source") + "  |  " + Json.Str(game, "exeName");
             GameStatus.Text = Json.Str(game, "stateText");
+            var overrideNote = Json.Str(game, "overrideNote"); // full-resolution note wins over the status text
+            if (!string.IsNullOrEmpty(overrideNote)) GameStatus.Text = overrideNote;
+            RenderCompat(Json.Obj(game, "compat"));
             GameActions.Visibility = Visibility.Visible;
 
             RenderScaleOptions(game);
@@ -300,6 +302,29 @@ namespace RalFsr.Widget
             ActiveBadge.Background = new SolidColorBrush(Color.FromArgb(0x26, color.R, color.G, color.B));
             ActiveText.Text = text;
             ActiveBadge.Visibility = Visibility.Visible;
+        }
+
+        private void RenderCompat(JsonObject compat)
+        {
+            var text = Json.Str(compat, "text");
+            var warn = Json.Str(compat, "status") == "NotWorking" || Json.Str(compat, "status") == "Mixed";
+            CompatText.Text = text;
+            CompatText.Foreground = (Brush)Application.Current.Resources[warn ? "WarnBrush" : "MutedBrush"];
+            CompatText.Visibility = string.IsNullOrEmpty(text) ? Visibility.Collapsed : Visibility.Visible;
+        }
+
+        private void RenderUpdates(double count)
+        {
+            var n = (int)count;
+            UpdateAllButton.Content = n == 1 ? "Update 1 game to the new OptiScaler" : "Update " + n + " games to the new OptiScaler";
+            UpdateAllButton.Visibility = n > 0 ? Visibility.Visible : Visibility.Collapsed;
+        }
+
+        private async void UpdateAll_Click(object sender, RoutedEventArgs e)
+        {
+            UpdateAllButton.IsEnabled = false;
+            try { await RunCommandAsync("updateAll"); }
+            finally { UpdateAllButton.IsEnabled = true; }
         }
 
         private void InstalledToggle_Click(object sender, RoutedEventArgs e)

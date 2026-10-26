@@ -15,6 +15,7 @@ public sealed class HostService
     private readonly DeviceInfo _device = DeviceCheck.Detect();
     private readonly AppSettings _settings = AppSettings.Load();
     private OptiPackage? _opti = OptiScalerSource.Cached();
+    private bool _compatRefreshStarted;
     private Task? _optiTask;
     private string _optiStatus = "";
     private DateTime _optiStartedAt = DateTime.MinValue;
@@ -59,6 +60,7 @@ public sealed class HostService
                 "notify" => Notify(Arg(args, "on") == "true"),
                 "renderScale" => RenderScale(Arg(args, "exeDir") ?? "", Arg(args, "value") ?? "game"),
                 "switchLoader" => SwitchLoader(Arg(args, "exeDir") ?? ""),
+                "updateAll" => UpdateAll(),
                 _ => Fail($"Unknown command: {cmd}"),
             };
             return Task.FromResult(JsonSerializer.Serialize(result, Json));
@@ -85,6 +87,13 @@ public sealed class HostService
     {
         // Retry a failed OptiScaler download at most once a minute (GitHub limits unauthenticated requests).
         if (_opti is null && _optiTask is null && DateTime.Now - _optiStartedAt > RetryEvery) Prepare();
+
+        // OptiScaler's community compatibility list: refreshed at most once a day, in the background.
+        if (!_compatRefreshStarted)
+        {
+            _compatRefreshStarted = true;
+            _ = Task.Run(CompatList.RefreshAsync);
+        }
 
         // OptiScaler can write its own settings back to OptiScaler.ini when a game closes. Re-apply the widget's
         // overlay and watermark choices to every installed game that isn't running, once per widget session,
@@ -120,8 +129,15 @@ public sealed class HostService
         var installed = InstallRegistry.Load().Select(dir =>
         {
             var m = InstallManifest.TryLoad(dir);
-            return new { name = m?.GameName ?? Path.GetFileName(dir), exeDir = dir, running = ForegroundGame.AnyRunningFrom(dir) };
+            return new
+            {
+                name = m?.GameName ?? Path.GetFileName(dir),
+                exeDir = dir,
+                running = ForegroundGame.AnyRunningFrom(dir),
+                outdated = IsOutdated(m),
+            };
         }).OrderBy(i => i.name, StringComparer.OrdinalIgnoreCase).ToList();
+        var updatesAvailable = installed.Count(i => i.outdated);
 
         return new
         {
@@ -136,6 +152,7 @@ public sealed class HostService
                 message = _device.Message,
                 gameBarHint = _device.GameBarHint,
             },
+            updatesAvailable,
             opti = new
             {
                 ready = _opti is not null,
@@ -211,10 +228,17 @@ public sealed class HostService
               "resolution, try the game's other upscaler options (FSR, DLSS, XeSS)."
             : "";
 
+        var compat = CompatList.Find(scan.Game.Name);
+
         return new
         {
             name = scan.Game.Name,
             overrideNote,
+            compat = compat is null ? null : new
+            {
+                status = compat.Status.ToString(),
+                text = CompatText(compat),
+            },
             source = scan.Game.SourceLabel,
             exeDir,
             exeName = Path.GetFileName(exe),
@@ -303,6 +327,15 @@ public sealed class HostService
               " in its graphics settings: if it also has an FSR option, that one is built into the game and may not switch to FSR 4.1 Lite."
             : "";
 
+    /// <summary>One line on the game card: the upscaler inputs that work, or a warning for "not working" entries.</summary>
+    private static string CompatText(CompatEntry e) => e.Status switch
+    {
+        CompatStatus.NotWorking => "OptiScaler community: not working in this game.",
+        CompatStatus.Mixed => "OptiScaler community: mixed reports for this game.",
+        _ when e.Inputs.Count > 0 => "Works with: " + string.Join(", ", e.Inputs),
+        _ => "",
+    };
+
     private static string StateText(GameScan s)
     {
         var xboxNote = s.Game.Source == GameSource.Xbox
@@ -336,7 +369,11 @@ public sealed class HostService
             try
             {
                 var pkg = await OptiScalerSource.EnsureLatestAsync(progress);
-                if (pkg is not null) _opti = pkg;
+                if (pkg is not null)
+                {
+                    _opti = pkg;
+                    NotifyUpdatesReady();
+                }
             }
             catch (Exception ex)
             {
@@ -544,6 +581,52 @@ public sealed class HostService
                 ? "Overlay on. Restart a game to see FPS and its render resolution."
                 : "Overlay off from the next game launch.",
         };
+    }
+
+    private bool IsOutdated(InstallManifest? m) =>
+        m is not null && _opti is not null && !m.OptiBuild.Equals(_opti.Build, StringComparison.OrdinalIgnoreCase);
+
+    /// <summary>Brings every installed game that isn't running up to the current OptiScaler build.</summary>
+    private object UpdateAll()
+    {
+        if (_opti is null) return Fail("OptiScaler is still downloading. Try again in a moment.");
+        int updated = 0, running = 0, failed = 0;
+        foreach (var dir in InstallRegistry.Load())
+        {
+            if (!IsOutdated(InstallManifest.TryLoad(dir))) continue;
+            if (ForegroundGame.AnyRunningFrom(dir)) { running++; continue; }
+            try
+            {
+                if (Installer.UpdateOpti(dir, _opti)) updated++;
+                Forget(dir);
+            }
+            catch (Exception ex)
+            {
+                failed++;
+                Log.Error($"Update failed for {dir}", ex);
+            }
+        }
+
+        var parts = new List<string>();
+        if (updated > 0) parts.Add($"Updated {Games(updated)} to {_opti.DisplayName}. Their settings are unchanged.");
+        if (running > 0) parts.Add($"Skipped {Games(running)} that {(running == 1 ? "is" : "are")} running: close {(running == 1 ? "it" : "them")} and update again.");
+        if (failed > 0) parts.Add($"{Games(failed)} couldn't be updated; the log has details.");
+        if (parts.Count == 0) parts.Add("Every game is already up to date.");
+        return new { ok = failed == 0, message = string.Join(" ", parts) };
+
+        static string Games(int n) => n == 1 ? "1 game" : $"{n} games";
+    }
+
+    /// <summary>One notification per new OptiScaler build when installed games are on an older one.</summary>
+    private void NotifyUpdatesReady()
+    {
+        if (_opti is null || _settings.LastUpdateNoticeBuild.Equals(_opti.Build, StringComparison.OrdinalIgnoreCase)) return;
+        var count = InstallRegistry.Load().Count(dir => IsOutdated(InstallManifest.TryLoad(dir)));
+        if (count == 0) return;
+        _settings.LastUpdateNoticeBuild = _opti.Build;
+        _settings.Save();
+        Toasts.Show("OptiScaler update ready",
+            $"{(count == 1 ? "1 game" : $"{count} games")} can use the new build. Open FSR 4.1 Lite and press Update.");
     }
 
     private object SwitchLoader(string exeDir)

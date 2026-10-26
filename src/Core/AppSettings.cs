@@ -16,6 +16,9 @@ public sealed class AppSettings
     /// <summary>A notification when FSR 4.1 Lite is confirmed active (or isn't running) in a game. Starts with Windows.</summary>
     public bool NotifyWhenActive { get; set; } = true;
 
+    /// <summary>The OptiScaler build the "updates ready" notification was last shown for, so it's shown once per build.</summary>
+    public string LastUpdateNoticeBuild { get; set; } = "";
+
     private static readonly JsonSerializerOptions Json = new() { WriteIndented = true };
 
     public static AppSettings Load()

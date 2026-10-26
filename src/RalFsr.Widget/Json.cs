@@ -17,6 +17,12 @@ namespace RalFsr.Widget
             return o != null && o.TryGetValue(key, out v) && v.ValueType == JsonValueType.Boolean && v.GetBoolean();
         }
 
+        public static double Num(JsonObject o, string key)
+        {
+            IJsonValue v;
+            return o != null && o.TryGetValue(key, out v) && v.ValueType == JsonValueType.Number ? v.GetNumber() : 0;
+        }
+
         public static JsonObject Obj(JsonObject o, string key)
         {
             IJsonValue v;

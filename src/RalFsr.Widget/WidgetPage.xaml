@@ -61,6 +61,9 @@
                         </StackPanel>
                     </Border>
                     <TextBlock x:Name="GameStatus" FontSize="14" TextWrapping="Wrap" />
+                    <!-- From OptiScaler's community Compatibility List: the upscalers that work in this game -->
+                    <TextBlock x:Name="CompatText" Visibility="Collapsed" FontSize="13" TextWrapping="Wrap"
+                               Foreground="{StaticResource MutedBrush}" />
 
                     <Button x:Name="SwitchLoaderButton" Style="{StaticResource QuietButton}" Content="Try another loader"
                             Visibility="Collapsed" Click="SwitchLoader_Click" />
@@ -120,6 +123,9 @@
                     <TextBlock x:Name="InstalledToggleText" Text="Installed in" FontFamily="{StaticResource DisplayFont}"
                                FontSize="17" FontWeight="SemiBold" />
                 </Button>
+                <!-- Shown when installed games are on an older OptiScaler build than the one downloaded -->
+                <Button x:Name="UpdateAllButton" Style="{StaticResource AccentButton}" Visibility="Collapsed"
+                        HorizontalAlignment="Stretch" Click="UpdateAll_Click" />
                 <ItemsControl x:Name="InstalledList" Visibility="Collapsed">
                     <ItemsControl.ItemTemplate>
                         <DataTemplate x:DataType="local:InstalledRow">
@@ -150,7 +156,7 @@
                     <TextBlock FontSize="13" TextWrapping="Wrap" Foreground="{StaticResource MutedBrush}"
                                Text="FSR 4.1 Lite installs and configures OptiScaler, the free, open-source upscaler tool created by cdozdil and the OptiScaler contributors (GPL-3.0). The widget downloads their official builds unmodified. All the upscaling work is theirs." />
                     <TextBlock FontSize="13" TextWrapping="Wrap" Foreground="{StaticResource MutedBrush}"
-                               Text="FSR 4 is by AMD. Thanks to TheRazerMD for sharing the FSR 4.1 Lite driver files." />
+                               Text="FSR 4 is by AMD. Thanks to TheRazerMD for sharing the FSR 4.1.2 Lite driver files, and to the OptiScaler community for the Compatibility List shown on game cards." />
                     <StackPanel Orientation="Horizontal" Spacing="4">
                         <HyperlinkButton Content="OptiScaler on GitHub" FontSize="13"
                                          NavigateUri="https://github.com/optiscaler/OptiScaler" />

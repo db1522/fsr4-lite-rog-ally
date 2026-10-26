@@ -44,6 +44,23 @@ When you install, the helper:
 
 All of these values live in `src\Core\InstallConfig.cs`.
 
+### Game compatibility notes
+
+Each game card shows one line from OptiScaler's community
+[Compatibility List](https://github.com/optiscaler/OptiScaler/wiki/Compatibility-List) when the game is in it: the
+upscalers that work, for example "Works with: DLSS, FSR3.1, XeSS", or a warning for the few games marked as not
+working. The widget downloads the list's raw Markdown once a day and caches it (`compat-list.md`), matching games by
+name with edition words removed, so "Ghost of Tsushima" finds the DIRECTOR'S CUT entry but "Control" never matches
+"CONTROL Resonant".
+
+### Updating OptiScaler in installed games
+
+New OptiScaler nightlies download automatically, but games keep the build they were installed with until they're
+updated. When installed games are on an older build, the Installed section shows **Update N games**, and a
+notification says so once per new build. Updating copies the new package over the old files, keeps each game's
+loader name, and never replaces `OptiScaler.ini`, so each game keeps its own settings. Running games are skipped.
+Uninstall still restores the folder byte for byte.
+
 ### FSR 2 games
 
 OptiScaler upgrades FSR 2 to FSR 4.1.2 Lite as well. At install the widget reads the running game's graphics API
@@ -129,8 +146,9 @@ widget downloads OptiScaler's official nightly builds from
 licence files. If FSR 4.1 Lite helps you, consider
 [supporting the OptiScaler developer](https://github.com/sponsors/cdozdil).
 
-FSR 4 is by AMD. Thanks to **TheRazerMD** for sharing the FSR 4.1.2 Lite driver files, and to everyone OptiScaler
-itself thanks in its README.
+FSR 4 is by AMD. Thanks to **TheRazerMD** for sharing the FSR 4.1.2 Lite driver files, to the OptiScaler
+community for the [Compatibility List](https://github.com/optiscaler/OptiScaler/wiki/Compatibility-List) shown on
+game cards, and to everyone OptiScaler itself thanks in its README.
 
 FSR 4.1 Lite is free. If it saves you time, you can
 [support ROG Ally Life on Ko-fi](https://ko-fi.com/rogallylife).
