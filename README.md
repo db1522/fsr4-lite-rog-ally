@@ -45,8 +45,9 @@ game, and pick its upscaler. That's it.
   the live render resolution, for example `Rendering 960x540 → 1920x1080`.
 - **Community compatibility at a glance.** Each game card shows which upscalers work in that game, from OptiScaler's
   community Compatibility List.
-- **Capcom RE Engine games handled.** Games that need REFramework for OptiScaler to work, like Monster Hunter Wilds,
-  Onimusha: Way of the Sword, PRAGMATA and Resident Evil 9 Requiem, get REFramework installed automatically too.
+- **Capcom RE Engine games handled.** Games that need REFramework for OptiScaler to work, like Resident Evil Requiem,
+  Monster Hunter Wilds, Dragon's Dogma 2, Onimusha: Way of the Sword and PRAGMATA, get REFramework installed
+  automatically too.
 - **Always up to date.** OptiScaler's newest build and the FSR 4.1.2 Lite files download by themselves, and your
   installed games update automatically, each keeping its own settings.
 - **Notifications.** A notification confirms FSR 4.1 Lite each time a game starts with it, or tells you what to fix.

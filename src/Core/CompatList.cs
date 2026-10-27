@@ -183,9 +183,27 @@ public static class CompatList
         return Regex.Replace(s, @"\s+", " ").Trim();
     }
 
-    /// <summary>Exact match key: letters and digits only, lowercased ("No Man’s Sky" and "No Man's Sky" match).</summary>
-    public static string Key(string name) =>
-        new string(name.ToLowerInvariant().Normalize(NormalizationForm.FormKD).Where(char.IsLetterOrDigit).ToArray());
+    /// <summary>
+    /// Exact match key: letters and digits only, lowercased ("No Man’s Sky" and "No Man's Sky" match), with Roman numerals
+    /// II to IX as numbers, so the list's "Dragon's Dogma II" matches Steam's "Dragon's Dogma 2". I and X stay as letters
+    /// (too many games use them as words).
+    /// </summary>
+    public static string Key(string name)
+    {
+        var s = Regex.Replace(name.ToLowerInvariant(), @"\b(ix|viii|vii|vi|iv|v|iii|ii)\b",
+            m => m.Value switch { "ii" => "2", "iii" => "3", "iv" => "4", "v" => "5", "vi" => "6", "vii" => "7", "viii" => "8", _ => "9" });
+        return new string(s.Normalize(NormalizationForm.FormKD).Where(char.IsLetterOrDigit).ToArray());
+    }
+
+    /// <summary>
+    /// Games that need REFramework even though their list entry doesn't say so in the table, by exe name. Dragon's Dogma 2's
+    /// entry only says "Check Wiki entry"; its wiki page says it requires REFramework.
+    /// </summary>
+    private static readonly HashSet<string> REFrameworkExes = new(StringComparer.OrdinalIgnoreCase) { "DD2.exe" };
+
+    /// <summary>Whether a game needs REFramework: its list entry says so, or its exe is a known REFramework game.</summary>
+    public static bool NeedsREFramework(CompatEntry? entry, string? exeName) =>
+        entry?.NeedsREFramework == true || (exeName is not null && REFrameworkExes.Contains(Path.GetFileName(exeName)));
 
     private static readonly string[] EditionWords =
     {

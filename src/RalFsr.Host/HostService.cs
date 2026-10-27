@@ -351,7 +351,7 @@ public sealed class HostService
 
     private static string REFrameworkText(GameScan s, CompatEntry? compat)
     {
-        if (s.State is GameState.Ready or GameState.NoUpscalerFound && compat?.NeedsREFramework == true)
+        if (s.State is GameState.Ready or GameState.NoUpscalerFound && CompatList.NeedsREFramework(compat, s.ExeName))
             return " This game needs REFramework, so the widget adds it too.";
         if (s.State == GameState.Installed && s.Manifest?.REFrameworkVersion.Length > 0)
             return " REFramework is installed too (this game needs it). The OptiScaler menu opens with Home here.";
@@ -468,7 +468,7 @@ public sealed class HostService
 
         // Capcom RE Engine games the OptiScaler community says need REFramework get it too.
         var refNote = "";
-        if (CompatList.Find(scan.Game.Name, scan.ExeName)?.NeedsREFramework == true)
+        if (CompatList.NeedsREFramework(CompatList.Find(scan.Game.Name, scan.ExeName), scan.ExeName))
             refNote = AddREFramework(exeDir);
 
         // FSR 2 games: pick OptiScaler's FSR 2 input settings for this game's graphics API.
