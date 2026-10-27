@@ -652,8 +652,8 @@ public sealed class HostService
     private void RefreshREFramework(string dir)
     {
         var m = InstallManifest.TryLoad(dir);
-        if (_ref is null || m is null || m.REFrameworkVersion.Length == 0 ||
-            m.REFrameworkVersion.Equals(_ref.Version, StringComparison.OrdinalIgnoreCase)) return;
+        if (_ref is null || m is null || m.REFrameworkVersion.Length == 0) return;
+        // Also run when REFramework is current: it keeps REFramework's menu set to start closed.
         try { Installer.AddREFramework(dir, _ref); }
         catch (Exception ex) { Log.Warn($"Couldn't update REFramework in {dir}: {ex.Message}"); }
     }

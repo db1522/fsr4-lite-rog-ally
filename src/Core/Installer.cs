@@ -262,7 +262,11 @@ public static class Installer
         const string name = "dinput8.dll";
         var ours = manifest.CreatedFiles.Contains(name, StringComparer.OrdinalIgnoreCase);
         if (!ours && File.Exists(Path.Combine(exeDir, name))) return RefResult.GameHasOwnDinput8;
-        if (ours && manifest.REFrameworkVersion.Equals(pkg.Version, StringComparison.OrdinalIgnoreCase)) return RefResult.AlreadyCurrent;
+        if (ours && manifest.REFrameworkVersion.Equals(pkg.Version, StringComparison.OrdinalIgnoreCase))
+        {
+            HideREFrameworkMenuAtStartup(exeDir, manifest);
+            return RefResult.AlreadyCurrent;
+        }
 
         if (!ours)
             manifest.REFrameworkPreexisting = REFrameworkArtifacts(exeDir).Select(p => Path.GetFileName(p)).ToList();
@@ -270,8 +274,39 @@ public static class Installer
         var result = manifest.REFrameworkVersion.Length == 0 ? RefResult.Installed : RefResult.Updated;
         manifest.REFrameworkVersion = pkg.Version;
         manifest.Save(exeDir);
+        HideREFrameworkMenuAtStartup(exeDir, manifest);
         Log.Info($"REFramework {pkg.Version} {(result == RefResult.Installed ? "added to" : "updated in")} {exeDir}");
         return result;
+    }
+
+    /// <summary>
+    /// REFramework opens its menu on every launch by default. Its config (re2_fw_config.txt next to the exe, the same name
+    /// for every game) can make it start closed: with RememberMenuState on it restores the saved MenuOpen state at launch.
+    /// Only written for configs FSR 4.1 Lite owns, never one the player already had; Insert still opens the menu.
+    /// Call only while the game isn't running (REFramework saves its own config while it runs).
+    /// </summary>
+    private static void HideREFrameworkMenuAtStartup(string exeDir, InstallManifest manifest)
+    {
+        const string configName = "re2_fw_config.txt";
+        if (manifest.REFrameworkPreexisting.Contains(configName, StringComparer.OrdinalIgnoreCase)) return;
+        var path = Path.Combine(exeDir, configName);
+        try
+        {
+            var lines = File.Exists(path) ? File.ReadAllLines(path).ToList() : new List<string>();
+            var changed = false;
+            foreach (var (key, value) in new[] { ("REFrameworkConfig_RememberMenuState", "true"), ("REFrameworkConfig_MenuOpen", "false") })
+            {
+                var i = lines.FindIndex(l => l.StartsWith(key + "=", StringComparison.Ordinal));
+                var line = $"{key}={value}";
+                if (i < 0) { lines.Add(line); changed = true; }
+                else if (lines[i] != line) { lines[i] = line; changed = true; }
+            }
+            if (changed) File.WriteAllLines(path, lines);
+        }
+        catch (Exception ex)
+        {
+            Log.Warn($"Couldn't set REFramework's menu to start closed in {exeDir}: {ex.Message}");
+        }
     }
 
     /// <summary>REFramework's runtime files next to the exe: the reframework folder, *_fw_config/log files, its log.</summary>
@@ -283,7 +318,7 @@ public static class Installer
         foreach (var file in Directory.GetFiles(exeDir))
         {
             var n = Path.GetFileName(file);
-            if (System.Text.RegularExpressions.Regex.IsMatch(n, @"^(re_?framework.*|[a-z0-9]+_fw_(config|log).*)\.(txt|log|json)$",
+            if (System.Text.RegularExpressions.Regex.IsMatch(n, @"^(re\d*_?framework.*|[a-z0-9]+_fw_(config|log).*)\.(txt|log|json)$",
                     System.Text.RegularExpressions.RegexOptions.IgnoreCase))
                 yield return file;
         }

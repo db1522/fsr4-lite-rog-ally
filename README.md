@@ -245,7 +245,9 @@ official nightly `REFramework.zip` (one build for every supported RE Engine game
 release notes advise without VR), checked once a day through the permanent `latest/download` link. A game that already
 has its own `dinput8.dll` is left alone. Uninstall removes REFramework and the files it created while running (its
 `reframework` folder, config and log) unless they were there before. REFramework updates along with OptiScaler. Because REFramework and OptiScaler both use Insert for their menus,
-these games get OptiScaler's menu on Home (`ShortcutKey=0x24`). OptiScaler's own game profiles already apply the other
+these games get OptiScaler's menu on Home (`ShortcutKey=0x24`). REFramework opens its menu on every launch by default,
+so the widget sets `REFrameworkConfig_RememberMenuState=true` and `REFrameworkConfig_MenuOpen=false` in
+`re2_fw_config.txt` (games it set REFramework up for only) and it starts closed; Insert still opens it. OptiScaler's own game profiles already apply the other
 settings these games need (`RestoreComputeSignature=true`, `Dxgi=false`).
 
 **Updates.** OptiScaler: looked for when the widget opens and hourly, GitHub asked once a day. FSR 4 files: ETag
