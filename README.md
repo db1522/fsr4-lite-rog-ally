@@ -15,7 +15,7 @@
 </p>
 
 <p align="center">
-  <a href="https://rogallylife.com/2026/10/26/fsr-4-1-2-lite-on-the-rog-ally/">Full guide on ROG Ally Life</a> ·
+  <a href="https://rogallylife.com/2026/10/25/fsr-4-1-2-lite-on-the-rog-ally/">Full guide on ROG Ally Life</a> ·
   <a href="#install">Install</a> ·
   <a href="#tested-games">Tested games</a> ·
   <a href="#faq">FAQ</a> ·
@@ -45,6 +45,8 @@ game, and pick its upscaler. That's it.
   the live render resolution, for example `Rendering 960x540 → 1920x1080`.
 - **Community compatibility at a glance.** Each game card shows which upscalers work in that game, from OptiScaler's
   community Compatibility List.
+- **Capcom RE Engine games handled.** Games that need REFramework for OptiScaler to work, like Monster Hunter Wilds,
+  Onimusha: Way of the Sword, PRAGMATA and Resident Evil 9 Requiem, get REFramework installed automatically too.
 - **Always up to date.** OptiScaler's newest build and the FSR 4.1.2 Lite files download by themselves, and your
   installed games update automatically, each keeping its own settings.
 - **Notifications.** A notification confirms FSR 4.1 Lite each time a game starts with it, or tells you what to fix.
@@ -190,8 +192,9 @@ free, open-source tool created by **cdozdil** and the OptiScaler contributors, r
 downloads their official [nightly builds](https://github.com/optiscaler/OptiScaler-nightly) unmodified. If FSR 4.1 Lite
 helps you, please consider [supporting the OptiScaler developer](https://github.com/sponsors/cdozdil).
 
-FSR 4 is by AMD. Thanks to **TheRazerMD** for sharing the FSR 4.1.2 Lite driver files, and to the OptiScaler community
-for the [Compatibility List](https://github.com/optiscaler/OptiScaler/wiki/Compatibility-List) shown on game cards.
+FSR 4 is by AMD. Thanks to **TheRazerMD** for sharing the FSR 4.1.2 Lite driver files, to the OptiScaler community
+for the [Compatibility List](https://github.com/optiscaler/OptiScaler/wiki/Compatibility-List) shown on game cards, and
+to **praydog** for [REFramework](https://github.com/praydog/REFramework), which RE Engine games need.
 
 <p align="center">
   <strong>FSR 4.1 Lite is free and always will be.</strong><br />
@@ -236,12 +239,21 @@ session). Green means the widget's own FSR 4.1.2 file is loaded and the log show
 resolution comes from Streamline's `color_in extents` when present (the size really handed over), otherwise from
 OptiScaler's feature setup.
 
+**REFramework.** For games whose Compatibility List entry says "Requires REFramework", the widget adds
+[REFramework](https://github.com/praydog/REFramework-nightly)'s `dinput8.dll` next to the exe. It comes from praydog's
+official nightly `REFramework.zip` (one build for every supported RE Engine game; only `dinput8.dll` is used, as its
+release notes advise without VR), checked once a day through the permanent `latest/download` link. A game that already
+has its own `dinput8.dll` is left alone. Uninstall removes REFramework and the files it created while running (its
+`reframework` folder, config and log) unless they were there before. REFramework updates along with OptiScaler. Because REFramework and OptiScaler both use Insert for their menus,
+these games get OptiScaler's menu on Home (`ShortcutKey=0x24`). OptiScaler's own game profiles already apply the other
+settings these games need (`RestoreComputeSignature=true`, `Dxgi=false`).
+
 **Updates.** OptiScaler: looked for when the widget opens and hourly, GitHub asked once a day. FSR 4 files: ETag
 check against ROG Ally Life's R2 bucket once a day. Compatibility list: raw wiki Markdown once a day. Game updates
 copy the new OptiScaler package over the old one, keep each game's loader name and never replace `OptiScaler.ini`.
 
-**Network access:** OptiScaler's GitHub releases, ROG Ally Life's R2 bucket (FSR 4 files), and OptiScaler's wiki
-(compatibility list). Nothing else, and no telemetry.
+**Network access:** OptiScaler's GitHub releases, ROG Ally Life's R2 bucket (FSR 4 files), OptiScaler's wiki
+(compatibility list) and REFramework's GitHub releases (only for games that need it). Nothing else, and no telemetry.
 </details>
 
 <details>

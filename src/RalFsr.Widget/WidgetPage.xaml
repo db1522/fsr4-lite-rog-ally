@@ -158,7 +158,7 @@
                     <TextBlock FontSize="13" TextWrapping="Wrap" Foreground="{StaticResource MutedBrush}"
                                Text="FSR 4.1 Lite installs and configures OptiScaler, the free, open-source upscaler tool created by cdozdil and the OptiScaler contributors (GPL-3.0). The widget downloads their official builds unmodified. All the upscaling work is theirs." />
                     <TextBlock FontSize="13" TextWrapping="Wrap" Foreground="{StaticResource MutedBrush}"
-                               Text="FSR 4 is by AMD. Thanks to TheRazerMD for sharing the FSR 4.1.2 Lite driver files, and to the OptiScaler community for the Compatibility List shown on game cards." />
+                               Text="FSR 4 is by AMD. Thanks to TheRazerMD for sharing the FSR 4.1.2 Lite driver files, to the OptiScaler community for the Compatibility List shown on game cards, and to praydog for REFramework, which Capcom RE Engine games need." />
                     <StackPanel Orientation="Horizontal" Spacing="4">
                         <HyperlinkButton Content="OptiScaler on GitHub" FontSize="13"
                                          NavigateUri="https://github.com/optiscaler/OptiScaler" />

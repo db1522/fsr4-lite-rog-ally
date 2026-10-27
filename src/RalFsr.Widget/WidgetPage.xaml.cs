@@ -33,7 +33,7 @@ namespace RalFsr.Widget
         private readonly List<string> _scaleKeys = new List<string>();
         private bool _busy;
         private int _installedCount;
-        private bool _installedExpanded; // collapsed by default; the list can get long
+        private bool _installedExpanded;
 
         public WidgetPage()
         {

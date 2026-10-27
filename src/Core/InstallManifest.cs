@@ -23,6 +23,12 @@ public sealed class InstallManifest
     /// <summary>Set once the widget has auto-fixed a game stuck at full resolution, so it never overrides again.</summary>
     public bool AutoFixedNativeAA { get; set; }
 
+    /// <summary>REFramework nightly installed alongside OptiScaler ("" = none). Its dinput8.dll is in CreatedFiles.</summary>
+    public string REFrameworkVersion { get; set; } = "";
+
+    /// <summary>REFramework's runtime files and folders that already existed before install, so uninstall leaves them.</summary>
+    public List<string> REFrameworkPreexisting { get; set; } = new();
+
     /// <summary>Files the app created, relative to the exe folder.</summary>
     public List<string> CreatedFiles { get; set; } = new();
 

@@ -8,7 +8,11 @@ public enum CompatStatus { Working, Partial, NotWorking, Mixed }
 
 /// <summary>One row of OptiScaler's community Compatibility List.</summary>
 public sealed record CompatEntry(string Name, CompatStatus Status, IReadOnlyList<string> Inputs, bool OptiPatcher,
-    string Notes, string? WikiUrl);
+    string Notes, string? WikiUrl)
+{
+    /// <summary>The community notes say OptiScaler needs REFramework in this game ("Requires REFramework").</summary>
+    public bool NeedsREFramework => Regex.IsMatch(Notes, @"requires\W+(\[)?REFramework", RegexOptions.IgnoreCase);
+}
 
 /// <summary>
 /// OptiScaler's community Compatibility List (github.com/optiscaler/OptiScaler/wiki/Compatibility-List): tested games,

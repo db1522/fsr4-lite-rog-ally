@@ -16,6 +16,7 @@ public sealed class HostService
     private readonly AppSettings _settings = AppSettings.Load();
     private OptiPackage? _opti = OptiScalerSource.Cached();
     private bool _compatRefreshStarted;
+    private RefPackage? _ref = REFrameworkSource.Cached();
     private Task? _optiTask;
     private string _optiStatus = "";
     private DateTime _optiStartedAt = DateTime.MinValue;
@@ -108,6 +109,8 @@ public sealed class HostService
         {
             _compatRefreshStarted = true;
             _ = Task.Run(CompatList.RefreshAsync);
+            // REFramework, for RE Engine games that need it: kept current in the background, once a day.
+            _ = Task.Run(async () => { var pkg = await REFrameworkSource.EnsureLatestAsync(); if (pkg is not null) _ref = pkg; });
         }
 
         // OptiScaler can write its own settings back to OptiScaler.ini when a game closes. Re-apply the widget's
@@ -260,7 +263,7 @@ public sealed class HostService
             exeDir,
             exeName = Path.GetFileName(exe),
             state = scan.State.ToString(),
-            stateText = StateText(scan),
+            stateText = StateText(scan) + REFrameworkText(scan, compat),
             canInstall = scan.State is GameState.Ready or GameState.NoUpscalerFound,
             installed = scan.State == GameState.Installed,
             upscalers = scan.Upscalers,
@@ -345,6 +348,15 @@ public sealed class HostService
             ? " In this game, pick " + string.Join(" or ", s.Upscalers) +
               " in its graphics settings: if it also has an FSR option, that one is built into the game and may not switch to FSR 4.1 Lite."
             : "";
+
+    private static string REFrameworkText(GameScan s, CompatEntry? compat)
+    {
+        if (s.State is GameState.Ready or GameState.NoUpscalerFound && compat?.NeedsREFramework == true)
+            return " This game needs REFramework, so the widget adds it too.";
+        if (s.State == GameState.Installed && s.Manifest?.REFrameworkVersion.Length > 0)
+            return " REFramework is installed too (this game needs it). The OptiScaler menu opens with Home here.";
+        return "";
+    }
 
     /// <summary>One line on the game card: the upscaler inputs that work, or a warning for "not working" entries.</summary>
     private static string CompatText(CompatEntry e) => e.Status switch
@@ -454,6 +466,11 @@ public sealed class HostService
         Installer.Install(scan, _opti, fsr4, _settings);
         InstallRegistry.Add(exeDir);
 
+        // Capcom RE Engine games the OptiScaler community says need REFramework get it too.
+        var refNote = "";
+        if (CompatList.Find(scan.Game.Name)?.NeedsREFramework == true)
+            refNote = AddREFramework(exeDir);
+
         // FSR 2 games: pick OptiScaler's FSR 2 input settings for this game's graphics API.
         int pid;
         lock (_seen) _seenPid.TryGetValue(exeDir, out pid);
@@ -469,7 +486,7 @@ public sealed class HostService
         return new
         {
             ok = true,
-            message = $"Installed. Restart {scan.Game.Name}, then turn on FSR in its graphics settings. " +
+            message = $"Installed. Restart {scan.Game.Name}, then turn on FSR in its graphics settings. " + refNote +
                       "FSR 4.1 Lite loads automatically, no OptiScaler menu needed.",
         };
     }
@@ -603,6 +620,44 @@ public sealed class HostService
         };
     }
 
+    /// <summary>Adds REFramework to an installed game. Returns a sentence for the install message.</summary>
+    private string AddREFramework(string exeDir)
+    {
+        var pkg = _ref ?? REFrameworkSource.EnsureLatestAsync().GetAwaiter().GetResult();
+        if (pkg is null) return "This game needs REFramework, which couldn't be downloaded right now; the widget adds it on the next update check. ";
+        _ref = pkg;
+        try
+        {
+            var result = Installer.AddREFramework(exeDir, pkg);
+
+            // REFramework and OptiScaler both open their menus with Insert. Move OptiScaler's to Home in these games
+            // (OptiScaler's previous default), so Insert opens only REFramework.
+            IniFile.SetValues(Path.Combine(exeDir, "OptiScaler.ini"),
+                new[] { new InstallConfig.IniValue("Menu", "ShortcutKey", "0x24") });
+
+            return result switch
+            {
+                Installer.RefResult.GameHasOwnDinput8 => "This game needs REFramework; it already has a dinput8.dll (REFramework or another mod), so that was left as is. The OptiScaler menu opens with Home in this game. ",
+                _ => "REFramework was added too, since this game needs it. Insert opens REFramework's menu; the OptiScaler menu opens with Home. ",
+            };
+        }
+        catch (Exception ex)
+        {
+            Log.Error("Adding REFramework failed", ex);
+            return "This game needs REFramework, which couldn't be added; the log has details. ";
+        }
+    }
+
+    /// <summary>Brings REFramework up to the cached nightly in a game that has it from FSR 4.1 Lite (not running).</summary>
+    private void RefreshREFramework(string dir)
+    {
+        var m = InstallManifest.TryLoad(dir);
+        if (_ref is null || m is null || m.REFrameworkVersion.Length == 0 ||
+            m.REFrameworkVersion.Equals(_ref.Version, StringComparison.OrdinalIgnoreCase)) return;
+        try { Installer.AddREFramework(dir, _ref); }
+        catch (Exception ex) { Log.Warn($"Couldn't update REFramework in {dir}: {ex.Message}"); }
+    }
+
     private bool IsOutdated(InstallManifest? m) =>
         m is not null && _opti is not null && !m.OptiBuild.Equals(_opti.Build, StringComparison.OrdinalIgnoreCase);
 
@@ -619,6 +674,7 @@ public sealed class HostService
             if (ForegroundGame.AnyRunningFrom(dir)) { running++; continue; }
             try
             {
+                RefreshREFramework(dir);
                 if (Installer.UpdateOpti(dir, _opti)) updated++;
                 Forget(dir);
             }
@@ -669,7 +725,9 @@ public sealed class HostService
             {
                 try
                 {
-                    if (!IsOutdated(InstallManifest.TryLoad(dir)) || ForegroundGame.AnyRunningFrom(dir)) continue;
+                    if (ForegroundGame.AnyRunningFrom(dir)) continue;
+                    RefreshREFramework(dir); // REFramework nightlies move independently of OptiScaler's
+                    if (!IsOutdated(InstallManifest.TryLoad(dir))) continue;
                     if (Installer.UpdateOpti(dir, opti)) updated++;
                     Forget(dir);
                 }

@@ -84,6 +84,25 @@ public static class Installer
         // Files OptiScaler writes while running.
         DeleteFile(Path.Combine(exeDir, "OptiScaler.log"));
 
+        // Files and folders REFramework creates while running (config, log, its reframework folder), unless the game
+        // already had them before FSR 4.1 Lite added REFramework.
+        if (manifest.REFrameworkVersion.Length > 0)
+        {
+            foreach (var path in REFrameworkArtifacts(exeDir))
+            {
+                if (manifest.REFrameworkPreexisting.Contains(Path.GetFileName(path), StringComparer.OrdinalIgnoreCase)) continue;
+                try
+                {
+                    if (Directory.Exists(path)) Directory.Delete(path, recursive: true);
+                    else DeleteFile(path);
+                }
+                catch (Exception ex)
+                {
+                    Log.Warn($"Couldn't remove REFramework file {path}: {ex.Message}");
+                }
+            }
+        }
+
         foreach (var rel in manifest.CreatedDirs.OrderByDescending(d => d.Length))
         {
             var dir = Path.Combine(exeDir, rel);
@@ -228,6 +247,46 @@ public static class Installer
         manifest.Save(exeDir);
         Log.Info($"Updated OptiScaler in {exeDir}: {previous} -> {opti.Build}");
         return true;
+    }
+
+    public enum RefResult { Installed, Updated, AlreadyCurrent, GameHasOwnDinput8 }
+
+    /// <summary>
+    /// Adds (or refreshes) REFramework's dinput8.dll next to the game exe, tracked in the manifest like every other file.
+    /// If the game already has a dinput8.dll that FSR 4.1 Lite didn't put there (the player's own REFramework or another
+    /// mod), it's left alone.
+    /// </summary>
+    public static RefResult AddREFramework(string exeDir, RefPackage pkg)
+    {
+        var manifest = InstallManifest.TryLoad(exeDir) ?? throw new InvalidOperationException("FSR 4.1 Lite isn't installed here.");
+        const string name = "dinput8.dll";
+        var ours = manifest.CreatedFiles.Contains(name, StringComparer.OrdinalIgnoreCase);
+        if (!ours && File.Exists(Path.Combine(exeDir, name))) return RefResult.GameHasOwnDinput8;
+        if (ours && manifest.REFrameworkVersion.Equals(pkg.Version, StringComparison.OrdinalIgnoreCase)) return RefResult.AlreadyCurrent;
+
+        if (!ours)
+            manifest.REFrameworkPreexisting = REFrameworkArtifacts(exeDir).Select(p => Path.GetFileName(p)).ToList();
+        PlaceFile(pkg.DllPath, exeDir, name, manifest);
+        var result = manifest.REFrameworkVersion.Length == 0 ? RefResult.Installed : RefResult.Updated;
+        manifest.REFrameworkVersion = pkg.Version;
+        manifest.Save(exeDir);
+        Log.Info($"REFramework {pkg.Version} {(result == RefResult.Installed ? "added to" : "updated in")} {exeDir}");
+        return result;
+    }
+
+    /// <summary>REFramework's runtime files next to the exe: the reframework folder, *_fw_config/log files, its log.</summary>
+    private static IEnumerable<string> REFrameworkArtifacts(string exeDir)
+    {
+        if (!Directory.Exists(exeDir)) yield break;
+        var dir = Path.Combine(exeDir, "reframework");
+        if (Directory.Exists(dir)) yield return dir;
+        foreach (var file in Directory.GetFiles(exeDir))
+        {
+            var n = Path.GetFileName(file);
+            if (System.Text.RegularExpressions.Regex.IsMatch(n, @"^(re_?framework.*|[a-z0-9]+_fw_(config|log).*)\.(txt|log|json)$",
+                    System.Text.RegularExpressions.RegexOptions.IgnoreCase))
+                yield return file;
+        }
     }
 
     /// <summary>First proxy name that doesn't clash with a file the game already ships.</summary>
