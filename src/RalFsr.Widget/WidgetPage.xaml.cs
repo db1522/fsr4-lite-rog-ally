@@ -164,6 +164,7 @@ namespace RalFsr.Widget
             OverlaySwitch.IsOn = Json.Bool(state, "overlay");
             NotifySwitch.IsOn = Json.Bool(state, "notify");
             AutoUpdateSwitch.IsOn = Json.Bool(state, "autoUpdate");
+            RenderWidgetVersion(Json.Obj(state, "widget"));
             _suppressOverlayEvent = false;
 
             var game = Json.Obj(state, "game");
@@ -398,6 +399,32 @@ namespace RalFsr.Widget
         {
             if (_suppressOverlayEvent) return;
             await RunCommandAsync("overlay", "on", OverlaySwitch.IsOn ? "true" : "false");
+        }
+
+        /// <summary>"FSR 4.1 Lite 1.0.10 · up to date", or the update offer and its progress.</summary>
+        private void RenderWidgetVersion(JsonObject widget)
+        {
+            var version = Json.Str(widget, "version");
+            var update = Json.Str(widget, "update");
+            var updating = Json.Bool(widget, "updating");
+            var message = Json.Str(widget, "message");
+
+            var line = "FSR 4.1 Lite " + version;
+            if (updating && !string.IsNullOrEmpty(message)) line = message;
+            else if (!string.IsNullOrEmpty(update)) line += " \u00B7 version " + update + " is available";
+            else if (!string.IsNullOrEmpty(message)) line += " \u00B7 " + message;
+            else line += " \u00B7 up to date";
+            AppVersionText.Text = line;
+
+            UpdateWidgetButton.Content = "Update to " + update;
+            UpdateWidgetButton.Visibility = !string.IsNullOrEmpty(update) && !updating ? Visibility.Visible : Visibility.Collapsed;
+        }
+
+        private async void UpdateWidget_Click(object sender, RoutedEventArgs e)
+        {
+            UpdateWidgetButton.IsEnabled = false;
+            try { await RunCommandAsync("updateWidget"); }
+            finally { UpdateWidgetButton.IsEnabled = true; }
         }
 
         private async void AutoUpdate_Toggled(object sender, RoutedEventArgs e)

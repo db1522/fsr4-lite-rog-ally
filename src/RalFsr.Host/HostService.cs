@@ -17,6 +17,12 @@ public sealed class HostService
     private OptiPackage? _opti = OptiScalerSource.Cached();
     private bool _compatRefreshStarted;
     private RefPackage? _ref = REFrameworkSource.Cached();
+
+    // Widget self-update: the newest release when it's newer than this one, and a one-time message after an update.
+    private (string Tag, Version Version)? _widgetUpdate;
+    private Task? _widgetUpdateCheck;
+    private bool _widgetUpdating;
+    private string? _widgetUpdateMessage = SelfUpdate.TakeResult();
     private Task? _optiTask;
     private string _optiStatus = "";
     private DateTime _optiStartedAt = DateTime.MinValue;
@@ -66,6 +72,7 @@ public sealed class HostService
                 "renderScale" => RenderScale(Arg(args, "exeDir") ?? "", Arg(args, "value") ?? "game"),
                 "switchLoader" => SwitchLoader(Arg(args, "exeDir") ?? ""),
                 "updateAll" => UpdateAll(),
+                "updateWidget" => UpdateWidget(),
                 "autoUpdate" => SetAutoUpdate(Arg(args, "on") == "true"),
                 _ => Fail($"Unknown command: {cmd}"),
             };
@@ -103,6 +110,10 @@ public sealed class HostService
             _autoUpdateLookedAt = DateTime.Now;
             StartAutoUpdate();
         }
+
+        // Widget updates: looked for in the background (GitHub asked at most every 6 hours).
+        if (_widgetUpdateCheck is null or { IsCompleted: true } && !_widgetUpdating)
+            _widgetUpdateCheck = Task.Run(async () => _widgetUpdate = await SelfUpdate.CheckAsync());
 
         // OptiScaler's community compatibility list: refreshed at most once a day, in the background.
         if (!_compatRefreshStarted)
@@ -172,6 +183,13 @@ public sealed class HostService
                 gameBarHint = _device.GameBarHint,
             },
             updatesAvailable,
+            widget = new
+            {
+                version = SelfUpdate.Display(SelfUpdate.Installed),
+                update = _widgetUpdate is { } u ? SelfUpdate.Display(u.Version) : "",
+                updating = _widgetUpdating,
+                message = _widgetUpdateMessage ?? "",
+            },
             autoUpdate = _settings.AutoUpdateGames,
             opti = new
             {
@@ -656,6 +674,29 @@ public sealed class HostService
         // Also run when REFramework is current: it keeps REFramework's menu set to start closed.
         try { Installer.AddREFramework(dir, _ref); }
         catch (Exception ex) { Log.Warn($"Couldn't update REFramework in {dir}: {ex.Message}"); }
+    }
+
+    /// <summary>Downloads the newest release and starts its installer; the widget closes while it installs.</summary>
+    private object UpdateWidget()
+    {
+        if (_widgetUpdate is not { } update) return Fail("FSR 4.1 Lite is already up to date.");
+        if (_widgetUpdating) return new { ok = true, message = _widgetUpdateMessage ?? "Updating..." };
+        _widgetUpdating = true;
+        _widgetUpdateMessage = $"Downloading FSR 4.1 Lite {SelfUpdate.Display(update.Version)}...";
+        _ = Task.Run(async () =>
+        {
+            try
+            {
+                await SelfUpdate.DownloadAndStartAsync(update.Tag, new Progress<string>(m => _widgetUpdateMessage = m));
+            }
+            catch (Exception ex)
+            {
+                Log.Error("Widget update failed", ex);
+                _widgetUpdateMessage = $"The update couldn't be downloaded: {ex.Message}";
+                _widgetUpdating = false;
+            }
+        });
+        return new { ok = true, message = _widgetUpdateMessage };
     }
 
     private bool IsOutdated(InstallManifest? m) =>

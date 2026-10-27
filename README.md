@@ -66,7 +66,10 @@ game, and pick its upscaler. That's it.
 
 The first time it opens, the widget downloads OptiScaler and the FSR 4.1.2 Lite files on its own.
 
-**Updating the widget:** download the new zip and run its Install.cmd. Your settings and installed games carry over.
+**Updating the widget:** Setup shows your installed version. When a new release is out, it shows **Update to x.y.z**:
+tap it, and the widget closes for a moment while the update installs, then reopen it from Game Bar. Your settings and
+installed games carry over. Windows may ask for administrator permission during the update. (Versions before the
+built-in updater: download the new zip and run its Install.cmd once.)
 
 ## Use it in a game
 
@@ -95,6 +98,9 @@ Confirmed on the ROG Ally X:
 | Ghost of Tsushima | Steam | FSR |
 | God of War | Steam | FSR 2.0 |
 | Control Ultimate Edition | Steam | DLSS (the game has no FSR) |
+| Resident Evil Requiem | Steam | FSR (REFramework added automatically) |
+| Monster Hunter Wilds | Steam | FSR (REFramework added automatically) |
+| Dragon's Dogma 2 | Steam | FSR (REFramework added automatically) |
 | Valor Mortis | Game Pass | FSR |
 | Forza Motorsport | Game Pass | DLSS |
 | No Man's Sky | Game Pass | DLSS (its FSR is built into the game) |
@@ -251,6 +257,13 @@ so the widget sets `REFrameworkConfig_RememberMenuState=true` and `REFrameworkCo
 `re2_fw_config.txt` (games it set REFramework up for only) and it starts closed; Insert still opens it. OptiScaler's own game profiles already apply the other
 settings these games need (`RestoreComputeSignature=true`, `Dxgi=false`).
 
+**Widget updates.** The helper reads the newest release from the redirect of
+`github.com/db1522/fsr4-lite-rog-ally/releases/latest` (no GitHub API, so no rate limit), at most every 6 hours, and
+compares it with the installed package version. Updating downloads that release's `FSR4Lite_x64.zip` into
+`%ProgramData%\ROG Ally Life\FSR4Lite-update`, then runs its `install.ps1` as a one-off scheduled task that deletes
+itself, because installing closes the widget and helper. The installer's output goes to `install.log` there, and the
+widget reports the result after it reopens.
+
 **Updates.** OptiScaler: looked for when the widget opens and hourly, GitHub asked once a day. FSR 4 files: ETag
 check against ROG Ally Life's R2 bucket once a day. Compatibility list: raw wiki Markdown once a day. Game updates
 copy the new OptiScaler package over the old one, keep each game's loader name and never replace `OptiScaler.ini`.
@@ -261,6 +274,11 @@ copy the new OptiScaler package over the old one, keep each game's loader name a
 
 <details>
 <summary><strong>Building and releasing</strong></summary>
+
+**Signing.** For a permanent certificate (players approve it once, ever), run
+`tools\SigningCertificate\Create certificate.cmd` once on your PC and paste the two values it produces into the repo's
+Actions secrets `SIGNING_PFX_BASE64` and `SIGNING_PFX_PASSWORD`. Keep the `.pfx` it creates private. Without those
+secrets, each build gets a fresh certificate and players approve every update.
 
 GitHub builds, signs and packages the widget. Publish a release with a new tag (`v1.0.3`, and so on) and
 **FSR4Lite_x64.zip** is attached a few minutes later; progress and errors show in the Actions tab. Each build is

@@ -101,6 +101,10 @@
             <!-- One-time setup -->
             <StackPanel Spacing="8">
                 <TextBlock Text="Setup" FontFamily="{StaticResource DisplayFont}" FontSize="17" FontWeight="SemiBold" />
+                <!-- The widget's own version, and a one-tap update when a newer release is out -->
+                <TextBlock x:Name="AppVersionText" FontSize="13" TextWrapping="Wrap" Foreground="{StaticResource MutedBrush}" />
+                <Button x:Name="UpdateWidgetButton" Style="{StaticResource AccentButton}" Visibility="Collapsed"
+                        HorizontalAlignment="Stretch" Click="UpdateWidget_Click" />
                 <TextBlock x:Name="OptiText" FontSize="13" TextWrapping="Wrap" />
                 <TextBlock x:Name="Fsr4Text" FontSize="13" TextWrapping="Wrap" />
                 <!-- Fallback only: shown when the automatic FSR 4 download hasn't worked (offline, blocked host) -->
