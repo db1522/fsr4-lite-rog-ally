@@ -1,6 +1,7 @@
 # Builds and publishes the widget. Publish a release with a new tag like v0.1.0 and the download
 # (FSR4Lite_x64.zip) is attached to it a few minutes later. No setup, no local Visual Studio.
-# Each build is signed with a fresh self-signed "CN=ROG Ally Life" certificate; Install.cmd trusts it.
+# Signing: with the SIGNING_PFX_BASE64 and SIGNING_PFX_PASSWORD secrets set, every build is signed with that one permanent
+# "CN=ROG Ally Life" certificate, so players approve it once, ever. Without them, each build gets a fresh certificate.
 name: Release
 
 on:
@@ -21,10 +22,30 @@ jobs:
         with:
           dotnet-version: '8.0.x'
 
+      - name: Load the permanent signing certificate
+        shell: powershell
+        env:
+          SIGNING_PFX: ${{ secrets.SIGNING_PFX_BASE64 }}
+          SIGNING_PFX_PASSWORD: ${{ secrets.SIGNING_PFX_PASSWORD }}
+        run: |
+          if (-not $env:SIGNING_PFX) {
+              Write-Host 'No permanent certificate in the repository secrets; this build gets a fresh one.'
+              exit 0
+          }
+          $pfx = Join-Path $env:RUNNER_TEMP 'signing.pfx'
+          [IO.File]::WriteAllBytes($pfx, [Convert]::FromBase64String($env:SIGNING_PFX))
+          $password = ConvertTo-SecureString $env:SIGNING_PFX_PASSWORD -AsPlainText -Force
+          $cert = Import-PfxCertificate -FilePath $pfx -CertStoreLocation Cert:\CurrentUser\My -Password $password
+          Remove-Item $pfx
+          if ($cert.Subject -ne 'CN=ROG Ally Life') { throw "The certificate is for '$($cert.Subject)', not CN=ROG Ally Life." }
+          Write-Host "Signing with the permanent certificate $($cert.Thumbprint)"
+
       - name: Build and sign
         shell: powershell
         run: |
-          $version = if ($env:GITHUB_REF_TYPE -eq 'tag') { $env:GITHUB_REF_NAME.TrimStart('v') } else { '0.0.1' }
+          # Releases use their tag. Test runs ("Run workflow") get 0.0.<run number>, unique for every run, because
+          # Windows refuses a package with the same version as the installed one but different contents.
+          $version = if ($env:GITHUB_REF_TYPE -eq 'tag') { $env:GITHUB_REF_NAME.TrimStart('v') } else { "0.0.$($env:GITHUB_RUN_NUMBER)" }
           .\scripts\build.ps1 -Version $version
 
       - name: Keep the build (test runs)
