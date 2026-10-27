@@ -248,7 +248,7 @@ public sealed class HostService
               "resolution, try the game's other upscaler options (FSR, DLSS, XeSS)."
             : "";
 
-        var compat = CompatList.Find(scan.Game.Name);
+        var compat = CompatList.Find(scan.Game.Name, scan.ExeName);
 
         return new
         {
@@ -468,7 +468,7 @@ public sealed class HostService
 
         // Capcom RE Engine games the OptiScaler community says need REFramework get it too.
         var refNote = "";
-        if (CompatList.Find(scan.Game.Name)?.NeedsREFramework == true)
+        if (CompatList.Find(scan.Game.Name, scan.ExeName)?.NeedsREFramework == true)
             refNote = AddREFramework(exeDir);
 
         // FSR 2 games: pick OptiScaler's FSR 2 input settings for this game's graphics API.

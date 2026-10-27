@@ -40,6 +40,9 @@ public static class CompatList
     private static Dictionary<string, CompatEntry>? _byKey;
     private static Dictionary<string, CompatEntry>? _byBase;
 
+    /// <summary>Entries whose name has exactly one number, keyed by the loose key without it ("Resident Evil 9 Requiem").</summary>
+    private static Dictionary<string, List<(CompatEntry Entry, string Number)>>? _byNoNumber;
+
     /// <summary>Downloads a fresh copy if the cache is older than a day. Never throws; a stale or missing list is fine.</summary>
     public static async Task RefreshAsync()
     {
@@ -50,7 +53,7 @@ public static class CompatList
             var text = await Http.GetStringAsync(RawUrl);
             if (!text.Contains("| Game |", StringComparison.Ordinal)) return; // not the page we expect
             await File.WriteAllTextAsync(CachePath, text, Encoding.UTF8);
-            lock (Gate) { _byKey = null; _byBase = null; }
+            lock (Gate) { _byKey = null; _byBase = null; _byNoNumber = null; }
             Log.Info($"OptiScaler compatibility list updated ({text.Length / 1024} KB)");
         }
         catch (Exception ex)
@@ -59,8 +62,12 @@ public static class CompatList
         }
     }
 
-    /// <summary>The list's entry for a game, matched by name, or null.</summary>
-    public static CompatEntry? Find(string gameName)
+    /// <summary>
+    /// The list's entry for a game, matched by name, or null. <paramref name="exeName"/> enables one extra, careful match:
+    /// a store name without a number ("Resident Evil Requiem") finds a list name with one ("Resident Evil 9 Requiem") only
+    /// when that number is in the exe name (re9.exe), so "Forza Horizon 5" never matches "Forza Horizon 6".
+    /// </summary>
+    public static CompatEntry? Find(string gameName, string? exeName = null)
     {
         EnsureLoaded();
         lock (Gate)
@@ -70,7 +77,14 @@ public static class CompatList
             if (key.Length == 0) return null;
             if (_byKey.TryGetValue(key, out var exact)) return exact;
             var baseKey = BaseKey(gameName);
-            return baseKey.Length >= 4 && _byBase.TryGetValue(baseKey, out var loose) ? loose : null;
+            if (baseKey.Length >= 4 && _byBase.TryGetValue(baseKey, out var loose)) return loose;
+
+            if (string.IsNullOrEmpty(exeName) || _byNoNumber is null || baseKey.Length < 6 || baseKey.Any(char.IsDigit))
+                return null;
+            if (!_byNoNumber.TryGetValue(baseKey, out var candidates) || candidates.Count != 1) return null;
+            var (entry, number) = candidates[0];
+            var exeDigits = Regex.Matches(Path.GetFileNameWithoutExtension(exeName), @"\d+").Select(m => m.Value);
+            return exeDigits.Contains(number) ? entry : null;
         }
     }
 
@@ -85,11 +99,24 @@ public static class CompatList
                 var entries = Parse(File.ReadAllText(CachePath));
                 _byKey = new Dictionary<string, CompatEntry>();
                 _byBase = new Dictionary<string, CompatEntry>();
+                _byNoNumber = new Dictionary<string, List<(CompatEntry, string)>>();
                 foreach (var e in entries)
                 {
                     _byKey.TryAdd(Key(e.Name), e);
                     var b = BaseKey(e.Name);
                     if (b.Length >= 4) _byBase.TryAdd(b, e);
+
+                    // "Resident Evil 9 Requiem" -> "residentevilrequiem" + "9", for names with exactly one number.
+                    var numbers = Regex.Matches(e.Name, @"\b\d+\b").Select(m => m.Value).ToList();
+                    if (numbers.Count == 1)
+                    {
+                        var noNumber = BaseKey(Regex.Replace(e.Name, @"\b\d+\b", " "));
+                        if (noNumber.Length >= 6)
+                        {
+                            if (!_byNoNumber.TryGetValue(noNumber, out var list)) _byNoNumber[noNumber] = list = new();
+                            list.Add((e, numbers[0]));
+                        }
+                    }
                 }
             }
             catch (Exception ex)
