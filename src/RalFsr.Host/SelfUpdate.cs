@@ -108,9 +108,20 @@ public static class SelfUpdate
     public static async Task RunUpdateAsync(string tag, Action<UpdateProgress> report)
     {
         var version = tag.TrimStart('v', 'V');
-        var dir = Path.Combine(UpdateRoot, tag);
-        if (Directory.Exists(dir)) Directory.Delete(dir, recursive: true);
+
+        // An install of this version started in the last few minutes is still running (the widget reopened during it
+        // and offered the update again): don't start a second one.
+        if (InstallInProgress(tag))
+        {
+            report(new UpdateProgress($"An update to FSR 4.1 Lite {version} is already installing. The widget closes " +
+                                      "when it finishes; reopen it from Game Bar."));
+            return;
+        }
+
+        // A fresh folder for every attempt, so a second attempt can never collide with files the first is still using.
+        var dir = Path.Combine(UpdateRoot, $"{tag}-{DateTime.Now:yyyyMMdd-HHmmss}");
         Directory.CreateDirectory(dir);
+        CleanOldAttempts(dir);
 
         // 1. Download, with a percentage.
         report(new UpdateProgress($"Downloading FSR 4.1 Lite {version}...", 0));
@@ -217,6 +228,40 @@ public static class SelfUpdate
         });
     }
 
+    /// <summary>True when pending.txt names this release and was written in the last 5 minutes.</summary>
+    private static bool InstallInProgress(string tag)
+    {
+        try
+        {
+            var pending = Path.Combine(UpdateRoot, "pending.txt");
+            if (!File.Exists(pending)) return false;
+            if (DateTime.UtcNow - File.GetLastWriteTimeUtc(pending) > TimeSpan.FromMinutes(5)) return false;
+            var line = File.ReadLines(pending).FirstOrDefault() ?? "";
+            return line.Equals(tag, StringComparison.OrdinalIgnoreCase) && Installed < ParseOrZero(tag);
+        }
+        catch
+        {
+            return false;
+        }
+    }
+
+    private static Version ParseOrZero(string tag) => TryParse(tag, out var v) ? v : new Version(0, 0);
+
+    /// <summary>Removes earlier attempt folders that aren't in use any more (best effort).</summary>
+    private static void CleanOldAttempts(string keep)
+    {
+        try
+        {
+            foreach (var old in Directory.GetDirectories(UpdateRoot))
+            {
+                if (old.Equals(keep, StringComparison.OrdinalIgnoreCase)) continue;
+                if (DateTime.UtcNow - Directory.GetLastWriteTimeUtc(old) < TimeSpan.FromMinutes(10)) continue;
+                try { Directory.Delete(old, recursive: true); } catch { }
+            }
+        }
+        catch { }
+    }
+
     private static string ReadShared(string path)
     {
         try
@@ -247,11 +292,12 @@ public static class SelfUpdate
             if (TryParse(tag, out var target) && Installed >= target)
             {
                 File.Delete(pending);
-                TryDelete(Path.Combine(UpdateRoot, tag));
+                var attempt = Path.GetDirectoryName(log);
+                if (!string.IsNullOrEmpty(attempt)) TryDelete(attempt);
                 return $"Updated to FSR 4.1 Lite {Display(target)}.";
             }
 
-            var text = File.Exists(log) ? File.ReadAllText(log) : "";
+            var text = ReadShared(log); // the installer may still have it open
             var failed = text.Contains("Install failed", StringComparison.OrdinalIgnoreCase);
             if (!failed) return null; // still installing, or the installer hasn't written anything yet
             File.Delete(pending);
