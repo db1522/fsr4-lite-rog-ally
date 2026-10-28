@@ -103,8 +103,20 @@
                 <TextBlock Text="Setup" FontFamily="{StaticResource DisplayFont}" FontSize="17" FontWeight="SemiBold" />
                 <!-- The widget's own version, and a one-tap update when a newer release is out -->
                 <TextBlock x:Name="AppVersionText" FontSize="13" TextWrapping="Wrap" Foreground="{StaticResource MutedBrush}" />
-                <Button x:Name="UpdateWidgetButton" Style="{StaticResource AccentButton}" Visibility="Collapsed"
-                        HorizontalAlignment="Stretch" Click="UpdateWidget_Click" />
+                <!-- Update progress: determinate while downloading, moving while installing -->
+                <ProgressBar x:Name="WidgetUpdateBar" Visibility="Collapsed" Minimum="0" Maximum="100" Height="6"
+                             Foreground="{StaticResource RalRedBrush}" />
+                <TextBlock x:Name="WidgetUpdateText" Visibility="Collapsed" FontSize="13" TextWrapping="Wrap" />
+                <Grid ColumnSpacing="8">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+                    <Button x:Name="UpdateWidgetButton" Style="{StaticResource AccentButton}" Visibility="Collapsed"
+                            HorizontalAlignment="Stretch" Click="UpdateWidget_Click" />
+                    <Button x:Name="CheckUpdatesButton" Grid.Column="1" Style="{StaticResource QuietButton}"
+                            Content="Check for updates" Click="CheckUpdates_Click" />
+                </Grid>
                 <TextBlock x:Name="OptiText" FontSize="13" TextWrapping="Wrap" />
                 <TextBlock x:Name="Fsr4Text" FontSize="13" TextWrapping="Wrap" />
                 <!-- Fallback only: shown when the automatic FSR 4 download hasn't worked (offline, blocked host) -->

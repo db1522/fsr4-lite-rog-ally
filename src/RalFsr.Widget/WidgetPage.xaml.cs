@@ -182,7 +182,8 @@ namespace RalFsr.Widget
 
             // Keep polling while downloading, or while an installed game isn't fully active yet / might change.
             var watchGame = game != null && Json.Bool(game, "installed");
-            if (Json.Bool(opti, "busy") || fsr4Busy || !fsr4Ready || watchGame) _poll.Start(); else _poll.Stop();
+            var widgetUpdating = Json.Bool(Json.Obj(state, "widget"), "updating"); // keep the progress bar moving
+            if (Json.Bool(opti, "busy") || fsr4Busy || !fsr4Ready || watchGame || widgetUpdating) _poll.Start(); else _poll.Stop();
             RenderInstalled(Json.Arr(state, "installed"));
             RenderUpdates(Json.Num(state, "updatesAvailable"));
         }
@@ -436,23 +437,47 @@ namespace RalFsr.Widget
             await RunCommandAsync("overlay", "on", OverlaySwitch.IsOn ? "true" : "false");
         }
 
-        /// <summary>"FSR 4.1 Lite 1.0.10 · up to date", or the update offer and its progress.</summary>
+        /// <summary>
+        /// The widget's version line, and while updating: a progress bar (percentage while downloading, moving while
+        /// installing) with the current stage, or the error and Try again if it failed.
+        /// </summary>
         private void RenderWidgetVersion(JsonObject widget)
         {
             var version = Json.Str(widget, "version");
             var update = Json.Str(widget, "update");
             var updating = Json.Bool(widget, "updating");
+            var failed = Json.Bool(widget, "failed");
             var message = Json.Str(widget, "message");
+            var percent = (int)Json.Num(widget, "percent");
+            var hasUpdate = !string.IsNullOrEmpty(update);
 
-            var line = "FSR 4.1 Lite " + version;
-            if (updating && !string.IsNullOrEmpty(message)) line = message;
-            else if (!string.IsNullOrEmpty(update)) line += " \u00B7 version " + update + " is available";
-            else if (!string.IsNullOrEmpty(message)) line += " \u00B7 " + message;
-            else line += " \u00B7 up to date";
-            AppVersionText.Text = line;
+            AppVersionText.Text = "FSR 4.1 Lite " + version +
+                (hasUpdate ? " \u00B7 version " + update + " is available" : " \u00B7 up to date");
 
-            UpdateWidgetButton.Content = "Update to " + update;
-            UpdateWidgetButton.Visibility = !string.IsNullOrEmpty(update) && !updating ? Visibility.Visible : Visibility.Collapsed;
+            WidgetUpdateBar.Visibility = updating ? Visibility.Visible : Visibility.Collapsed;
+            WidgetUpdateBar.IsIndeterminate = updating && percent < 0;
+            if (percent >= 0) WidgetUpdateBar.Value = percent;
+
+            WidgetUpdateText.Text = message;
+            WidgetUpdateText.Visibility = !string.IsNullOrEmpty(message) && (updating || failed || !hasUpdate)
+                ? Visibility.Visible : Visibility.Collapsed;
+            WidgetUpdateText.Foreground = (Brush)Application.Current.Resources[failed ? "WarnBrush" : "MutedBrush"];
+
+            UpdateWidgetButton.Content = failed ? "Try again" : "Update to " + update;
+            UpdateWidgetButton.Visibility = hasUpdate && !updating ? Visibility.Visible : Visibility.Collapsed;
+            CheckUpdatesButton.IsEnabled = !updating;
+        }
+
+        private async void CheckUpdates_Click(object sender, RoutedEventArgs e)
+        {
+            CheckUpdatesButton.IsEnabled = false;
+            CheckUpdatesButton.Content = "Checking...";
+            try { await RunCommandAsync("checkWidgetUpdate"); }
+            finally
+            {
+                CheckUpdatesButton.Content = "Check for updates";
+                CheckUpdatesButton.IsEnabled = true;
+            }
         }
 
         private async void UpdateWidget_Click(object sender, RoutedEventArgs e)

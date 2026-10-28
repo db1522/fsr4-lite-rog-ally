@@ -93,37 +93,134 @@ public static class SelfUpdate
     private static string UpdateRoot => Path.Combine(
         Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData), "ROG Ally Life", "FSR4Lite-update");
 
-    /// <summary>Downloads and unpacks a release, then starts its installer outside the package. Returns the log path.</summary>
-    public static async Task<string> DownloadAndStartAsync(string tag, IProgress<string> progress)
+    /// <summary>Progress for the widget: a message, a percentage (null = indeterminate), and whether it failed.</summary>
+    public sealed record UpdateProgress(string Message, int? Percent = null, bool Failed = false, bool ManualWindow = false);
+
+    /// <summary>
+    /// Downloads and unpacks a release, starts its installer outside the package, then follows the installer's own output
+    /// (install.log) until it reports success or failure. The widget is closed by Windows when the new version installs,
+    /// so a successful run usually ends with this process being stopped. If the background installer hasn't started
+    /// within 20 seconds, the installer opens in its own window instead (Install.cmd through Explorer, also outside the
+    /// package), so the update still happens.
+    /// </summary>
+    public static async Task RunUpdateAsync(string tag, Action<UpdateProgress> report)
     {
+        var version = tag.TrimStart('v', 'V');
         var dir = Path.Combine(UpdateRoot, tag);
         if (Directory.Exists(dir)) Directory.Delete(dir, recursive: true);
         Directory.CreateDirectory(dir);
 
-        progress.Report($"Downloading FSR 4.1 Lite {tag.TrimStart('v')}...");
+        // 1. Download, with a percentage.
+        report(new UpdateProgress($"Downloading FSR 4.1 Lite {version}...", 0));
         var zip = Path.Combine(dir, "FSR4Lite_x64.zip");
         var url = $"https://github.com/{Repo}/releases/download/{Uri.EscapeDataString(tag)}/FSR4Lite_x64.zip";
         using (var response = await Download.GetAsync(url, HttpCompletionOption.ResponseHeadersRead))
         {
             response.EnsureSuccessStatusCode();
+            var total = response.Content.Headers.ContentLength ?? 0;
+            await using var source = await response.Content.ReadAsStreamAsync();
             await using var file = File.Create(zip);
-            await response.Content.CopyToAsync(file);
+            var buffer = new byte[81920];
+            long done = 0;
+            var lastPercent = -1;
+            int read;
+            while ((read = await source.ReadAsync(buffer)) > 0)
+            {
+                await file.WriteAsync(buffer.AsMemory(0, read));
+                done += read;
+                if (total > 0)
+                {
+                    var percent = (int)(done * 100 / total);
+                    if (percent != lastPercent)
+                    {
+                        lastPercent = percent;
+                        report(new UpdateProgress($"Downloading FSR 4.1 Lite {version}... {percent}%", percent));
+                    }
+                }
+            }
         }
 
-        progress.Report("Unpacking the update...");
+        // 2. Unpack and check it's a real release.
+        report(new UpdateProgress("Preparing the update..."));
         var files = Path.Combine(dir, "files");
         ZipFile.ExtractToDirectory(zip, files);
         var installer = Path.Combine(files, "install.ps1");
         if (!File.Exists(installer) || !Directory.EnumerateFiles(files, "*.msix").Any())
             throw new InvalidDataException("The download doesn't look like an FSR 4.1 Lite release.");
 
+        // 3. Start the installer in the background and follow its output.
         var log = Path.Combine(dir, "install.log");
         File.WriteAllText(Path.Combine(UpdateRoot, "pending.txt"), tag + "\n" + log);
-        progress.Report("Installing. The widget closes for a moment; reopen it from Game Bar.");
-
+        report(new UpdateProgress("Starting the installer..."));
         StartAsScheduledTask(dir, installer, log);
         Log.Info($"Widget update {tag} started; installer log: {log}");
-        return log;
+
+        var started = DateTime.UtcNow;
+        while (true)
+        {
+            await Task.Delay(1000);
+            var text = ReadShared(log);
+
+            if (text.Length == 0)
+            {
+                if (DateTime.UtcNow - started > TimeSpan.FromSeconds(20))
+                {
+                    // The background route didn't start: open the installer in its own window instead.
+                    Log.Warn("Background installer didn't start within 20 s; opening Install.cmd instead");
+                    StartInstallerWindow(files);
+                    report(new UpdateProgress("Finishing the update in the installer window. The widget closes while it " +
+                                              "installs; reopen it from Game Bar afterwards.", ManualWindow: true));
+                    return;
+                }
+                continue;
+            }
+
+            var failed = text.IndexOf("Install failed", StringComparison.OrdinalIgnoreCase);
+            if (failed >= 0)
+            {
+                var reason = text[failed..].Split('\n')[0].Replace("Install failed:", "").Trim();
+                throw new InvalidOperationException(reason.Length > 0 ? reason : "The installer reported an error.");
+            }
+            if (text.Contains("Installed", StringComparison.Ordinal))
+                report(new UpdateProgress($"FSR 4.1 Lite {version} is installed. The widget restarts now; reopen it from Game Bar."));
+            else if (text.Contains("> Installing the widget", StringComparison.Ordinal))
+                report(new UpdateProgress($"Installing FSR 4.1 Lite {version}. The widget closes for a moment..."));
+            else if (text.Contains("> Installing runtime packages", StringComparison.Ordinal))
+                report(new UpdateProgress("Checking the components the widget needs..."));
+            else if (text.Contains("administrator permission", StringComparison.OrdinalIgnoreCase))
+                report(new UpdateProgress("Approve the Windows prompt to trust the ROG Ally Life certificate..."));
+            else
+                report(new UpdateProgress("Checking the signing certificate..."));
+
+            if (DateTime.UtcNow - started > TimeSpan.FromMinutes(3))
+                throw new TimeoutException("The installer is taking too long. Try again, or install the zip from the Releases page.");
+        }
+    }
+
+    /// <summary>Opens Install.cmd in its own window through Explorer, so it runs outside the widget's package.</summary>
+    private static void StartInstallerWindow(string files)
+    {
+        var cmd = Path.Combine(files, "Install.cmd");
+        if (!File.Exists(cmd)) throw new FileNotFoundException("Install.cmd is missing from the update.");
+        System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo("explorer.exe", $"\"{cmd}\"")
+        {
+            UseShellExecute = true,
+        });
+    }
+
+    private static string ReadShared(string path)
+    {
+        try
+        {
+            if (!File.Exists(path)) return "";
+            using var stream = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.ReadWrite | FileShare.Delete);
+            using var reader = new StreamReader(stream);
+            return reader.ReadToEnd();
+        }
+        catch
+        {
+            return "";
+        }
     }
 
     /// <summary>
@@ -177,7 +274,8 @@ public static class SelfUpdate
         var script = Path.Combine(dir, "run-update.ps1");
         File.WriteAllText(script,
             "$ErrorActionPreference = 'Continue'\r\n" +
-            $"& {Quote(installer)} *>&1 | Out-File -FilePath {Quote(log)} -Encoding utf8\r\n" +
+            $"'Starting the installer' | Out-File -FilePath {Quote(log)} -Encoding utf8\r\n" +
+            $"& {Quote(installer)} *>&1 | Out-File -FilePath {Quote(log)} -Encoding utf8 -Append\r\n" +
             $"schtasks.exe /Delete /TN {Quote(TaskName)} /F | Out-Null\r\n");
 
         var action = $"powershell.exe -NoProfile -ExecutionPolicy Bypass -WindowStyle Hidden -File \"{script}\"";

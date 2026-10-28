@@ -22,6 +22,8 @@ public sealed class HostService
     private (string Tag, Version Version)? _widgetUpdate;
     private Task? _widgetUpdateCheck;
     private bool _widgetUpdating;
+    private int? _widgetUpdatePercent;
+    private bool _widgetUpdateFailed;
     private string? _widgetUpdateMessage = SelfUpdate.TakeResult();
     private Task? _optiTask;
     private string _optiStatus = "";
@@ -76,6 +78,7 @@ public sealed class HostService
                 "updateAll" => UpdateAll(),
                 "updateWidget" => UpdateWidget(),
                 "widgetOpened" => WidgetOpened(),
+                "checkWidgetUpdate" => CheckWidgetUpdate(),
                 "autoUpdate" => SetAutoUpdate(Arg(args, "on") == "true"),
                 _ => Fail($"Unknown command: {cmd}"),
             };
@@ -191,6 +194,8 @@ public sealed class HostService
                 version = SelfUpdate.Display(SelfUpdate.Installed),
                 update = _widgetUpdate is { } u ? SelfUpdate.Display(u.Version) : "",
                 updating = _widgetUpdating,
+                percent = _widgetUpdatePercent ?? -1,
+                failed = _widgetUpdateFailed,
                 message = _widgetUpdateMessage ?? "",
             },
             autoUpdate = _settings.AutoUpdateGames,
@@ -722,23 +727,48 @@ public sealed class HostService
         return new { ok = true };
     }
 
-    /// <summary>Downloads the newest release and starts its installer; the widget closes while it installs.</summary>
+    /// <summary>"Check for updates": asks GitHub now and says what it found.</summary>
+    private object CheckWidgetUpdate()
+    {
+        if (_widgetUpdating) return new { ok = true, message = _widgetUpdateMessage ?? "Updating..." };
+        var found = SelfUpdate.CheckAsync(force: true).GetAwaiter().GetResult();
+        _widgetUpdate = found;
+        _widgetUpdateFailed = false;
+        _widgetUpdateMessage = null;
+        return new
+        {
+            ok = true,
+            message = found is { } u
+                ? $"FSR 4.1 Lite {SelfUpdate.Display(u.Version)} is available. Press Update to install it."
+                : $"You're up to date (FSR 4.1 Lite {SelfUpdate.Display(SelfUpdate.Installed)}).",
+        };
+    }
+
+    /// <summary>Downloads the newest release and installs it, reporting each stage; the widget closes while it installs.</summary>
     private object UpdateWidget()
     {
         if (_widgetUpdate is not { } update) return Fail("FSR 4.1 Lite is already up to date.");
         if (_widgetUpdating) return new { ok = true, message = _widgetUpdateMessage ?? "Updating..." };
         _widgetUpdating = true;
+        _widgetUpdateFailed = false;
+        _widgetUpdatePercent = 0;
         _widgetUpdateMessage = $"Downloading FSR 4.1 Lite {SelfUpdate.Display(update.Version)}...";
         _ = Task.Run(async () =>
         {
             try
             {
-                await SelfUpdate.DownloadAndStartAsync(update.Tag, new Progress<string>(m => _widgetUpdateMessage = m));
+                await SelfUpdate.RunUpdateAsync(update.Tag, p =>
+                {
+                    _widgetUpdateMessage = p.Message;
+                    _widgetUpdatePercent = p.Percent;
+                });
             }
             catch (Exception ex)
             {
                 Log.Error("Widget update failed", ex);
-                _widgetUpdateMessage = $"The update couldn't be downloaded: {ex.Message}";
+                _widgetUpdateMessage = $"The update didn't install: {ex.Message}";
+                _widgetUpdateFailed = true;
+                _widgetUpdatePercent = null;
                 _widgetUpdating = false;
             }
         });

@@ -66,8 +66,10 @@ game, and pick its upscaler. That's it.
 
 The first time it opens, the widget downloads OptiScaler and the FSR 4.1.2 Lite files on its own.
 
-**Updating the widget:** Setup shows your installed version. When a new release is out, it shows **Update to x.y.z**:
-tap it, and the widget closes for a moment while the update installs, then reopen it from Game Bar. Your settings and
+**Updating the widget:** Setup shows your installed version and a **Check for updates** button. When a new release is
+out, it shows **Update to x.y.z**: tap it to see the download progress and each install step. The widget closes for a
+moment while the new version installs; reopen it from Game Bar. If anything goes wrong, Setup shows what happened and a
+**Try again** button. Your settings and
 installed games carry over. Windows may ask for administrator permission during the update. (Versions before the
 built-in updater: download the new zip and run its Install.cmd once.)
 
@@ -263,7 +265,9 @@ opened (at most every 30 minutes) and every 6 hours in the background, and compa
 version. Updating downloads that release's `FSR4Lite_x64.zip` into
 `%ProgramData%\ROG Ally Life\FSR4Lite-update`, then runs its `install.ps1` as a one-off scheduled task that deletes
 itself, because installing closes the widget and helper. The installer's output goes to `install.log` there, and the
-widget reports the result after it reopens.
+widget follows that log live (download percentage, certificate, install) and reports failures with Try again; after
+it reopens, it confirms the new version. If the background installer hasn't started within 20 seconds, `Install.cmd`
+opens in its own window through Explorer instead, so the update still finishes.
 
 **Overlay size and position.** The FPS and resolution overlay (Small, Medium, Large, Extra large, Huge, Maximum) takes
 the same share of the
