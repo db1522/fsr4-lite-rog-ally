@@ -10,6 +10,7 @@ using Windows.System;
 using Windows.UI;
 using Windows.UI.Core;
 using Windows.UI.Xaml;
+using Windows.UI.Xaml.Input;
 using Windows.UI.Xaml.Controls;
 using Windows.UI.Xaml.Media;
 using Windows.UI.Xaml.Navigation;
@@ -73,6 +74,8 @@ namespace RalFsr.Widget
                     _tracker = null;
                 }
             }
+
+            PageScroll.BringIntoViewRequested += PageScroll_BringIntoViewRequested;
 
             Window.Current.VisibilityChanged += async (s, a) =>
             {
@@ -470,14 +473,9 @@ namespace RalFsr.Widget
 
         private async void CheckUpdates_Click(object sender, RoutedEventArgs e)
         {
-            CheckUpdatesButton.IsEnabled = false;
             CheckUpdatesButton.Content = "Checking...";
             try { await RunCommandAsync("checkWidgetUpdate"); }
-            finally
-            {
-                CheckUpdatesButton.Content = "Check for updates";
-                CheckUpdatesButton.IsEnabled = true;
-            }
+            finally { CheckUpdatesButton.Content = "Check for updates"; }
         }
 
         private async void UpdateWidget_Click(object sender, RoutedEventArgs e)
@@ -597,6 +595,12 @@ namespace RalFsr.Widget
         {
             if (_busy) return null;
             _busy = true;
+
+            // Disabling the buttons takes focus away from the one just pressed, and Windows scrolls to wherever focus
+            // lands next (with a controller, often the bottom of the widget). Hold the scroll position and give focus
+            // back afterwards.
+            var focused = FocusManager.GetFocusedElement() as Control;
+            var scroll = PageScroll.VerticalOffset;
             SetButtonsEnabled(false);
             StatusText.Text = "Working...";
             JsonObject result = null;
@@ -614,7 +618,17 @@ namespace RalFsr.Widget
             var message = StatusText.Text;
             await RefreshAsync(quiet: true);
             StatusText.Text = message;
+
+            if (focused != null && focused.IsEnabled && focused.Visibility == Visibility.Visible)
+                focused.Focus(FocusState.Programmatic);
+            PageScroll.ChangeView(null, scroll, null, disableAnimation: true);
             return result;
+        }
+
+        /// <summary>While a command runs, ignore the scroll jumps that come from focus moving off disabled buttons.</summary>
+        private void PageScroll_BringIntoViewRequested(UIElement sender, BringIntoViewRequestedEventArgs args)
+        {
+            if (_busy) args.Handled = true;
         }
 
         private void SetButtonsEnabled(bool on)

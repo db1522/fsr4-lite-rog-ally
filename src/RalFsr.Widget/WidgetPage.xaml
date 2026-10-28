@@ -5,7 +5,7 @@
     xmlns:local="using:RalFsr.Widget"
     Background="{StaticResource SurfaceBrush}">
 
-    <ScrollViewer VerticalScrollBarVisibility="Auto">
+    <ScrollViewer x:Name="PageScroll" VerticalScrollBarVisibility="Auto">
         <StackPanel Padding="20,16,20,20" Spacing="16" XYFocusKeyboardNavigation="Enabled">
             <StackPanel.ChildrenTransitions>
                 <TransitionCollection>
@@ -107,16 +107,13 @@
                 <ProgressBar x:Name="WidgetUpdateBar" Visibility="Collapsed" Minimum="0" Maximum="100" Height="6"
                              Foreground="{StaticResource RalRedBrush}" />
                 <TextBlock x:Name="WidgetUpdateText" Visibility="Collapsed" FontSize="13" TextWrapping="Wrap" />
-                <Grid ColumnSpacing="8">
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="*" />
-                        <ColumnDefinition Width="Auto" />
-                    </Grid.ColumnDefinitions>
+                <!-- Side by side from the left: Update (when there is one), then Check for updates -->
+                <StackPanel Orientation="Horizontal" Spacing="8" HorizontalAlignment="Left">
                     <Button x:Name="UpdateWidgetButton" Style="{StaticResource AccentButton}" Visibility="Collapsed"
-                            HorizontalAlignment="Stretch" Click="UpdateWidget_Click" />
-                    <Button x:Name="CheckUpdatesButton" Grid.Column="1" Style="{StaticResource QuietButton}"
+                            Click="UpdateWidget_Click" />
+                    <Button x:Name="CheckUpdatesButton" Style="{StaticResource QuietButton}"
                             Content="Check for updates" Click="CheckUpdates_Click" />
-                </Grid>
+                </StackPanel>
                 <TextBlock x:Name="OptiText" FontSize="13" TextWrapping="Wrap" />
                 <TextBlock x:Name="Fsr4Text" FontSize="13" TextWrapping="Wrap" />
                 <!-- Fallback only: shown when the automatic FSR 4 download hasn't worked (offline, blocked host) -->

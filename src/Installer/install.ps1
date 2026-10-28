@@ -49,6 +49,15 @@ try {
     Add-AppxPackage -Path $msix.FullName -ForceApplicationShutdown -ForceUpdateFromAnyVersion
     Write-Host '  Installed' -ForegroundColor Green
 
+    # Game Bar caches widget icons and keeps showing the old one (or a blank box) after an update until it restarts.
+    # The widget is closed by the install anyway, so restart Game Bar: it comes back fresh on the next press of the
+    # Armoury Crate button or Win + G.
+    $gameBar = Get-Process -Name 'GameBar', 'GameBarFTServer' -ErrorAction SilentlyContinue
+    if ($gameBar) {
+        $gameBar | Stop-Process -Force -ErrorAction SilentlyContinue
+        Write-Host '  Game Bar restarted so it shows the updated widget'
+    }
+
     Write-Host "`nOpen Game Bar (the Armoury Crate button on ROG handhelds, Win + G on others), open the Widgets menu and pick FSR 4.1 Lite." -ForegroundColor Green
     Write-Host 'Pin it if you want it to stay over your games.'
     Finish 0
