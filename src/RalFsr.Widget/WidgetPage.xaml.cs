@@ -127,7 +127,7 @@ namespace RalFsr.Widget
             var state = await HostClient.SendAsync("state", "targetName", targetName, "targetIsGame", targetIsGame);
             if (!Json.Bool(state, "ok"))
             {
-                GameName.Text = "Helper not running";
+                GameName.Text = HostClient.JustUpdated() ? "Restart to finish the update" : "Helper not running";
                 GameMeta.Text = "";
                 GameStatus.Text = Json.Str(state, "message");
                 GameActions.Visibility = Visibility.Collapsed;

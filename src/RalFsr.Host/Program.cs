@@ -36,7 +36,20 @@ internal static class Program
     [STAThread]
     private static void Main(string[] args)
     {
-        AppPaths.Ensure();
+        // Anything that goes wrong before normal logging is up still leaves a trace in helper.log (or, if even that
+        // can't be written, in a crash file in the temp folder).
+        AppDomain.CurrentDomain.UnhandledException += (_, e) => EarlyCrash(e.ExceptionObject as Exception);
+        try
+        {
+            AppPaths.Ensure();
+            Log.Info($"Helper process started ({(args.Length == 0 ? "watcher" : string.Join(" ", args))}, " +
+                     $"version {SelfUpdate.Display(SelfUpdate.Installed)})");
+        }
+        catch (Exception ex)
+        {
+            EarlyCrash(ex);
+            throw;
+        }
         System.Windows.Forms.Application.SetHighDpiMode(System.Windows.Forms.HighDpiMode.SystemAware);
         var loop = new System.Windows.Forms.ApplicationContext();
         var context = new System.Windows.Forms.WindowsFormsSynchronizationContext();
@@ -190,6 +203,15 @@ internal static class Program
         {
             Log.Error("Host crashed during startup or run", ex);
         }
+    }
+
+    private static void EarlyCrash(Exception? ex)
+    {
+        var text = $"{DateTime.Now:yyyy-MM-dd HH:mm:ss} [CRASH] Helper stopped during startup: {ex}{Environment.NewLine}";
+        try { Log.Error("Helper stopped during startup", ex ?? new Exception("unknown error")); return; }
+        catch { }
+        try { File.AppendAllText(Path.Combine(Path.GetTempPath(), "RalFsr.Host-crash.log"), text); }
+        catch { }
     }
 
     private static bool OtherHelpersRunning()

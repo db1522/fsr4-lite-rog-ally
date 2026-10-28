@@ -48,10 +48,14 @@ namespace RalFsr.Widget
                     await FullTrustProcessLauncher.LaunchFullTrustProcessForCurrentAppAsync("Widget"); // --widget
                     await Task.WhenAny(_connected.Task, Task.Delay(waits[attempt]));
                     if (App.Connection != null) return true;
+                    CrashLog.Write($"Starting the helper, try {attempt + 1} of {waits.Length}",
+                        new TimeoutException($"The helper was launched but didn't connect within {waits[attempt].TotalSeconds:0} s."));
                 }
-                catch (Exception)
+                catch (Exception ex)
                 {
-                    // Launch refused (often right after an update): try again after the pause.
+                    // Launch refused (often right after an update): note why, then try again after the pause.
+                    CrashLog.Write($"Starting the helper, try {attempt + 1} of {waits.Length}", ex);
+                    continue;
                 }
                 finally
                 {
@@ -69,12 +73,25 @@ namespace RalFsr.Widget
             if (App.Connection != null) _connected?.TrySetResult(true);
         }
 
+        /// <summary>
+        /// Installed or updated within the last hour. Right after an update Windows can refuse to start the helper until
+        /// the device restarts and finishes the switch-over to the new version.
+        /// </summary>
+        public static bool JustUpdated()
+        {
+            try { return DateTimeOffset.Now - Windows.ApplicationModel.Package.Current.InstalledDate < TimeSpan.FromHours(1); }
+            catch (Exception) { return false; }
+        }
+
         /// <param name="pairs">Alternating key, value strings.</param>
         public static async Task<JsonObject> SendAsync(string cmd, params string[] pairs)
         {
             if (!await EnsureConnectedAsync())
-                return Error("The helper didn't start after three tries. Close Game Bar, open the widget again, and if it " +
-                             "still doesn't start, restart the device and send ROG Ally Life the helper.log file.");
+                return Error(JustUpdated()
+                    ? "FSR 4.1 Lite was just updated, and Windows needs a restart to finish the update. Restart your " +
+                      "device, then open the widget again."
+                    : "The helper didn't start after three tries. Close Game Bar, open the widget again, and if it " +
+                      "still doesn't start, restart the device and send ROG Ally Life the helper.log file.");
 
             var connection = App.Connection;
             if (connection == null) return Error("The helper disconnected. Close the widget and open it again.");
