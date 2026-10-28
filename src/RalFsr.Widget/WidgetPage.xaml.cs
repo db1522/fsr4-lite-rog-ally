@@ -166,11 +166,12 @@ namespace RalFsr.Widget
             _suppressOverlayEvent = true;
             OverlaySwitch.IsOn = Json.Bool(state, "overlay");
             var sizeIndex = Array.IndexOf(OverlaySizeKeys, Json.Str(state, "overlaySize", "medium"));
-            OverlaySizeBox.SelectedIndex = sizeIndex >= 0 ? sizeIndex : 1;
+            OverlaySizeBox.SelectedIndex = sizeIndex >= 0 ? sizeIndex : OverlaySizeKeys.Length - 1;
             OverlaySizeBox.Visibility = OverlaySwitch.IsOn ? Visibility.Visible : Visibility.Collapsed;
             var positionIndex = Array.IndexOf(OverlayPositionKeys, Json.Str(state, "overlayPosition", "topleft"));
             OverlayPositionBox.SelectedIndex = positionIndex >= 0 ? positionIndex : 0;
             OverlayPositionBox.Visibility = OverlaySizeBox.Visibility;
+            OverlayRestartNote.Visibility = OverlaySizeBox.Visibility;
             NotifySwitch.IsOn = Json.Bool(state, "notify");
             AutoUpdateSwitch.IsOn = Json.Bool(state, "autoUpdate");
             RenderWidgetVersion(Json.Obj(state, "widget"));
@@ -431,6 +432,7 @@ namespace RalFsr.Widget
             if (_suppressOverlayEvent) return;
             OverlaySizeBox.Visibility = OverlaySwitch.IsOn ? Visibility.Visible : Visibility.Collapsed;
             OverlayPositionBox.Visibility = OverlaySizeBox.Visibility;
+            OverlayRestartNote.Visibility = OverlaySizeBox.Visibility;
             await RunCommandAsync("overlay", "on", OverlaySwitch.IsOn ? "true" : "false");
         }
 

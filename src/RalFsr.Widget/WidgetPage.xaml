@@ -129,6 +129,9 @@
                     <x:String>Bottom left</x:String>
                     <x:String>Bottom right</x:String>
                 </ComboBox>
+                <TextBlock x:Name="OverlayRestartNote" Visibility="Collapsed" FontSize="12" TextWrapping="Wrap"
+                           Foreground="{StaticResource MutedBrush}"
+                           Text="Size and position changes show after you restart the game." />
                 <ToggleSwitch x:Name="NotifySwitch" Header="Notify me when FSR 4.1 Lite is active"
                               Toggled="Notify_Toggled" />
                 <ToggleSwitch x:Name="AutoUpdateSwitch" Header="Update games automatically"

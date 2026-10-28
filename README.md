@@ -272,7 +272,7 @@ pixels and its own automatic scale follows the game's output height (1080p = 1.0
 original fixed `FpsScale=0.8` ignored that and looked small on a 2560x1600 Legion Go. The widget now writes each game's
 `FpsScale` from OptiScaler's rule for that game's output height (read from its last `OptiScaler.log`, or the screen's
 resolution before the first run), times the chosen size, within OptiScaler's 0.5 to 3.0 range. Medium at 1080p (the
-ROG Ally family) is still 0.8. It's OptiScaler's two-line Simple layout, so even Maximum stays well inside the screen.
+ROG Ally family) is 0.8; the default size is Maximum (2.0 at 1080p). It's OptiScaler's two-line Simple layout, so even Maximum stays well inside the screen.
 **Overlay position** puts it in any corner (`FpsOverlayPos` 0 to 3), for example away from a game's own HUD.
 
 **Updates.** OptiScaler: looked for when the widget opens and hourly, GitHub asked once a day. FSR 4 files: ETag

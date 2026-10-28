@@ -640,10 +640,11 @@ public sealed class HostService
     {
         if (!InstallConfig.OverlaySizes.Any(s => s.Key == size)) return Fail("Unknown overlay size.");
         _settings.OverlaySize = size;
+        _settings.OverlaySizeChosen = true;
         _settings.Save();
         foreach (var dir in InstallRegistry.Load()) Installer.ApplyOverlay(dir, _settings.ShowResolutionOverlay, OverlayScaleFor(dir), _settings.OverlayPosition);
         var label = InstallConfig.OverlaySizes.First(s => s.Key == size).Label;
-        return new { ok = true, message = $"Overlay size: {label}. Restart a game to see it." };
+        return new { ok = true, message = $"Overlay size set to {label}. Restart your game to see the new size." };
     }
 
     private object OverlayPosition(string position)
@@ -654,7 +655,7 @@ public sealed class HostService
         foreach (var dir in InstallRegistry.Load())
             Installer.ApplyOverlay(dir, _settings.ShowResolutionOverlay, OverlayScaleFor(dir), position);
         var label = InstallConfig.OverlayPositions.First(p => p.Key == position).Label;
-        return new { ok = true, message = $"Overlay position: {label}. Restart a game to see it." };
+        return new { ok = true, message = $"Overlay moved to {label.ToLowerInvariant()}. Restart your game to see it there." };
     }
 
     private object Overlay(bool on)

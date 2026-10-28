@@ -22,8 +22,14 @@ public sealed class AppSettings
     /// </summary>
     public bool AutoUpdateGames { get; set; } = true;
 
-    /// <summary>Size of the in-game FPS and resolution overlay: small, medium (default), large or xlarge.</summary>
-    public string OverlaySize { get; set; } = "medium";
+    /// <summary>Size of the in-game FPS and resolution overlay: small, medium, large, xlarge, huge or max (default).</summary>
+    public string OverlaySize { get; set; } = "max";
+
+    /// <summary>
+    /// The player picked the overlay size themselves. Until then the default applies, which also moves anyone whose
+    /// settings saved the earlier default ("medium") without them choosing it.
+    /// </summary>
+    public bool OverlaySizeChosen { get; set; }
 
     /// <summary>Corner for the in-game overlay: topleft (default), topright, bottomleft or bottomright.</summary>
     public string OverlayPosition { get; set; } = "topleft";
@@ -41,6 +47,7 @@ public sealed class AppSettings
             {
                 var loaded = JsonSerializer.Deserialize<AppSettings>(File.ReadAllText(AppPaths.SettingsFile)) ?? new();
                 loaded.ShowFsr4Watermark = false; // retired setting, see above
+                if (!loaded.OverlaySizeChosen) loaded.OverlaySize = "max"; // the default, unless the player chose a size
                 return loaded;
             }
         }
