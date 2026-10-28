@@ -7,7 +7,8 @@ namespace RalFsrHelper.Core;
 /// </summary>
 public static class Installer
 {
-    public static InstallManifest Install(GameScan scan, OptiPackage opti, Fsr4Set fsr4, AppSettings settings)
+    public static InstallManifest Install(GameScan scan, OptiPackage opti, Fsr4Set fsr4, AppSettings settings,
+        string? overlayScale = null)
     {
         var exeDir = scan.ExeDir ?? throw new InvalidOperationException("No exe folder for this game.");
         if (!fsr4.IsUsable) throw new InvalidOperationException("Import the FSR 4 files first.");
@@ -55,7 +56,7 @@ public static class Installer
                 RecordNewFile(exeDir, "OptiScaler.ini", manifest);
             }
             IniFile.SetValues(ini, InstallConfig.Base(fsr4.Vulkan is not null)
-                .Concat(InstallConfig.Overlay(settings.ShowResolutionOverlay))
+                .Concat(InstallConfig.Overlay(settings.ShowResolutionOverlay, overlayScale ?? "0.8", settings.OverlayPosition))
                 .Concat(InstallConfig.Watermark(settings.ShowFsr4Watermark)));
 
             manifest.InstalledAt = DateTime.Now;
@@ -158,10 +159,10 @@ public static class Installer
     }
 
     /// <summary>Changes only the overlay keys in an installed game's ini.</summary>
-    public static void ApplyOverlay(string exeDir, bool on)
+    public static void ApplyOverlay(string exeDir, bool on, string scale = "0.8", string position = "topleft")
     {
         var ini = Path.Combine(exeDir, "OptiScaler.ini");
-        if (File.Exists(ini)) IniFile.SetValues(ini, InstallConfig.Overlay(on));
+        if (File.Exists(ini)) IniFile.SetValues(ini, InstallConfig.Overlay(on, scale, position));
     }
 
     /// <summary>Sets this game's render resolution (OptiScaler's upscale ratio override) and remembers it.</summary>

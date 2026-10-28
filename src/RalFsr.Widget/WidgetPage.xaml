@@ -112,6 +112,23 @@
                         Visibility="Collapsed" Click="Import_Click" />
                 <ToggleSwitch x:Name="OverlaySwitch" Header="Show FPS and render resolution in game"
                               Toggled="Overlay_Toggled" />
+                <!-- Shown while the overlay is on: how big the overlay text is in game -->
+                <ComboBox x:Name="OverlaySizeBox" Header="Overlay size" Visibility="Collapsed" HorizontalAlignment="Stretch"
+                          SelectionChanged="OverlaySize_Changed">
+                    <x:String>Small</x:String>
+                    <x:String>Medium</x:String>
+                    <x:String>Large</x:String>
+                    <x:String>Extra large</x:String>
+                    <x:String>Huge</x:String>
+                    <x:String>Maximum</x:String>
+                </ComboBox>
+                <ComboBox x:Name="OverlayPositionBox" Header="Overlay position" Visibility="Collapsed" HorizontalAlignment="Stretch"
+                          SelectionChanged="OverlayPosition_Changed">
+                    <x:String>Top left</x:String>
+                    <x:String>Top right</x:String>
+                    <x:String>Bottom left</x:String>
+                    <x:String>Bottom right</x:String>
+                </ComboBox>
                 <ToggleSwitch x:Name="NotifySwitch" Header="Notify me when FSR 4.1 Lite is active"
                               Toggled="Notify_Toggled" />
                 <ToggleSwitch x:Name="AutoUpdateSwitch" Header="Update games automatically"

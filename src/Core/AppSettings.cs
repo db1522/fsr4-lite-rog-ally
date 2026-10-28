@@ -22,6 +22,12 @@ public sealed class AppSettings
     /// </summary>
     public bool AutoUpdateGames { get; set; } = true;
 
+    /// <summary>Size of the in-game FPS and resolution overlay: small, medium (default), large or xlarge.</summary>
+    public string OverlaySize { get; set; } = "medium";
+
+    /// <summary>Corner for the in-game overlay: topleft (default), topright, bottomleft or bottomright.</summary>
+    public string OverlayPosition { get; set; } = "topleft";
+
     /// <summary>The OptiScaler build the "updates ready" notification was last shown for, so it's shown once per build.</summary>
     public string LastUpdateNoticeBuild { get; set; } = "";
 

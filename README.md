@@ -52,7 +52,7 @@ game, and pick its upscaler. That's it.
   installed games update automatically, each keeping its own settings.
 - **Notifications.** A notification confirms FSR 4.1 Lite each time a game starts with it, or tells you what to fix.
 - **Nothing on screen you didn't ask for.** No startup message, no watermark. An optional FPS and resolution overlay
-  is one switch away.
+  is one switch away, in six sizes from Small to Maximum and any of the four corners.
 - **Clean uninstall.** Remove it from one game or all of them, and every game folder goes back exactly as it was.
 
 ## Install
@@ -263,6 +263,16 @@ compares it with the installed package version. Updating downloads that release'
 `%ProgramData%\ROG Ally Life\FSR4Lite-update`, then runs its `install.ps1` as a one-off scheduled task that deletes
 itself, because installing closes the widget and helper. The installer's output goes to `install.log` there, and the
 widget reports the result after it reopens.
+
+**Overlay size and position.** The FPS and resolution overlay (Small, Medium, Large, Extra large, Huge, Maximum) takes
+the same share of the
+screen on every handheld, so bigger screens like the Legion Go's show bigger text. OptiScaler draws it in the game's
+pixels and its own automatic scale follows the game's output height (1080p = 1.0, 1200p = 1.1, 1600p = 1.4); the
+original fixed `FpsScale=0.8` ignored that and looked small on a 2560x1600 Legion Go. The widget now writes each game's
+`FpsScale` from OptiScaler's rule for that game's output height (read from its last `OptiScaler.log`, or the screen's
+resolution before the first run), times the chosen size, within OptiScaler's 0.5 to 3.0 range. Medium at 1080p (the
+ROG Ally family) is still 0.8. It's OptiScaler's two-line Simple layout, so even Maximum stays well inside the screen.
+**Overlay position** puts it in any corner (`FpsOverlayPos` 0 to 3), for example away from a game's own HUD.
 
 **Updates.** OptiScaler: looked for when the widget opens and hourly, GitHub asked once a day. FSR 4 files: ETag
 check against ROG Ally Life's R2 bucket once a day. Compatibility list: raw wiki Markdown once a day. Game updates

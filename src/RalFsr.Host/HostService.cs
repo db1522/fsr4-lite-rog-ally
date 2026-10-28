@@ -67,6 +67,8 @@ public sealed class HostService
                 "removeAll" => RemoveAll(),
                 "import" => Import(Arg(args, "paths") ?? "", Arg(args, "allowUnverified") == "true"),
                 "overlay" => Overlay(Arg(args, "on") == "true"),
+                "overlaySize" => OverlaySize(Arg(args, "value") ?? "medium"),
+                "overlayPosition" => OverlayPosition(Arg(args, "value") ?? "topleft"),
                 "watermark" => Watermark(Arg(args, "on") == "true"),
                 "notify" => Notify(Arg(args, "on") == "true"),
                 "renderScale" => RenderScale(Arg(args, "exeDir") ?? "", Arg(args, "value") ?? "game"),
@@ -135,7 +137,7 @@ public sealed class HostService
                 if (ForegroundGame.AnyRunningFrom(dir)) continue;
                 try
                 {
-                    Installer.ApplyOverlay(dir, _settings.ShowResolutionOverlay);
+                    Installer.ApplyOverlay(dir, _settings.ShowResolutionOverlay, OverlayScaleFor(dir), _settings.OverlayPosition);
                     Installer.ApplyWatermark(dir, _settings.ShowFsr4Watermark);
                     Installer.ApplyRenderScale(dir, InstallManifest.TryLoad(dir)?.RenderScale ?? "game");
                 }
@@ -191,6 +193,8 @@ public sealed class HostService
                 message = _widgetUpdateMessage ?? "",
             },
             autoUpdate = _settings.AutoUpdateGames,
+            overlaySize = _settings.OverlaySize,
+            overlayPosition = _settings.OverlayPosition,
             opti = new
             {
                 ready = _opti is not null,
@@ -481,7 +485,7 @@ public sealed class HostService
             return Fail("That's a Windows or Xbox app, not a game, so FSR 4.1 Lite won't install there.");
         if (scan.State is not (GameState.Ready or GameState.NoUpscalerFound)) return Fail(StateText(scan));
 
-        Installer.Install(scan, _opti, fsr4, _settings);
+        Installer.Install(scan, _opti, fsr4, _settings, OverlayScaleFor(exeDir));
         InstallRegistry.Add(exeDir);
 
         // Capcom RE Engine games the OptiScaler community says need REFramework get it too.
@@ -624,11 +628,39 @@ public sealed class HostService
         }
     }
 
+    /// <summary>
+    /// The overlay scale for one game: the player's size, adjusted for that game's output resolution (from its last
+    /// OptiScaler.log, else the screen's) so it's the same share of the screen everywhere. See InstallConfig.OverlayScale.
+    /// </summary>
+    private string OverlayScaleFor(string exeDir) =>
+        InstallConfig.OverlayScale(_settings.OverlaySize, LoadedModules.LastDisplayHeight(exeDir) ?? ScreenProbe.Get().HeightPx);
+
+    private object OverlaySize(string size)
+    {
+        if (!InstallConfig.OverlaySizes.Any(s => s.Key == size)) return Fail("Unknown overlay size.");
+        _settings.OverlaySize = size;
+        _settings.Save();
+        foreach (var dir in InstallRegistry.Load()) Installer.ApplyOverlay(dir, _settings.ShowResolutionOverlay, OverlayScaleFor(dir), _settings.OverlayPosition);
+        var label = InstallConfig.OverlaySizes.First(s => s.Key == size).Label;
+        return new { ok = true, message = $"Overlay size: {label}. Restart a game to see it." };
+    }
+
+    private object OverlayPosition(string position)
+    {
+        if (!InstallConfig.OverlayPositions.Any(p => p.Key == position)) return Fail("Unknown overlay position.");
+        _settings.OverlayPosition = position;
+        _settings.Save();
+        foreach (var dir in InstallRegistry.Load())
+            Installer.ApplyOverlay(dir, _settings.ShowResolutionOverlay, OverlayScaleFor(dir), position);
+        var label = InstallConfig.OverlayPositions.First(p => p.Key == position).Label;
+        return new { ok = true, message = $"Overlay position: {label}. Restart a game to see it." };
+    }
+
     private object Overlay(bool on)
     {
         _settings.ShowResolutionOverlay = on;
         _settings.Save();
-        foreach (var dir in InstallRegistry.Load()) Installer.ApplyOverlay(dir, on);
+        foreach (var dir in InstallRegistry.Load()) Installer.ApplyOverlay(dir, on, OverlayScaleFor(dir), _settings.OverlayPosition);
         return new
         {
             ok = true,

@@ -42,18 +42,61 @@ public static class InstallConfig
 
     /// <summary>
     /// OptiScaler's FPS overlay, sized for a 7" 1080p handheld: the "Simple" layout (FPS row with the upscaler name,
-    /// e.g. "FSR3 -> FSR 4.1.2", plus the render -> output resolution row) at 0.8 scale in the top left corner.
-    /// The "Detailed" layout at automatic scale runs off the ROG Ally's screen.
+    /// e.g. "FSR3 -> FSR 4.1.2", plus the render -> output resolution row) in the top left corner, at the size the player
+    /// picked (0.8 by default). The "Detailed" layout at automatic scale runs off the ROG Ally's screen.
     /// </summary>
-    public static IReadOnlyList<IniValue> Overlay(bool on) => new[]
+    public static IReadOnlyList<IniValue> Overlay(bool on, string scale = "0.8", string position = "topleft") => new[]
     {
         new IniValue("Menu", "ShowFps", on ? "true" : "auto"),
         new IniValue("Menu", "FpsOverlayType", on ? "1" : "auto"),
         new IniValue("Menu", "FpsOverlayShowRatio", on ? "true" : "auto"),
-        new IniValue("Menu", "FpsScale", on ? "0.8" : "auto"),
-        new IniValue("Menu", "FpsOverlayPos", on ? "0" : "auto"),
+        new IniValue("Menu", "FpsScale", on ? scale : "auto"),
+        new IniValue("Menu", "FpsOverlayPos", on ? OverlayPositionValue(position) : "auto"),
         new IniValue("Menu", "FpsOverlayHorizontal", on ? "false" : "auto"),
     };
+
+    /// <summary>Overlay sizes offered in the widget: key, label, size relative to Medium.</summary>
+    public static readonly IReadOnlyList<(string Key, string Label, double Factor)> OverlaySizes = new[]
+    {
+        ("small", "Small", 0.75),
+        ("medium", "Medium", 1.0),
+        ("large", "Large", 1.25),
+        ("xlarge", "Extra large", 1.6),
+        // The overlay is OptiScaler's two-line Simple layout, so even these stay well inside the screen
+        // (about a quarter to a third of the width at 1080p).
+        ("huge", "Huge", 2.0),
+        ("max", "Maximum", 2.5),
+    };
+
+    /// <summary>Overlay corners offered in the widget: key, label, OptiScaler FpsOverlayPos (0 TL, 1 TR, 2 BL, 3 BR).</summary>
+    public static readonly IReadOnlyList<(string Key, string Label, string Value)> OverlayPositions = new[]
+    {
+        ("topleft", "Top left", "0"),
+        ("topright", "Top right", "1"),
+        ("bottomleft", "Bottom left", "2"),
+        ("bottomright", "Bottom right", "3"),
+    };
+
+    public static string OverlayPositionValue(string position) =>
+        OverlayPositions.FirstOrDefault(p => p.Key.Equals(position, StringComparison.OrdinalIgnoreCase)).Value ?? "0";
+
+    /// <summary>
+    /// OptiScaler FpsScale for an overlay size, so the overlay takes the same share of the screen on every handheld.
+    ///
+    /// OptiScaler draws the overlay in the game's own pixels, and its automatic scale grows with the game's output height
+    /// (floor(height / 108) / 10: 1080p = 1.0, 1200p = 1.1, 1600p = 1.4). A fixed FpsScale ignores that, so the original
+    /// fixed 0.8 looked small on a 2560x1600 Legion Go and oversized in a 720p game. Following OptiScaler's rule keeps the
+    /// overlay the same proportion of the screen everywhere, so bigger screens show bigger text, as people expect.
+    /// Medium at 1080p (the whole ROG Ally family) is 0.8, the original value. OptiScaler clamps FpsScale to 0.5-3.0.
+    /// </summary>
+    public static string OverlayScale(string size, int outputHeightPx)
+    {
+        var factor = OverlaySizes.FirstOrDefault(s => s.Key.Equals(size, StringComparison.OrdinalIgnoreCase)).Factor;
+        if (factor <= 0) factor = 1.0;
+        var auto = Math.Clamp(Math.Floor(Math.Max(outputHeightPx, 1) / 108.0) / 10.0, 0.5, 2.0);
+        var scale = Math.Clamp(Math.Round(0.8 * auto * factor, 2), 0.5, 3.0);
+        return scale.ToString("0.00", System.Globalization.CultureInfo.InvariantCulture);
+    }
 
     /// <summary>
     /// Per-game render resolution, through OptiScaler's upscale ratio override. Every render-resolution request from

@@ -111,6 +111,33 @@ public static class LoadedModules
     private static readonly System.Text.RegularExpressions.Regex ColorOutLine = new(
         @"color_out extents \((\d+),(\d+),(\d+),(\d+)\)", System.Text.RegularExpressions.RegexOptions.Compiled);
 
+    /// <summary>
+    /// The game's output height from its last OptiScaler.log (Streamline's color_out extents, else OptiScaler's
+    /// "Display Resolution"), or null before the game has run with OptiScaler. Used to size the overlay.
+    /// </summary>
+    public static int? LastDisplayHeight(string exeDir)
+    {
+        try
+        {
+            var path = Path.Combine(exeDir, "OptiScaler.log");
+            if (!File.Exists(path)) return null;
+            string log;
+            using (var stream = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.ReadWrite | FileShare.Delete))
+            using (var reader = new StreamReader(stream))
+                log = reader.ReadToEnd();
+
+            var outExtents = ColorOutLine.Matches(log);
+            if (outExtents.Count > 0) return int.Parse(outExtents[^1].Groups[4].Value);
+            var display = System.Text.RegularExpressions.Regex.Matches(log, @"Display Resolution:?\s*(\d+)x(\d+)");
+            if (display.Count > 0) return int.Parse(display[^1].Groups[2].Value);
+        }
+        catch
+        {
+            // a log that can't be read just means "unknown"
+        }
+        return null;
+    }
+
     /// <summary>Returns a function that stamps the latest logged render/display size onto a status.</summary>
     private static Func<Status, Status> ParseResolution(string log)
     {

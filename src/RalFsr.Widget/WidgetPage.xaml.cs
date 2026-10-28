@@ -162,6 +162,12 @@ namespace RalFsr.Widget
 
             _suppressOverlayEvent = true;
             OverlaySwitch.IsOn = Json.Bool(state, "overlay");
+            var sizeIndex = Array.IndexOf(OverlaySizeKeys, Json.Str(state, "overlaySize", "medium"));
+            OverlaySizeBox.SelectedIndex = sizeIndex >= 0 ? sizeIndex : 1;
+            OverlaySizeBox.Visibility = OverlaySwitch.IsOn ? Visibility.Visible : Visibility.Collapsed;
+            var positionIndex = Array.IndexOf(OverlayPositionKeys, Json.Str(state, "overlayPosition", "topleft"));
+            OverlayPositionBox.SelectedIndex = positionIndex >= 0 ? positionIndex : 0;
+            OverlayPositionBox.Visibility = OverlaySizeBox.Visibility;
             NotifySwitch.IsOn = Json.Bool(state, "notify");
             AutoUpdateSwitch.IsOn = Json.Bool(state, "autoUpdate");
             RenderWidgetVersion(Json.Obj(state, "widget"));
@@ -395,9 +401,33 @@ namespace RalFsr.Widget
             if (!string.IsNullOrEmpty(dir)) await RunCommandAsync("remove", "exeDir", dir);
         }
 
+        /// <summary>Same order as the ComboBox items: Small, Medium, Large, Extra large.</summary>
+        private static readonly string[] OverlaySizeKeys = { "small", "medium", "large", "xlarge", "huge", "max" };
+
+        /// <summary>Same order as the position ComboBox items.</summary>
+        private static readonly string[] OverlayPositionKeys = { "topleft", "topright", "bottomleft", "bottomright" };
+
+        private async void OverlayPosition_Changed(object sender, SelectionChangedEventArgs e)
+        {
+            if (_suppressOverlayEvent) return;
+            var index = OverlayPositionBox.SelectedIndex;
+            if (index < 0 || index >= OverlayPositionKeys.Length) return;
+            await RunCommandAsync("overlayPosition", "value", OverlayPositionKeys[index]);
+        }
+
+        private async void OverlaySize_Changed(object sender, SelectionChangedEventArgs e)
+        {
+            if (_suppressOverlayEvent) return;
+            var index = OverlaySizeBox.SelectedIndex;
+            if (index < 0 || index >= OverlaySizeKeys.Length) return;
+            await RunCommandAsync("overlaySize", "value", OverlaySizeKeys[index]);
+        }
+
         private async void Overlay_Toggled(object sender, RoutedEventArgs e)
         {
             if (_suppressOverlayEvent) return;
+            OverlaySizeBox.Visibility = OverlaySwitch.IsOn ? Visibility.Visible : Visibility.Collapsed;
+            OverlayPositionBox.Visibility = OverlaySizeBox.Visibility;
             await RunCommandAsync("overlay", "on", OverlaySwitch.IsOn ? "true" : "false");
         }
 
@@ -552,6 +582,8 @@ namespace RalFsr.Widget
             RefreshButton.IsEnabled = on;
             ImportButton.IsEnabled = on;
             OverlaySwitch.IsEnabled = on;
+            OverlaySizeBox.IsEnabled = on;
+            OverlayPositionBox.IsEnabled = on;
             NotifySwitch.IsEnabled = on;
             AutoUpdateSwitch.IsEnabled = on;
             UninstallButton.IsEnabled = on;
