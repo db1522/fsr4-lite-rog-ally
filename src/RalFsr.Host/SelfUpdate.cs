@@ -12,8 +12,8 @@ namespace RalFsrHelper.Host;
 ///
 /// Installing: the release's FSR4Lite_x64.zip is unpacked into ProgramData (outside AppData, so it isn't redirected into
 /// the package's private storage) and its own install.ps1 runs, the same installer as Install.cmd. Installing the update
-/// closes the widget and helper, so the installer can't be their child process: it runs as a one-off Windows scheduled
-/// task, which belongs to the Task Scheduler service, then deletes itself. Its output goes to install.log next to it.
+/// closes the widget and helper, so the installer can't be their child process: Explorer starts it, minimized, through
+/// Update.cmd, which logs its output to install.log next to it and closes itself.
 /// </summary>
 public static class SelfUpdate
 {
@@ -150,11 +150,13 @@ public static class SelfUpdate
         if (!File.Exists(installer) || !Directory.EnumerateFiles(files, "*.msix").Any())
             throw new InvalidDataException("The download doesn't look like an FSR 4.1 Lite release.");
 
-        // 3. Start the installer in the background and follow its output.
+        // 3. Start the installer outside the widget and follow its output. Task Scheduler turned out not to run the
+        //    installer on some devices (the task was created but never started), so the main route is the one that
+        //    always worked: Explorer opens Update.cmd, minimized, which logs the installer's output and closes itself.
         var log = Path.Combine(dir, "install.log");
         File.WriteAllText(Path.Combine(UpdateRoot, "pending.txt"), tag + "\n" + log);
         report(new UpdateProgress("Starting the installer..."));
-        StartAsScheduledTask(dir, installer, log);
+        StartInstallerWindow(files, log);
         Log.Info($"Widget update {tag} started; installer log: {log}");
 
         var started = DateTime.UtcNow;
@@ -165,15 +167,8 @@ public static class SelfUpdate
 
             if (text.Length == 0)
             {
-                if (DateTime.UtcNow - started > TimeSpan.FromSeconds(20))
-                {
-                    // The background route didn't start: open the installer in its own window instead.
-                    Log.Warn("Background installer didn't start within 20 s; opening Install.cmd instead");
-                    StartInstallerWindow(files);
-                    report(new UpdateProgress("Finishing the update in the installer window. The widget closes while it " +
-                                              "installs; reopen it from Game Bar afterwards.", ManualWindow: true));
-                    return;
-                }
+                if (DateTime.UtcNow - started > TimeSpan.FromSeconds(30))
+                    throw new InvalidOperationException("The installer didn't start. Try again, or install the zip from the Releases page.");
                 continue;
             }
 
@@ -200,16 +195,22 @@ public static class SelfUpdate
     }
 
     /// <summary>
-    /// Opens the installer in its own window through Explorer, so it runs outside the widget's package. Uses Update.cmd,
-    /// which (unlike Install.cmd, made for manual installs) doesn't wait for Enter, so the window closes by itself.
+    /// Runs the installer outside the widget's package: Explorer opens Update.cmd (Explorer's child, not ours, so the
+    /// install closing the widget can't stop it). Update.cmd starts itself again minimized, runs install.ps1 with its
+    /// output going to install.log (which the widget follows for live progress), and closes itself. Unlike Install.cmd,
+    /// made for manual installs, it never waits for Enter.
     /// </summary>
-    private static void StartInstallerWindow(string files)
+    private static void StartInstallerWindow(string files, string log)
     {
         var cmd = Path.Combine(files, "Update.cmd");
         File.WriteAllText(cmd,
             "@echo off\r\n" +
+            "if not \"%~1\"==\"min\" (start \"FSR 4.1 Lite update\" /min \"%~f0\" min & exit /b)\r\n" +
             "title FSR 4.1 Lite update\r\n" +
-            "powershell.exe -NoProfile -ExecutionPolicy Bypass -File \"%~dp0install.ps1\"\r\n");
+            "echo Updating FSR 4.1 Lite. This window closes by itself.\r\n" +
+            // *>&1 merges every PowerShell stream (Write-Host included) into the output that goes to install.log.
+            $"powershell.exe -NoProfile -ExecutionPolicy Bypass -Command \"& '%~dp0install.ps1' *>&1\" > \"{log}\" 2>&1\r\n" +
+            "exit\r\n");
         System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo("explorer.exe", $"\"{cmd}\"")
         {
             UseShellExecute = true,
@@ -266,43 +267,5 @@ public static class SelfUpdate
     private static void TryDelete(string dir)
     {
         try { if (Directory.Exists(dir)) Directory.Delete(dir, recursive: true); } catch { }
-    }
-
-    // ---- Running the installer outside the widget: a one-off scheduled task ----
-
-    private const string TaskName = @"ROGAllyLife\FSR4LiteUpdate"; // no spaces, like the update folder
-
-    /// <summary>
-    /// Writes run-update.ps1 (runs install.ps1 hidden, logs its output, deletes the task) and starts it as a scheduled
-    /// task for the signed-in user. Windows still shows its admin prompt if the update's certificate needs trusting.
-    /// </summary>
-    private static void StartAsScheduledTask(string dir, string installer, string log)
-    {
-        static string Quote(string s) => "'" + s.Replace("'", "''") + "'";
-        var script = Path.Combine(dir, "run-update.ps1");
-        File.WriteAllText(script,
-            "$ErrorActionPreference = 'Continue'\r\n" +
-            $"'Starting the installer' | Out-File -FilePath {Quote(log)} -Encoding utf8\r\n" +
-            $"& {Quote(installer)} *>&1 | Out-File -FilePath {Quote(log)} -Encoding utf8 -Append\r\n" +
-            $"schtasks.exe /Delete /TN {Quote(TaskName)} /F | Out-Null\r\n");
-
-        var action = $"powershell.exe -NoProfile -ExecutionPolicy Bypass -WindowStyle Hidden -File \"{script}\"";
-        RunSchtasks($"/Create /TN \"{TaskName}\" /TR \"{action.Replace("\"", "\\\"")}\" /SC ONCE /ST 00:00 /RL LIMITED /F");
-        RunSchtasks($"/Run /TN \"{TaskName}\"");
-    }
-
-    private static void RunSchtasks(string arguments)
-    {
-        var psi = new System.Diagnostics.ProcessStartInfo("schtasks.exe", arguments)
-        {
-            CreateNoWindow = true,
-            UseShellExecute = false,
-            RedirectStandardOutput = true,
-            RedirectStandardError = true,
-        };
-        using var p = System.Diagnostics.Process.Start(psi) ?? throw new InvalidOperationException("Couldn't start schtasks.exe");
-        var output = p.StandardOutput.ReadToEnd() + p.StandardError.ReadToEnd();
-        p.WaitForExit(15000);
-        if (p.ExitCode != 0) throw new InvalidOperationException($"Couldn't schedule the update installer: {output.Trim()}");
     }
 }

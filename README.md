@@ -263,14 +263,14 @@ settings these games need (`RestoreComputeSignature=true`, `Dxgi=false`).
 `github.com/db1522/fsr4-lite-rog-ally/releases/latest` (no GitHub API, so no rate limit) whenever the widget is
 opened (at most every 30 minutes) and every 6 hours in the background, and compares it with the installed package
 version. Updating downloads that release's `FSR4Lite_x64.zip` into
-`%ProgramData%\ROGAllyLife\FSR4LiteUpdate` (no spaces, since it passes through Task Scheduler), then runs its `install.ps1` as a one-off scheduled task that deletes
-itself, because installing closes the widget and helper. The installer's output goes to `install.log` there, and the
-widget follows that log live (download percentage, certificate, install) and reports failures with Try again; after
-it reopens, it confirms the new version. If the background installer hasn't started within 20 seconds, `Install.cmd`
-opens in its own window through Explorer instead (a small Update.cmd that closes by itself), so the update still
-finishes. The installer closes the widget's own processes before installing, so Windows doesn't relaunch the widget as
-a full-screen app afterwards, and the widget never opens as a full-screen app: launched outside Game Bar, it opens Game
-Bar instead (or just closes right after an update).
+`%ProgramData%\ROGAllyLife\FSR4LiteUpdate` (no spaces) and runs its `install.ps1` outside the widget's package:
+Explorer opens a small `Update.cmd` that starts itself minimized, writes the installer's output to `install.log`, and
+closes itself. (Task Scheduler was tried first, but on some devices the task never ran.) The widget follows that log
+live (download percentage, certificate, install), reports failures with Try again, and confirms the new version after
+it reopens. The installer closes the widget's own processes before installing, so Windows doesn't relaunch the widget
+as a full-screen app afterwards, and the widget never opens as a full-screen app: launched outside Game Bar, it opens
+Game Bar instead (or just closes right after an update). After an update the widget tries up to three times to start
+its helper.
 
 **Overlay size and position.** The FPS and resolution overlay (Small, Medium, Large, Extra large, Huge, Maximum) takes
 the same share of the

@@ -23,28 +23,46 @@ namespace RalFsr.Widget
             return _launching;
         }
 
+        /// <summary>
+        /// Starts the helper and waits for it to connect back, trying up to three times. Right after an update (and the
+        /// Game Bar restart that ends it) Windows can still be finishing the package registration: the first launch then
+        /// fails at once, or the helper never connects. A short pause and another try sorts that out by itself.
+        /// </summary>
         private static async Task<bool> LaunchAsync()
         {
             if (App.Connection != null) return true;
 
-            _connected = new TaskCompletionSource<bool>();
-            App.ConnectionChanged += OnConnectionChanged;
-            try
+            var waits = new[] { TimeSpan.FromSeconds(25), TimeSpan.FromSeconds(20), TimeSpan.FromSeconds(20) };
+            for (var attempt = 0; attempt < waits.Length; attempt++)
             {
-                await FullTrustProcessLauncher.LaunchFullTrustProcessForCurrentAppAsync("Widget"); // --widget
-                // Generous: the first start after an install or update unpacks the helper before it can connect.
-                await Task.WhenAny(_connected.Task, Task.Delay(TimeSpan.FromSeconds(45)));
-                return App.Connection != null;
+                if (attempt > 0)
+                {
+                    Starting?.Invoke(null, attempt + 1);
+                    await Task.Delay(TimeSpan.FromSeconds(3));
+                }
+
+                _connected = new TaskCompletionSource<bool>();
+                App.ConnectionChanged += OnConnectionChanged;
+                try
+                {
+                    await FullTrustProcessLauncher.LaunchFullTrustProcessForCurrentAppAsync("Widget"); // --widget
+                    await Task.WhenAny(_connected.Task, Task.Delay(waits[attempt]));
+                    if (App.Connection != null) return true;
+                }
+                catch (Exception)
+                {
+                    // Launch refused (often right after an update): try again after the pause.
+                }
+                finally
+                {
+                    App.ConnectionChanged -= OnConnectionChanged;
+                }
             }
-            catch (Exception)
-            {
-                return false;
-            }
-            finally
-            {
-                App.ConnectionChanged -= OnConnectionChanged;
-            }
+            return App.Connection != null;
         }
+
+        /// <summary>Raised before a retry, with the attempt number (2 or 3), so the widget can say it's still starting.</summary>
+        public static event EventHandler<int> Starting;
 
         private static void OnConnectionChanged(object sender, EventArgs e)
         {
@@ -55,8 +73,8 @@ namespace RalFsr.Widget
         public static async Task<JsonObject> SendAsync(string cmd, params string[] pairs)
         {
             if (!await EnsureConnectedAsync())
-                return Error("The helper didn't start. Close the widget and open it again. " +
-                             "If this keeps happening, restart the Ally and send ROG Ally Life the helper.log file.");
+                return Error("The helper didn't start after three tries. Close Game Bar, open the widget again, and if it " +
+                             "still doesn't start, restart the device and send ROG Ally Life the helper.log file.");
 
             var connection = App.Connection;
             if (connection == null) return Error("The helper disconnected. Close the widget and open it again.");

@@ -77,6 +77,11 @@ namespace RalFsr.Widget
 
             PageScroll.BringIntoViewRequested += PageScroll_BringIntoViewRequested;
 
+            // While the helper is being retried (right after an update, for example), say so instead of looking stuck.
+            HostClient.Starting += async (_, attempt) =>
+                await Dispatcher.RunAsync(CoreDispatcherPriority.Normal, () =>
+                    StatusText.Text = $"Starting the helper (try {attempt} of 3)...");
+
             Window.Current.VisibilityChanged += async (s, a) =>
             {
                 if (!a.Visible) return;
