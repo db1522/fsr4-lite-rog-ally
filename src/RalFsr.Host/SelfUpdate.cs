@@ -90,8 +90,10 @@ public static class SelfUpdate
         return true;
     }
 
+    // No spaces anywhere in this path: it's passed through Task Scheduler and PowerShell, where a space in
+    // "ROG Ally Life" is the kind of thing that stops the installer from starting at all.
     private static string UpdateRoot => Path.Combine(
-        Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData), "ROG Ally Life", "FSR4Lite-update");
+        Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData), "ROGAllyLife", "FSR4LiteUpdate");
 
     /// <summary>Progress for the widget: a message, a percentage (null = indeterminate), and whether it failed.</summary>
     public sealed record UpdateProgress(string Message, int? Percent = null, bool Failed = false, bool ManualWindow = false);
@@ -197,11 +199,17 @@ public static class SelfUpdate
         }
     }
 
-    /// <summary>Opens Install.cmd in its own window through Explorer, so it runs outside the widget's package.</summary>
+    /// <summary>
+    /// Opens the installer in its own window through Explorer, so it runs outside the widget's package. Uses Update.cmd,
+    /// which (unlike Install.cmd, made for manual installs) doesn't wait for Enter, so the window closes by itself.
+    /// </summary>
     private static void StartInstallerWindow(string files)
     {
-        var cmd = Path.Combine(files, "Install.cmd");
-        if (!File.Exists(cmd)) throw new FileNotFoundException("Install.cmd is missing from the update.");
+        var cmd = Path.Combine(files, "Update.cmd");
+        File.WriteAllText(cmd,
+            "@echo off\r\n" +
+            "title FSR 4.1 Lite update\r\n" +
+            "powershell.exe -NoProfile -ExecutionPolicy Bypass -File \"%~dp0install.ps1\"\r\n");
         System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo("explorer.exe", $"\"{cmd}\"")
         {
             UseShellExecute = true,
@@ -262,7 +270,7 @@ public static class SelfUpdate
 
     // ---- Running the installer outside the widget: a one-off scheduled task ----
 
-    private const string TaskName = @"ROG Ally Life\FSR 4.1 Lite update";
+    private const string TaskName = @"ROGAllyLife\FSR4LiteUpdate"; // no spaces, like the update folder
 
     /// <summary>
     /// Writes run-update.ps1 (runs install.ps1 hidden, logs its output, deletes the task) and starts it as a scheduled

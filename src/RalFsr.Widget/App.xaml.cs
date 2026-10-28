@@ -59,16 +59,28 @@ namespace RalFsr.Widget
         }
 
         /// <summary>Opened from the Start menu instead of Game Bar: show the same page as a normal window.</summary>
-        protected override void OnLaunched(LaunchActivatedEventArgs e)
+        /// <summary>
+        /// Launched as a normal app (Start menu, or Windows relaunching it after an update) rather than by Game Bar. The
+        /// widget only makes sense in Game Bar, so never show a full-screen window: right after an update just close, and
+        /// otherwise open Game Bar, where the widget lives.
+        /// </summary>
+        protected override async void OnLaunched(LaunchActivatedEventArgs e)
         {
-            var frame = Window.Current.Content as Frame;
-            if (frame == null)
+            var justUpdated = false;
+            try
             {
-                frame = new Frame();
-                Window.Current.Content = frame;
+                justUpdated = DateTimeOffset.Now - Windows.ApplicationModel.Package.Current.InstalledDate < TimeSpan.FromMinutes(3);
             }
-            if (frame.Content == null) frame.Navigate(typeof(WidgetPage), null);
-            Window.Current.Activate();
+            catch (Exception)
+            {
+            }
+
+            if (!justUpdated)
+            {
+                try { await Windows.System.Launcher.LaunchUriAsync(new Uri("ms-gamebar:")); }
+                catch (Exception) { }
+            }
+            Current.Exit();
         }
 
         /// <summary>The helper connecting to the in-process app service lands here.</summary>

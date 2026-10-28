@@ -46,6 +46,10 @@ try {
     }
 
     Step 'Installing the widget'
+    # Close the widget and its helper first. Windows relaunches apps it had to shut down for an update, and a Game Bar
+    # widget relaunched that way opens as a full-screen app window instead of in Game Bar.
+    Get-Process -Name 'RalFsr.Widget', 'RalFsr.Host' -ErrorAction SilentlyContinue | Stop-Process -Force -ErrorAction SilentlyContinue
+    Start-Sleep -Milliseconds 500
     Add-AppxPackage -Path $msix.FullName -ForceApplicationShutdown -ForceUpdateFromAnyVersion
     Write-Host '  Installed' -ForegroundColor Green
 
