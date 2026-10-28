@@ -258,8 +258,9 @@ so the widget sets `REFrameworkConfig_RememberMenuState=true` and `REFrameworkCo
 settings these games need (`RestoreComputeSignature=true`, `Dxgi=false`).
 
 **Widget updates.** The helper reads the newest release from the redirect of
-`github.com/db1522/fsr4-lite-rog-ally/releases/latest` (no GitHub API, so no rate limit), at most every 6 hours, and
-compares it with the installed package version. Updating downloads that release's `FSR4Lite_x64.zip` into
+`github.com/db1522/fsr4-lite-rog-ally/releases/latest` (no GitHub API, so no rate limit) whenever the widget is
+opened (at most every 30 minutes) and every 6 hours in the background, and compares it with the installed package
+version. Updating downloads that release's `FSR4Lite_x64.zip` into
 `%ProgramData%\ROG Ally Life\FSR4Lite-update`, then runs its `install.ps1` as a one-off scheduled task that deletes
 itself, because installing closes the widget and helper. The installer's output goes to `install.log` there, and the
 widget reports the result after it reopens.

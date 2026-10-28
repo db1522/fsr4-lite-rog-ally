@@ -75,6 +75,7 @@ public sealed class HostService
                 "switchLoader" => SwitchLoader(Arg(args, "exeDir") ?? ""),
                 "updateAll" => UpdateAll(),
                 "updateWidget" => UpdateWidget(),
+                "widgetOpened" => WidgetOpened(),
                 "autoUpdate" => SetAutoUpdate(Arg(args, "on") == "true"),
                 _ => Fail($"Unknown command: {cmd}"),
             };
@@ -706,6 +707,18 @@ public sealed class HostService
         // Also run when REFramework is current: it keeps REFramework's menu set to start closed.
         try { Installer.AddREFramework(dir, _ref); }
         catch (Exception ex) { Log.Warn($"Couldn't update REFramework in {dir}: {ex.Message}"); }
+    }
+
+    /// <summary>
+    /// The widget was just opened: look for a newer widget release if the last look is over 30 minutes old, so a new
+    /// version shows up the next time anyone opens the widget instead of after the 6-hour background check.
+    /// </summary>
+    private object WidgetOpened()
+    {
+        if (!_widgetUpdating && _widgetUpdateCheck is null or { IsCompleted: true })
+            _widgetUpdateCheck = Task.Run(async () =>
+                _widgetUpdate = await SelfUpdate.CheckAsync(maxAge: SelfUpdate.CheckOnOpenEvery));
+        return new { ok = true };
     }
 
     /// <summary>Downloads the newest release and starts its installer; the widget closes while it installs.</summary>

@@ -19,7 +19,11 @@ public static class SelfUpdate
 {
     public const string Repo = "db1522/fsr4-lite-rog-ally";
     private const string LatestUrl = "https://github.com/" + Repo + "/releases/latest";
-    private static readonly TimeSpan CheckEvery = TimeSpan.FromHours(6);
+    /// <summary>Background check interval (the helper can run for days as the notification watcher).</summary>
+    public static readonly TimeSpan CheckEvery = TimeSpan.FromHours(6);
+
+    /// <summary>When the widget is opened: look again if the last check is older than this.</summary>
+    public static readonly TimeSpan CheckOnOpenEvery = TimeSpan.FromMinutes(30);
 
     private static readonly HttpClient Probe = Client(redirects: false);
     private static readonly HttpClient Download = Client(redirects: true);
@@ -53,11 +57,11 @@ public static class SelfUpdate
     public static string Display(Version v) => v.Revision == 0 ? $"{v.Major}.{v.Minor}.{v.Build}" : v.ToString();
 
     /// <summary>The newest release when it's newer than the installed widget, else null. Never throws.</summary>
-    public static async Task<(string Tag, Version Version)?> CheckAsync(bool force = false)
+    public static async Task<(string Tag, Version Version)?> CheckAsync(bool force = false, TimeSpan? maxAge = null)
     {
         try
         {
-            if (force || DateTime.UtcNow - _checkedAt > CheckEvery)
+            if (force || DateTime.UtcNow - _checkedAt > (maxAge ?? CheckEvery))
             {
                 _checkedAt = DateTime.UtcNow;
                 using var response = await Probe.GetAsync(LatestUrl, HttpCompletionOption.ResponseHeadersRead);

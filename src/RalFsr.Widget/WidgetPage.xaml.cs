@@ -76,9 +76,12 @@ namespace RalFsr.Widget
 
             Window.Current.VisibilityChanged += async (s, a) =>
             {
-                if (a.Visible) await RefreshAsync(quiet: true);
+                if (!a.Visible) return;
+                await TellHelperWidgetOpenedAsync();
+                await RefreshAsync(quiet: true);
             };
 
+            await TellHelperWidgetOpenedAsync();
             await RefreshAsync(quiet: false);
 
             // Controller users land on the main action straight away.
@@ -553,6 +556,16 @@ namespace RalFsr.Widget
         }
 
         /// <summary>Sends a command, shows its message, and refreshes the view.</summary>
+        /// <summary>
+        /// Lets the helper know the widget was just opened, so it looks for a newer widget release (at most every 30
+        /// minutes). Silent: no status message, and a failure doesn't matter.
+        /// </summary>
+        private static async Task TellHelperWidgetOpenedAsync()
+        {
+            try { await HostClient.SendAsync("widgetOpened"); }
+            catch (Exception) { }
+        }
+
         private async Task<JsonObject> RunCommandAsync(string cmd, params string[] pairs)
         {
             if (_busy) return null;
