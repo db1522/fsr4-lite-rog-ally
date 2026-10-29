@@ -14,7 +14,7 @@ public static class Installer
         if (!fsr4.IsUsable) throw new InvalidOperationException("Import the FSR 4 files first.");
         if (InstallManifest.TryLoad(exeDir) is not null) throw new InvalidOperationException("Already installed.");
 
-        var proxy = PickProxyName(exeDir);
+        var proxy = PickProxyName(exeDir, scan.ExeName);
         var manifest = new InstallManifest
         {
             GameKey = scan.Game.Key,
@@ -325,10 +325,16 @@ public static class Installer
         }
     }
 
-    /// <summary>First proxy name that doesn't clash with a file the game already ships.</summary>
-    public static string PickProxyName(string exeDir) =>
-        InstallConfig.ProxyNames.FirstOrDefault(n => !File.Exists(Path.Combine(exeDir, n)))
-        ?? throw new InvalidOperationException("Every OptiScaler file name is already taken in this folder.");
+    /// <summary>
+    /// The loader name a game needs (see GameRules, e.g. winmm.dll for Red Dead Redemption 2) if it's free, otherwise
+    /// the first proxy name that doesn't clash with a file the game already ships.
+    /// </summary>
+    public static string PickProxyName(string exeDir, string? exeName = null)
+    {
+        if (GameRules.LoaderFor(exeName) is { } wanted && !File.Exists(Path.Combine(exeDir, wanted))) return wanted;
+        return InstallConfig.ProxyNames.FirstOrDefault(n => !File.Exists(Path.Combine(exeDir, n)))
+               ?? throw new InvalidOperationException("Every OptiScaler file name is already taken in this folder.");
+    }
 
     private static void PlaceFile(string source, string exeDir, string rel, InstallManifest manifest)
     {

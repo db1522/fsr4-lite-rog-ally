@@ -291,7 +291,7 @@ public sealed class HostService
             exeDir,
             exeName = Path.GetFileName(exe),
             state = scan.State.ToString(),
-            stateText = StateText(scan) + REFrameworkText(scan, compat),
+            stateText = StateText(scan) + REFrameworkText(scan, compat) + GameRules.TipFor(scan.ExeName),
             canInstall = scan.State is GameState.Ready or GameState.NoUpscalerFound,
             installed = scan.State == GameState.Installed,
             upscalers = scan.Upscalers,
