@@ -166,7 +166,14 @@ public static class SelfUpdate
         //    always worked: Explorer opens Update.cmd, minimized, which logs the installer's output and closes itself.
         var log = Path.Combine(dir, "install.log");
         File.WriteAllText(Path.Combine(UpdateRoot, "pending.txt"), tag + "\n" + log);
-        report(new UpdateProgress("Starting the installer..."));
+        // A short countdown, so Game Bar closing is never a surprise. The installer then shows Windows notifications
+        // under the widget's name and reopens Game Bar by itself when it's done.
+        for (var i = 3; i >= 1; i--)
+        {
+            report(new UpdateProgress($"Ready to install FSR 4.1 Lite {version}. Game Bar closes in {i} and reopens by itself..."));
+            await Task.Delay(1000);
+        }
+        report(new UpdateProgress("Installing. Game Bar closes now and reopens by itself in a few seconds."));
         StartInstallerWindow(files, log);
         Log.Info($"Widget update {tag} started; installer log: {log}");
 
@@ -218,6 +225,7 @@ public static class SelfUpdate
             "@echo off\r\n" +
             "if not \"%~1\"==\"min\" (start \"FSR 4.1 Lite update\" /min \"%~f0\" min & exit /b)\r\n" +
             "title FSR 4.1 Lite update\r\n" +
+            "set RAL_UPDATE=1\r\n" +
             "echo Updating FSR 4.1 Lite. This window closes by itself.\r\n" +
             // *>&1 merges every PowerShell stream (Write-Host included) into the output that goes to install.log.
             $"powershell.exe -NoProfile -ExecutionPolicy Bypass -Command \"& '%~dp0install.ps1' *>&1\" > \"{log}\" 2>&1\r\n" +
