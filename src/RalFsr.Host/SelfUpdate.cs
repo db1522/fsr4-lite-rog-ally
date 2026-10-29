@@ -113,8 +113,8 @@ public static class SelfUpdate
         // and offered the update again): don't start a second one.
         if (InstallInProgress(tag))
         {
-            report(new UpdateProgress($"An update to FSR 4.1 Lite {version} is already installing. The widget closes " +
-                                      "when it finishes; reopen it from Game Bar."));
+            report(new UpdateProgress($"An update to FSR 4.1 Lite {version} is already installing. Game Bar " +
+                                      "closes when it finishes; open it again afterwards."));
             return;
         }
 
@@ -190,9 +190,9 @@ public static class SelfUpdate
                 throw new InvalidOperationException(reason.Length > 0 ? reason : "The installer reported an error.");
             }
             if (text.Contains("Installed", StringComparison.Ordinal))
-                report(new UpdateProgress($"FSR 4.1 Lite {version} is installed. The widget restarts now; reopen it from Game Bar."));
+                report(new UpdateProgress($"FSR 4.1 Lite {version} is installed. Game Bar closes now; open it again to use the new version."));
             else if (text.Contains("> Installing the widget", StringComparison.Ordinal))
-                report(new UpdateProgress($"Installing FSR 4.1 Lite {version}. The widget closes for a moment..."));
+                report(new UpdateProgress($"Installing FSR 4.1 Lite {version}. Game Bar closes for a moment; open it again in a few seconds..."));
             else if (text.Contains("> Installing runtime packages", StringComparison.Ordinal))
                 report(new UpdateProgress("Checking the components the widget needs..."));
             else if (text.Contains("administrator permission", StringComparison.OrdinalIgnoreCase))

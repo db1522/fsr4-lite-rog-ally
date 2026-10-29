@@ -89,12 +89,6 @@ Once it's running, the badge turns green and a notification confirms it.
 > If the card says a game is rendering at full resolution, change the game's resolution once and back. Some games,
 > like Forza Horizon 6, only apply their upscaler preset after a resolution change.
 
-## Screenshots
-
-<img width="960" height="540" alt="Hellraiser-Win64-Shipping_CnAwUwDYK7" src="https://github.com/user-attachments/assets/90de3389-e862-4403-80b6-5f1464924093" />
-<img width="960" height="540" alt="Hellraiser-Win64-Shipping_uPr5QjjIxm" src="https://github.com/user-attachments/assets/76d96721-4475-4b18-81bb-17a98c2c23f0" />
-<img width="960" height="540" alt="Hellraiser-Win64-Shipping_OMuvIBVGvc" src="https://github.com/user-attachments/assets/d799498b-2b80-4c8a-a97a-1437fb8ffdcc" />
-
 ## Tested games
 
 Confirmed on the ROG Ally X:

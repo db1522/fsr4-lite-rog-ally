@@ -46,21 +46,21 @@ try {
     }
 
     Step 'Installing the widget'
-    # Close the widget and its helper first. Windows relaunches apps it had to shut down for an update, and a Game Bar
-    # widget relaunched that way opens as a full-screen app window instead of in Game Bar.
+    # Close Game Bar first, then the widget and its helper. Game Bar hosts the widget: closing the widget while Game Bar
+    # is open makes Game Bar show "Something went wrong" and keep hold of the widget, which stalls the install until
+    # Game Bar is restarted. With Game Bar closed first nothing holds the package, nothing reports a crash, and Windows
+    # has no running widget to relaunch as a full-screen app afterwards. Game Bar comes back fresh, with the new
+    # version and its icon, on the next press of the Armoury Crate button or Win + G.
+    Get-Process -Name 'GameBar', 'GameBarFTServer' -ErrorAction SilentlyContinue | Stop-Process -Force -ErrorAction SilentlyContinue
     Get-Process -Name 'RalFsr.Widget', 'RalFsr.Host' -ErrorAction SilentlyContinue | Stop-Process -Force -ErrorAction SilentlyContinue
-    Start-Sleep -Milliseconds 500
+    Start-Sleep -Seconds 1
     Add-AppxPackage -Path $msix.FullName -ForceApplicationShutdown -ForceUpdateFromAnyVersion
     Write-Host '  Installed' -ForegroundColor Green
 
-    # Game Bar caches widget icons and keeps showing the old one (or a blank box) after an update until it restarts.
-    # The widget is closed by the install anyway, so restart Game Bar: it comes back fresh on the next press of the
-    # Armoury Crate button or Win + G.
+    # If Game Bar was opened during the install, close it again so it picks up the new version and icon.
     $gameBar = Get-Process -Name 'GameBar', 'GameBarFTServer' -ErrorAction SilentlyContinue
-    if ($gameBar) {
-        $gameBar | Stop-Process -Force -ErrorAction SilentlyContinue
-        Write-Host '  Game Bar restarted so it shows the updated widget'
-    }
+    if ($gameBar) { $gameBar | Stop-Process -Force -ErrorAction SilentlyContinue }
+    Write-Host '  Open Game Bar again to use the updated widget'
 
     Write-Host "`nOpen Game Bar (the Armoury Crate button on ROG handhelds, Win + G on others), open the Widgets menu and pick FSR 4.1 Lite." -ForegroundColor Green
     Write-Host 'Pin it if you want it to stay over your games.'
