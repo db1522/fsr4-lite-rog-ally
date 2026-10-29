@@ -15,14 +15,24 @@ namespace RalFsrHelper.Core;
 /// </summary>
 public static class Fsr4Download
 {
-    private const string R2Base = R2Files.Fsr4Folder;
+    /// <summary>
+    /// Where the FSR 4 files come from, tried in order: ROG Ally Life's R2 bucket, then a GitHub release in the separate
+    /// db1522/fsr4-files repo (kept apart from the widget's repo on purpose). Some networks block or stall r2.dev
+    /// addresses while GitHub works, so the fallback keeps those players covered. Every file still has to pass the AMD
+    /// signature check, whichever source it came from.
+    /// </summary>
+    private static readonly (string Name, string Base)[] Sources =
+    {
+        ("R2", R2Files.Fsr4Folder),
+        ("GitHub", "https://github.com/db1522/fsr4-files/releases/latest/download/"),
+    };
 
     private static readonly TimeSpan CheckInterval = TimeSpan.FromHours(24);
     private static string StatePath => Path.Combine(AppPaths.Fsr4Dir, "download-source.txt");
     private static string CheckPath => Path.Combine(AppPaths.Fsr4Dir, "download-checked.txt");
 
     private static readonly HttpClient Http = Create(followRedirects: true, TimeSpan.FromMinutes(30));
-    private static readonly HttpClient NoRedirect = Create(followRedirects: false, TimeSpan.FromSeconds(20));
+    private static readonly HttpClient NoRedirect = Create(followRedirects: false, TimeSpan.FromSeconds(12));
 
     private static HttpClient Create(bool followRedirects, TimeSpan timeout)
     {
@@ -43,39 +53,48 @@ public static class Fsr4Download
         var temp = Path.Combine(Path.GetTempPath(), "RalFsr4Download");
         var recorded = ReadText(StatePath);
 
+        string? lastError = null;
         try
         {
-            // Cheap fingerprint first: if it matches what we already have, there's nothing to download.
-            var fingerprint = await FingerprintAsync(ct);
-            if (haveFiles && fingerprint is not null && fingerprint == recorded)
+            foreach (var source in Sources)
             {
-                WriteText(CheckPath, DateTime.UtcNow.ToString("o"));
-                return new Result(false, null);
+                try
+                {
+                    // Cheap fingerprint first: if it matches what we already have, there's nothing to download.
+                    var fingerprint = await FingerprintAsync(source, ct);
+                    if (haveFiles && fingerprint is not null && fingerprint == recorded)
+                    {
+                        WriteText(CheckPath, DateTime.UtcNow.ToString("o"));
+                        return new Result(false, null);
+                    }
+
+                    if (Directory.Exists(temp)) Directory.Delete(temp, true);
+                    var unpacked = Path.Combine(temp, "files");
+                    Directory.CreateDirectory(unpacked);
+                    await FetchAsync(source, unpacked, progress, ct);
+
+                    progress.Report("Checking the FSR 4 files...");
+                    var accepted = Validate(unpacked);
+
+                    // Every file passed: only now replace the current ones.
+                    foreach (var (file, name) in accepted)
+                        File.Copy(file, Path.Combine(AppPaths.Fsr4Dir, name), overwrite: true);
+
+                    if (fingerprint is not null) WriteText(StatePath, fingerprint);
+                    WriteText(CheckPath, DateTime.UtcNow.ToString("o"));
+                    Log.Info($"FSR 4 files updated from {source.Name}: {string.Join(", ", accepted.Select(a => a.Name))}");
+                    return new Result(true, null);
+                }
+                catch (Exception ex) when (ex is not OperationCanceledException || !ct.IsCancellationRequested)
+                {
+                    Log.Warn($"FSR 4 download from {source.Name} failed: {ex.GetBaseException().Message}");
+                    lastError = ex is InvalidDataException
+                        ? ex.Message
+                        : $"Couldn't download the FSR 4 files ({OptiScalerSource.Describe(ex)}).";
+                }
             }
-
-            if (Directory.Exists(temp)) Directory.Delete(temp, true);
-            var unpacked = Path.Combine(temp, "files");
-            Directory.CreateDirectory(unpacked);
-            await FetchAsync(unpacked, progress, ct);
-
-            progress.Report("Checking the FSR 4 files...");
-            var accepted = Validate(unpacked);
-
-            // Every file passed: only now replace the current ones.
-            foreach (var (file, name) in accepted)
-                File.Copy(file, Path.Combine(AppPaths.Fsr4Dir, name), overwrite: true);
-
-            if (fingerprint is not null) WriteText(StatePath, fingerprint);
-            WriteText(CheckPath, DateTime.UtcNow.ToString("o"));
-            Log.Info($"FSR 4 files updated from R2: {string.Join(", ", accepted.Select(a => a.Name))}");
-            return new Result(true, null);
-        }
-        catch (Exception ex)
-        {
-            Log.Error("FSR 4 download failed", ex);
-            return new Result(false, ex is InvalidDataException
-                ? ex.Message
-                : $"Couldn't download the FSR 4 files ({OptiScalerSource.Describe(ex)}).");
+            Log.Error("FSR 4 download failed from every source");
+            return new Result(false, lastError);
         }
         finally
         {
@@ -86,28 +105,36 @@ public static class Fsr4Download
     private static readonly string[] Files = { InstallConfig.Dx12Fsr4File, InstallConfig.VulkanFsr4File };
 
     /// <summary>Identifies the files currently on the host without downloading them.</summary>
-    private static async Task<string?> FingerprintAsync(CancellationToken ct)
+    private static async Task<string?> FingerprintAsync((string Name, string Base) source, CancellationToken ct)
     {
         var tags = new List<string>();
         foreach (var name in Files)
         {
-            using var request = new HttpRequestMessage(HttpMethod.Head, R2Base + name);
+            using var request = new HttpRequestMessage(HttpMethod.Head, source.Base + name);
             using var response = await NoRedirect.SendAsync(request, ct);
+            var code = (int)response.StatusCode;
+            if (code is >= 300 and < 400 && response.Headers.Location is { } location)
+            {
+                // GitHub's latest/download link redirects to the current release's file: the target names the release.
+                tags.Add(location.ToString());
+                continue;
+            }
             if (!response.IsSuccessStatusCode)
                 throw new HttpRequestException(
-                    $"R2 answered HTTP {(int)response.StatusCode} {response.ReasonPhrase} for {name}", null, response.StatusCode);
+                    $"{source.Name} answered HTTP {code} {response.ReasonPhrase} for {name}", null, response.StatusCode);
             tags.Add(response.Headers.ETag?.Tag ?? response.Content.Headers.ContentLength?.ToString() ?? "?");
         }
-        return "r2:" + string.Join("|", tags);
+        return source.Name.ToLowerInvariant() + ":" + string.Join("|", tags);
     }
 
     /// <summary>Downloads the host's files and leaves the DLLs in <paramref name="unpacked"/>.</summary>
-    private static async Task FetchAsync(string unpacked, IProgress<string> progress, CancellationToken ct)
+    private static async Task FetchAsync((string Name, string Base) source, string unpacked, IProgress<string> progress,
+        CancellationToken ct)
     {
         foreach (var name in Files)
         {
             var label = name == InstallConfig.VulkanFsr4File ? "Vulkan " : "DX12 ";
-            await DownloadAsync(R2Base + name, Path.Combine(unpacked, name), label, progress, ct);
+            await DownloadAsync(source.Base + name, Path.Combine(unpacked, name), label, progress, ct);
         }
     }
 

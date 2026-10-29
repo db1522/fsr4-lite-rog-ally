@@ -36,6 +36,7 @@ public static class SelfUpdate
 
     private static DateTime _checkedAt = DateTime.MinValue;
     private static (string Tag, Version Version)? _latest;
+    private static DateTime? _assetPendingSince;
 
     /// <summary>The installed widget's version, from its package.</summary>
     public static Version Installed
@@ -61,13 +62,25 @@ public static class SelfUpdate
     {
         try
         {
-            if (force || DateTime.UtcNow - _checkedAt > (maxAge ?? CheckEvery))
+            var pendingAsset = _latest is null && _assetPendingSince is not null;
+            if (force || DateTime.UtcNow - _checkedAt > (pendingAsset ? TimeSpan.FromMinutes(2) : maxAge ?? CheckEvery))
             {
                 _checkedAt = DateTime.UtcNow;
                 using var response = await Probe.GetAsync(LatestUrl, HttpCompletionOption.ResponseHeadersRead);
                 var location = response.Headers.Location?.ToString() ?? "";
                 var tag = location.Contains("/releases/tag/") ? location[(location.LastIndexOf('/') + 1)..] : "";
-                if (TryParse(tag, out var version)) _latest = (Uri.UnescapeDataString(tag), version);
+                // A release can exist a few minutes before GitHub finishes building and attaches its zip. Only offer it
+                // once the download is really there, or players get "404 Not Found" if they tap Update too early.
+                if (TryParse(tag, out var version))
+                {
+                    var name = Uri.UnescapeDataString(tag);
+                    if (await AssetExistsAsync(name)) { _latest = (name, version); _assetPendingSince = null; }
+                    else
+                    {
+                        _assetPendingSince ??= DateTime.UtcNow;
+                        Log.Info($"Widget update {name} found, but its download isn't attached yet; checking again later");
+                    }
+                }
                 else Log.Warn($"Widget update check: no release tag in the redirect ({(int)response.StatusCode})");
             }
             return _latest is { } l && l.Version > Installed ? l : null;
@@ -76,6 +89,22 @@ public static class SelfUpdate
         {
             Log.Warn($"Widget update check failed: {ex.Message}");
             return null;
+        }
+    }
+
+    /// <summary>Whether the release's zip is downloadable yet (GitHub answers its download link with a redirect).</summary>
+    private static async Task<bool> AssetExistsAsync(string tag)
+    {
+        try
+        {
+            var url = $"https://github.com/{Repo}/releases/download/{Uri.EscapeDataString(tag)}/FSR4Lite_x64.zip";
+            using var request = new HttpRequestMessage(HttpMethod.Head, url);
+            using var response = await Probe.SendAsync(request);
+            return (int)response.StatusCode is >= 200 and < 400;
+        }
+        catch
+        {
+            return false;
         }
     }
 
