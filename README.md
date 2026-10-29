@@ -118,7 +118,6 @@ Confirmed on the ROG Ally X:
 | Valor Mortis | Game Pass | FSR |
 | Forza Motorsport | Game Pass | DLSS |
 | No Man's Sky | Game Pass | DLSS (its FSR is built into the game) |
-| Red Dead Redemption 2 | Steam | FSR 2 (DirectX 12; installed as winmm.dll automatically) |
 
 Hundreds more games work with OptiScaler; see the community
 [Compatibility List](https://github.com/optiscaler/OptiScaler/wiki/Compatibility-List).

@@ -6,7 +6,15 @@
     Background="{StaticResource SurfaceBrush}">
 
     <ScrollViewer x:Name="PageScroll" VerticalScrollBarVisibility="Auto">
-        <StackPanel Padding="20,16,20,20" Spacing="16" XYFocusKeyboardNavigation="Enabled">
+        <!-- Controller and arrow-key navigation: move to the nearest control in the pressed direction. The default
+             (projection) only considers controls directly in line, so pressing down from the right-hand Refresh button
+             skipped the left-aligned Setup controls and jumped to the full-width Installed list. Inherited by every
+             control inside. -->
+        <StackPanel Padding="20,16,20,20" Spacing="16" XYFocusKeyboardNavigation="Enabled"
+                    XYFocusUpNavigationStrategy="NavigationDirectionDistance"
+                    XYFocusDownNavigationStrategy="NavigationDirectionDistance"
+                    XYFocusLeftNavigationStrategy="NavigationDirectionDistance"
+                    XYFocusRightNavigationStrategy="NavigationDirectionDistance">
             <StackPanel.ChildrenTransitions>
                 <TransitionCollection>
                     <EntranceThemeTransition FromVerticalOffset="16" IsStaggeringEnabled="True" />
