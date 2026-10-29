@@ -294,8 +294,9 @@ resolution before the first run), times the chosen size, within OptiScaler's 0.5
 ROG Ally family) is 0.8; the default size is Maximum (2.0 at 1080p). It's OptiScaler's two-line Simple layout, so even Maximum stays well inside the screen.
 **Overlay position** puts it in any corner (`FpsOverlayPos` 0 to 3), for example away from a game's own HUD.
 
-**Updates.** OptiScaler: looked for when the widget opens and hourly, GitHub asked once a day. FSR 4 files: ETag
-check against ROG Ally Life's R2 bucket once a day. Compatibility list: raw wiki Markdown once a day. Game updates
+**Updates.** OptiScaler: looked for when the widget opens and hourly, GitHub asked at most every 6 hours. FSR 4
+files: ETag check against ROG Ally Life's R2 bucket once a day, with a GitHub release (db1522/fsr4-files) as the
+fallback source. Compatibility list: raw wiki Markdown once a day. Game updates
 copy the new OptiScaler package over the old one, keep each game's loader name and never replace `OptiScaler.ini`.
 
 **Network access:** OptiScaler's GitHub releases, ROG Ally Life's R2 bucket (FSR 4 files), OptiScaler's wiki

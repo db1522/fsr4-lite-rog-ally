@@ -30,7 +30,7 @@ public sealed record OptiPackage(string Build, string Dir)
 /// The "nightly" release in the main repository is now only a pointer there.
 ///
 /// GitHub allows 60 unauthenticated API requests per hour per connection. Once a build is downloaded, the release is
-/// checked for a newer nightly at most once a day, and the helper retries a failed check at most once a minute.
+/// checked for a newer nightly at most every 6 hours, and the helper retries a failed check at most once a minute.
 /// Existing game installs keep the build they were installed with until they're reinstalled.
 /// </summary>
 public static class OptiScalerSource
@@ -38,7 +38,8 @@ public static class OptiScalerSource
     private const string NightlyApi = "https://api.github.com/repos/optiscaler/OptiScaler-nightly/releases?per_page=10";
     private static readonly string LatestMarker = Path.Combine(AppPaths.OptiCache, "latest.txt");
     private static readonly string LastCheckMarker = Path.Combine(AppPaths.OptiCache, "last-check.txt");
-    private static readonly TimeSpan CheckInterval = TimeSpan.FromHours(24);
+    // Every 6 hours: nightlies reach players the same day, still far under GitHub's 60 unauthenticated requests per hour.
+    private static readonly TimeSpan CheckInterval = TimeSpan.FromHours(6);
 
     private static readonly HttpClient Http = CreateClient();
 
