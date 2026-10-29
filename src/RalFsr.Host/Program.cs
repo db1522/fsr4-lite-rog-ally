@@ -38,7 +38,20 @@ internal static class Program
     {
         // Anything that goes wrong before normal logging is up still leaves a trace in helper.log (or, if even that
         // can't be written, in a crash file in the temp folder).
-        AppDomain.CurrentDomain.UnhandledException += (_, e) => EarlyCrash(e.ExceptionObject as Exception);
+        // Never show a crash dialog: one left open blocks Windows from restarting or shutting down ("This app is
+        // preventing you from restarting"). Any error is logged instead, and the helper exits quietly.
+        SetErrorMode(SEM_FAILCRITICALERRORS | SEM_NOGPFAULTERRORBOX | SEM_NOOPENFILEERRORBOX);
+        AppDomain.CurrentDomain.UnhandledException += (_, e) => QuietExit("Unhandled error", e.ExceptionObject as Exception);
+        TaskScheduler.UnobservedTaskException += (_, e) =>
+        {
+            try { Log.Warn($"Background task error (ignored): {e.Exception.GetBaseException().Message}"); } catch { }
+            e.SetObserved();
+        };
+        System.Windows.Forms.Application.SetUnhandledExceptionMode(System.Windows.Forms.UnhandledExceptionMode.CatchException);
+        System.Windows.Forms.Application.ThreadException += (_, e) =>
+        {
+            try { Log.Warn($"Message loop error (ignored): {e.Exception.Message}"); } catch { }
+        };
         try
         {
             AppPaths.Ensure();
@@ -75,10 +88,12 @@ internal static class Program
         // When Windows asks programs to close (Restart Manager during an install such as Xbox Service's repair, sign-out,
         // shutdown), exit straight away. The helper has nothing to save, and staying put is what made the Xbox Service
         // installer time out ("HangType: Quiesce"). It starts again the next time the widget opens.
+        // Windows is signing out, restarting or shutting down: stop on the spot. A normal exit runs shutdown code on
+        // other threads (connections closing, background work), and an error there would block the restart.
         Microsoft.Win32.SystemEvents.SessionEnding += (_, e) =>
         {
-            Log.Info($"Windows asked the helper to close ({e.Reason}); exiting");
-            Environment.Exit(0);
+            try { Log.Info($"Windows asked the helper to close ({e.Reason}); exiting"); } catch { }
+            Process.GetCurrentProcess().Kill();
         };
 
         System.Windows.Forms.Application.Run(loop); // pumps messages until the helper is done
@@ -204,6 +219,18 @@ internal static class Program
             Log.Error("Host crashed during startup or run", ex);
         }
     }
+
+    /// <summary>Logs an unexpected error and ends the helper without a crash dialog (the widget restarts it when needed).</summary>
+    private static void QuietExit(string what, Exception? ex)
+    {
+        try { Log.Error($"{what}; the helper is closing", ex ?? new Exception("unknown error")); } catch { }
+        try { Process.GetCurrentProcess().Kill(); } catch { Environment.Exit(1); }
+    }
+
+    private const uint SEM_FAILCRITICALERRORS = 0x0001, SEM_NOGPFAULTERRORBOX = 0x0002, SEM_NOOPENFILEERRORBOX = 0x8000;
+
+    [System.Runtime.InteropServices.DllImport("kernel32.dll")]
+    private static extern uint SetErrorMode(uint mode);
 
     private static void EarlyCrash(Exception? ex)
     {
