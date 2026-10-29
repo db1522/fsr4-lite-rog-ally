@@ -1,21 +1,33 @@
 <p align="center">
-  <img src="src/RalFsr.Widget/Assets/Square150x150Logo.png" width="120" alt="ROG Ally Life logo" />
+  <img src="src/RalFsr.Widget/Assets/Square150x150Logo.png" width="112" alt="ROG Ally Life" />
 </p>
 
-<h1 align="center">FSR 4.1 Lite by ROG Ally Life</h1>
+<h1 align="center">FSR 4.1 Lite</h1>
 
 <p align="center">
-  <strong>FSR 4.1.2 Lite in any game on your ROG Ally, ROG Ally X or other AMD handheld. One tap, from Game Bar.</strong>
-</p>
-
-<p align="center">
-  <a href="https://github.com/db1522/fsr4-lite-rog-ally/releases/latest/download/FSR4Lite_x64.zip"><img src="https://img.shields.io/badge/Download-FSR4Lite__x64.zip-E50007?style=for-the-badge" alt="Download" /></a>
-  <a href="https://github.com/db1522/fsr4-lite-rog-ally/releases/latest"><img src="https://img.shields.io/github/v/release/db1522/fsr4-lite-rog-ally?style=for-the-badge&label=version&color=333" alt="Latest version" /></a>
-  <a href="https://github.com/db1522/fsr4-lite-rog-ally/releases"><img src="https://img.shields.io/github/downloads/db1522/fsr4-lite-rog-ally/total?style=for-the-badge&color=333" alt="Downloads" /></a>
+  <b>FSR 4.1.2 Lite in any game on your ROG Ally, ROG Ally X or other AMD handheld. One tap, from Game Bar.</b><br/>
+  A free Xbox Game Bar widget by <a href="https://rogallylife.com">ROG Ally Life</a>.
 </p>
 
 <p align="center">
-  <a href="https://rogallylife.com/2026/10/25/fsr-4-1-2-lite-on-the-rog-ally/">Full guide on ROG Ally Life</a> ·
+  <a href="https://github.com/db1522/fsr4-lite-rog-ally/releases/latest"><img alt="Latest release" src="https://img.shields.io/github/v/release/db1522/fsr4-lite-rog-ally?style=for-the-badge&label=Latest&color=E50007"></a>
+  <a href="https://github.com/db1522/fsr4-lite-rog-ally/releases"><img alt="Total downloads" src="https://img.shields.io/github/downloads/db1522/fsr4-lite-rog-ally/total?style=for-the-badge&label=Downloads&color=1f1f1f"></a>
+  <a href="https://github.com/db1522/fsr4-lite-rog-ally/releases/latest"><img alt="Downloads of the latest release" src="https://img.shields.io/github/downloads/db1522/fsr4-lite-rog-ally/latest/total?style=for-the-badge&label=This%20version&color=1f1f1f"></a>
+</p>
+
+<p align="center">
+  <img alt="FSR 4.1.2 Lite" src="https://img.shields.io/badge/FSR-4.1.2%20Lite-E50007?style=flat-square&logo=amd&logoColor=white">
+  <img alt="Upscalers" src="https://img.shields.io/badge/Upgrades-FSR%202%20%7C%20FSR%203.1%20%7C%20DLSS%20%7C%20XeSS-313131?style=flat-square">
+  <img alt="Windows 10 and 11" src="https://img.shields.io/badge/Windows-10%20%7C%2011-0078D4?style=flat-square&logo=windows&logoColor=white">
+  <img alt="Xbox Game Bar" src="https://img.shields.io/badge/Xbox%20Game%20Bar-widget-107C10?style=flat-square&logo=xbox&logoColor=white">
+  <img alt="Powered by OptiScaler" src="https://img.shields.io/badge/Powered%20by-OptiScaler-313131?style=flat-square">
+  <a href="https://github.com/db1522/fsr4-lite-rog-ally/releases/latest"><img alt="Release date" src="https://img.shields.io/github/release-date/db1522/fsr4-lite-rog-ally?style=flat-square&label=Updated"></a>
+  <a href="https://github.com/db1522/fsr4-lite-rog-ally/stargazers"><img alt="Stars" src="https://img.shields.io/github/stars/db1522/fsr4-lite-rog-ally?style=flat-square"></a>
+</p>
+
+<p align="center">
+  <a href="https://github.com/db1522/fsr4-lite-rog-ally/releases/latest/download/FSR4Lite_x64.zip"><b>⬇ Download</b></a> ·
+  <a href="https://rogallylife.com/2026/10/25/fsr-4-1-2-lite-on-the-rog-ally/">Full guide</a> ·
   <a href="#install">Install</a> ·
   <a href="#tested-games">Tested games</a> ·
   <a href="#faq">FAQ</a> ·
