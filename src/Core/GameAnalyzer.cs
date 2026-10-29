@@ -48,6 +48,7 @@ public static class GameAnalyzer
         ["ffx_fsr2_api_dx12_x64.dll"] = "FSR 2",
         ["ffx_fsr2_api_vk_x64.dll"] = "FSR 2",
         ["nvngx_dlss.dll"] = "DLSS",
+        ["sl.dlss.dll"] = "DLSS", // NVIDIA Streamline (DLSS 4 and later games)
         ["libxess.dll"] = "XeSS",
         ["libxess_dx11.dll"] = "XeSS",
     };
@@ -202,8 +203,16 @@ public static class GameAnalyzer
         return best is null ? (null, null, false) : (Path.GetDirectoryName(best), Path.GetFileName(best), false);
     }
 
+    /// <summary>
+    /// Upscaler files anywhere in the install: the usual 5 folders deep, plus deeper inside Unreal's Plugins folders
+    /// (Engine\Plugins and the game's own), where DLSS, Streamline and FSR plugins keep their DLLs, e.g.
+    /// Engine\Plugins\Marketplace\DLSS\Binaries\ThirdParty\Win64\nvngx_dlss.dll, 7 folders down.
+    /// </summary>
     private static List<string> FindUpscalers(string root) =>
         FilesUpTo(root, 5)
+            .Concat(DirsUpTo(root, 3)
+                .Where(d => Path.GetFileName(d).Equals("Plugins", StringComparison.OrdinalIgnoreCase))
+                .SelectMany(d => FilesUpTo(d, 7)))
             .Select(Path.GetFileName)
             .Where(n => n is not null && UpscalerDlls.ContainsKey(n))
             .Select(n => UpscalerDlls[n!])
