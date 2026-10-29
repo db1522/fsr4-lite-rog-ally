@@ -170,10 +170,10 @@ public static class SelfUpdate
         // under the widget's name and reopens Game Bar by itself when it's done.
         for (var i = 3; i >= 1; i--)
         {
-            report(new UpdateProgress($"Ready to install FSR 4.1 Lite {version}. Game Bar closes in {i} and reopens by itself..."));
+            report(new UpdateProgress($"Ready to install FSR 4.1 Lite {version}. Game Bar closes in {i}..."));
             await Task.Delay(1000);
         }
-        report(new UpdateProgress("Installing. Game Bar closes now and reopens by itself in a few seconds."));
+        report(new UpdateProgress("Installing. Game Bar closes now; tap the notification to open it again when the update is done."));
         StartInstallerWindow(files, log);
         Log.Info($"Widget update {tag} started; installer log: {log}");
 
