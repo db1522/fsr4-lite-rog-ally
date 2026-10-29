@@ -78,7 +78,7 @@ try {
 
     Step 'Installing the widget'
     $newVersion = Get-NewVersion $msix.FullName
-    Show-UpdateToast "Updating $appName$(if ($newVersion) { " to $newVersion" })" 'Game Bar closes for a moment while it installs. You''ll get a notification when it''s done.'
+    Show-UpdateToast "Updating $appName$(if ($newVersion) { " to $newVersion" })" 'Game Bar closes for a moment while it installs. Open Game Bar again when it''s done.'
     Start-Sleep -Milliseconds 800
     # Close Game Bar first, then the widget and its helper. Game Bar hosts the widget: closing the widget while Game Bar
     # is open makes Game Bar show "Something went wrong" and keep hold of the widget, which stalls the install until
@@ -96,7 +96,7 @@ try {
     if ($gameBar) { $gameBar | Stop-Process -Force -ErrorAction SilentlyContinue }
     Write-Host '  Open Game Bar again to use the updated widget'
     if ($env:RAL_UPDATE) {
-        Show-UpdateToast "$appName updated$(if ($newVersion) { " to $newVersion" })" 'Tap here to open Game Bar with the new version.'
+        Show-UpdateToast "$appName updated$(if ($newVersion) { " to $newVersion" })" 'Open Game Bar again to use the new version.'
         Start-Sleep -Seconds 2
         try { Start-Process 'ms-gamebar:' } catch { }
     }
@@ -106,7 +106,7 @@ try {
     Finish 0
 } catch {
     Write-Host "`nInstall failed: $($_.Exception.Message)" -ForegroundColor Red
-    Show-UpdateToast "$appName didn't update" 'Tap here to open Game Bar, then press Try again in the widget, or run Install.cmd from the release zip.'
+    Show-UpdateToast "$appName didn't update" 'Open Game Bar again and press Try again in the widget, or run Install.cmd from the release zip.'
     if ($env:RAL_UPDATE) { try { Start-Process 'ms-gamebar:' } catch { } }
     Finish 1
 }

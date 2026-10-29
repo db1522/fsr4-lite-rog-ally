@@ -173,7 +173,7 @@ public static class SelfUpdate
             report(new UpdateProgress($"Ready to install FSR 4.1 Lite {version}. Game Bar closes in {i}..."));
             await Task.Delay(1000);
         }
-        report(new UpdateProgress("Installing. Game Bar closes now; tap the notification to open it again when the update is done."));
+        report(new UpdateProgress("Installing. Game Bar closes now; open it again in a few seconds to use the new version."));
         StartInstallerWindow(files, log);
         Log.Info($"Widget update {tag} started; installer log: {log}");
 
