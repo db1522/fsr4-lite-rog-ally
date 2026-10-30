@@ -5,7 +5,7 @@
 <h1 align="center">FSR 4.1 Lite</h1>
 
 <p align="center">
-  <b>FSR 4.1.2 Lite in any game on your ROG Ally, ROG Ally X or other AMD handheld. One tap, from Game Bar.</b><br/>
+  <b>FSR 4.1.2 Lite in any game on your ROG Ally, ROG Ally X, ROG Xbox Ally, ROG Xbox Ally X, Legion Go or other AMD handheld. One tap, from Game Bar.</b><br/>
   A free Xbox Game Bar widget by <a href="https://rogallylife.com">ROG Ally Life</a>.
 </p>
 
