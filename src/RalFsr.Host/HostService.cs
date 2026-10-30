@@ -77,6 +77,7 @@ public sealed class HostService
                 "switchLoader" => SwitchLoader(Arg(args, "exeDir") ?? ""),
                 "updateAll" => UpdateAll(),
                 "updateWidget" => UpdateWidget(),
+                "supportReport" => CreateSupportReport(Arg(args, "exeDir"), Arg(args, "gameName"), Arg(args, "cardText")),
                 "widgetOpened" => WidgetOpened(),
                 "checkWidgetUpdate" => CheckWidgetUpdate(),
                 "autoUpdate" => SetAutoUpdate(Arg(args, "on") == "true"),
@@ -725,6 +726,37 @@ public sealed class HostService
             _widgetUpdateCheck = Task.Run(async () =>
                 _widgetUpdate = await SelfUpdate.CheckAsync(maxAge: SelfUpdate.CheckOnOpenEvery));
         return new { ok = true };
+    }
+
+    /// <summary>Builds the support report zip on the Desktop and shows it in File Explorer.</summary>
+    private object CreateSupportReport(string? exeDir, string? gameName, string? cardText)
+    {
+        try
+        {
+            var game = !string.IsNullOrEmpty(exeDir)
+                ? new SupportReport.GameContext(exeDir, gameName ?? "", cardText ?? "")
+                : null;
+            var zip = SupportReport.Create(_device, _opti, _settings, game);
+            try
+            {
+                System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo("explorer.exe", $"/select,\"{zip}\"")
+                {
+                    UseShellExecute = true,
+                });
+            }
+            catch { /* showing the file is a convenience */ }
+            return new
+            {
+                ok = true,
+                message = $"Support report saved to your Desktop: {Path.GetFileName(zip)}. Send it to ROG Ally Life " +
+                          "(Discord, email or a GitHub issue). It holds logs and settings only, with your user name removed.",
+            };
+        }
+        catch (Exception ex)
+        {
+            Log.Error("Support report failed", ex);
+            return Fail($"Couldn't create the support report: {ex.Message}");
+        }
     }
 
     /// <summary>"Check for updates": asks GitHub now and says what it found.</summary>

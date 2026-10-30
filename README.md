@@ -294,6 +294,12 @@ resolution before the first run), times the chosen size, within OptiScaler's 0.5
 ROG Ally family) is 0.8; the default size is Maximum (2.0 at 1080p). It's OptiScaler's two-line Simple layout, so even Maximum stays well inside the screen.
 **Overlay position** puts it in any corner (`FpsOverlayPos` 0 to 3), for example away from a game's own HUD.
 
+**Support report.** Setup's **Create support report** saves `FSR4Lite-report-<date>.zip` to the Desktop: a
+`summary.txt` (device, versions, settings, installed games, the current game's card text, install record and
+OptiScaler errors), the last 3,000 lines of `helper.log` and `widget.log`, and for the current game its
+`OptiScaler.log`, `OptiScaler.ini`, install record and a list of the file names in its folder. The Windows user name is
+replaced with `<user>`, and nothing is sent anywhere.
+
 **Updates.** OptiScaler: looked for when the widget opens and hourly, GitHub asked at most every 6 hours. FSR 4
 files: ETag check against ROG Ally Life's R2 bucket once a day, with a GitHub release (db1522/fsr4-files) as the
 fallback source. Compatibility list: raw wiki Markdown once a day. Game updates

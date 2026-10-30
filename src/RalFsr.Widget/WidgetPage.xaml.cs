@@ -476,6 +476,17 @@ namespace RalFsr.Widget
             CheckUpdatesButton.IsEnabled = !updating;
         }
 
+        private async void SupportReport_Click(object sender, RoutedEventArgs e)
+        {
+            SupportReportButton.Content = "Creating report...";
+            try
+            {
+                await RunCommandAsync("supportReport", "exeDir", _exeDir ?? "", "gameName", GameName.Text ?? "",
+                    "cardText", GameStatus.Text ?? "");
+            }
+            finally { SupportReportButton.Content = "Create support report"; }
+        }
+
         private async void CheckUpdates_Click(object sender, RoutedEventArgs e)
         {
             CheckUpdatesButton.Content = "Checking...";

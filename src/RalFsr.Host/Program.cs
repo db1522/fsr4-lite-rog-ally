@@ -65,7 +65,11 @@ internal static class Program
         }
         System.Windows.Forms.Application.SetHighDpiMode(System.Windows.Forms.HighDpiMode.SystemAware);
         var loop = new System.Windows.Forms.ApplicationContext();
-        var context = new System.Windows.Forms.WindowsFormsSynchronizationContext();
+        // The helper's work continues on this thread's message loop. During shutdown Windows destroys the loop's hidden
+        // window first, and work finishing just after that used to throw "Invoke or BeginInvoke cannot be called on a
+        // control until the window handle has been created", which crashed the helper and blocked the restart. The
+        // safe context runs such late work on a background thread instead.
+        var context = new SafeSynchronizationContext(new System.Windows.Forms.WindowsFormsSynchronizationContext());
         SynchronizationContext.SetSynchronizationContext(context);
 
         context.Post(async _ =>
@@ -225,6 +229,33 @@ internal static class Program
     {
         try { Log.Error($"{what}; the helper is closing", ex ?? new Exception("unknown error")); } catch { }
         try { Process.GetCurrentProcess().Kill(); } catch { Environment.Exit(1); }
+    }
+
+    /// <summary>
+    /// Wraps the Windows Forms context so that posting work after its window is gone (shutdown) runs the work on the
+    /// thread pool instead of throwing.
+    /// </summary>
+    private sealed class SafeSynchronizationContext : SynchronizationContext
+    {
+        private readonly SynchronizationContext _inner;
+        public SafeSynchronizationContext(SynchronizationContext inner) => _inner = inner;
+
+        public override void Post(SendOrPostCallback d, object? state)
+        {
+            try { _inner.Post(d, state); }
+            catch (Exception ex) when (ex is InvalidOperationException or ObjectDisposedException)
+            {
+                ThreadPool.QueueUserWorkItem(_ => { try { d(state); } catch { } });
+            }
+        }
+
+        public override void Send(SendOrPostCallback d, object? state)
+        {
+            try { _inner.Send(d, state); }
+            catch (Exception ex) when (ex is InvalidOperationException or ObjectDisposedException) { d(state); }
+        }
+
+        public override SynchronizationContext CreateCopy() => this;
     }
 
     private const uint SEM_FAILCRITICALERRORS = 0x0001, SEM_NOGPFAULTERRORBOX = 0x0002, SEM_NOOPENFILEERRORBOX = 0x8000;

@@ -122,6 +122,11 @@
                     <Button x:Name="CheckUpdatesButton" Style="{StaticResource QuietButton}"
                             Content="Check for updates" Click="CheckUpdates_Click" />
                 </StackPanel>
+                <!-- Support: one zip on the Desktop with logs and settings (user name removed), for sending to ROG Ally Life -->
+                <Button x:Name="SupportReportButton" Style="{StaticResource QuietButton}" HorizontalAlignment="Left"
+                        Content="Create support report" Click="SupportReport_Click" />
+                <TextBlock FontSize="12" TextWrapping="Wrap" Foreground="{StaticResource MutedBrush}"
+                           Text="Something not working? This saves a file to your Desktop with the details ROG Ally Life needs to help. Open the widget over the game first if it's about one game." />
                 <TextBlock x:Name="OptiText" FontSize="13" TextWrapping="Wrap" />
                 <TextBlock x:Name="Fsr4Text" FontSize="13" TextWrapping="Wrap" />
                 <!-- Fallback only: shown when the automatic FSR 4 download hasn't worked (offline, blocked host) -->
