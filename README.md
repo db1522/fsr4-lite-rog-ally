@@ -5,7 +5,7 @@
 <h1 align="center">FSR 4.1 Lite</h1>
 
 <p align="center">
-  <b>FSR 4.1.2 Lite in any game on your ROG Ally, ROG Ally X, ROG Xbox Ally, ROG Xbox Ally X, Legion Go or other AMD handheld. One tap, from Game Bar.</b><br/>
+  <b>FSR 4.1.2 Lite in any game on your ROG Ally, ROG Ally X or other AMD handheld. One tap, from Game Bar.</b><br/>
   A free Xbox Game Bar widget by <a href="https://rogallylife.com">ROG Ally Life</a>.
 </p>
 
@@ -78,12 +78,9 @@ game, and pick its upscaler. That's it.
 
 The first time it opens, the widget downloads OptiScaler and the FSR 4.1.2 Lite files on its own.
 
-**Updating the widget:** Setup shows your installed version and a **Check for updates** button. When a new release is
-out, it shows **Update to x.y.z**: tap it to see the download progress and each install step. The widget closes for a
-moment while the new version installs; reopen it from Game Bar. If anything goes wrong, Setup shows what happened and a
-**Try again** button. Your settings and
-installed games carry over. Windows may ask for administrator permission during the update. (Versions before the
-built-in updater: download the new zip and run its Install.cmd once.)
+**Updating:** the widget updates itself. Setup shows your installed version, a **Check for updates** button, and an
+**Update** button whenever a new version is out. While it installs, Game Bar closes for a few seconds and a notification
+tells you when it's done; open Game Bar again to use the new version. Your settings and installed games carry over.
 
 ## Use it in a game
 
@@ -103,7 +100,7 @@ Once it's running, the badge turns green and a notification confirms it.
 
 ## Tested games
 
-Confirmed on the ROG Ally X:
+Confirmed on ROG Ally hardware:
 
 | Game | Store | Upscaler picked in the game |
 | --- | --- | --- |
@@ -115,6 +112,9 @@ Confirmed on the ROG Ally X:
 | Resident Evil Requiem | Steam | FSR (REFramework added automatically) |
 | Monster Hunter Wilds | Steam | FSR (REFramework added automatically) |
 | Dragon's Dogma 2 | Steam | FSR (REFramework added automatically) |
+| Red Dead Redemption 2 | Steam | FSR 2 (set the game to DirectX 12; installed as winmm.dll automatically) |
+| Palworld | Steam | DLSS (add `-dx12` to Palworld's launch options) |
+| The Witcher 3: Wild Hunt | Steam | FSR (the game's own frame generation works alongside it) |
 | Valor Mortis | Game Pass | FSR |
 | Forza Motorsport | Game Pass | DLSS |
 | No Man's Sky | Game Pass | DLSS (its FSR is built into the game) |
@@ -151,7 +151,9 @@ anti-cheat, and it recognises games protected by Riot Vanguard, Valve Anti-Cheat
 - **The game needs an upscaler:** FSR 2, FSR 3, DLSS or XeSS. FSR 1 can't be upgraded.
 - **Some Game Pass games need a nudge.** If OptiScaler doesn't load after a restart, press **Try another loader**.
   Games in Windows' protected WindowsApps folder can't be changed.
-- **Tested on the ROG Ally X so far.** Other AMD handhelds are supported by chip.
+- **Most testing happens on ROG Ally hardware.** Other AMD handhelds are supported by chip.
+- **RivaTuner (RTSS) can crash some games** together with OptiScaler, Red Dead Redemption 2 among them. If a game
+  crashes at startup, close RTSS (or MSI Afterburner) and try again.
 - **OptiScaler nightlies** update automatically and can occasionally break a game. If that happens, turn off
   **Update games automatically** and let me know.
 - **Notifications during fullscreen games** are held by Windows unless you add FSR 4.1 Lite under Settings > System >
@@ -199,11 +201,28 @@ default loader name.
 </details>
 
 <details>
+<summary><strong>Does frame generation work with it?</strong></summary>
+
+Yes. If your game has its own FSR frame generation, turn it on in the game's graphics settings as usual. It works
+alongside FSR 4.1.2 Lite, so you get the sharper upscaling and smoother motion together.
+</details>
+
+<details>
+<summary><strong>A game crashes at startup after installing.</strong></summary>
+
+Close RivaTuner (RTSS) or MSI Afterburner if they're running, since they can clash with OptiScaler. If it still
+crashes, press **Try another loader** on the game's card (or **Uninstall** under **Installed in**), and check the game's
+row on OptiScaler's [Compatibility List](https://github.com/optiscaler/OptiScaler/wiki/Compatibility-List) for any
+game-specific setting, such as DirectX 12.
+</details>
+
+<details>
 <summary><strong>Something isn't working. How do I report it?</strong></summary>
 
-Email [contact@rogallylife.com](mailto:contact@rogallylife.com) with the game name and `helper.log`, found at
-`%LOCALAPPDATA%\Packages\ROGAllyLife.FSR4Lite_...\LocalCache\Local\RAL FSR Helper\helper.log`. The game's own
-`OptiScaler.log`, next to its exe, helps too.
+Open the widget (over the game, if it's about one game) and press **Create support report** in Setup. It saves a file
+to your Desktop with the logs and settings needed to help, with your Windows user name removed. Send it to
+[contact@rogallylife.com](mailto:contact@rogallylife.com), or attach it to a
+[GitHub issue](https://github.com/db1522/fsr4-lite-rog-ally/issues).
 </details>
 
 ## Credits
@@ -317,7 +336,7 @@ copy the new OptiScaler package over the old one, keep each game's loader name a
 Actions secrets `SIGNING_PFX_BASE64` and `SIGNING_PFX_PASSWORD`. Keep the `.pfx` it creates private. Without those
 secrets, each build gets a fresh certificate and players approve every update.
 
-GitHub builds, signs and packages the widget. Publish a release with a new tag (`v1.0.3`, and so on) and
+GitHub builds, signs and packages the widget. Publish a release with a new tag (`v1.2.3` style, always higher than the last) and
 **FSR4Lite_x64.zip** is attached a few minutes later; progress and errors show in the Actions tab. Each build is
 signed with a fresh self-signed `CN=ROG Ally Life` certificate; updates install over older versions because Windows
 matches the publisher name.
