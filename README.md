@@ -43,7 +43,10 @@ editing an ini file and picking the model in an in-game menu, for every game.
 **FSR 4.1 Lite does all of that for you.** Open Game Bar over a game, press **Install FSR 4.1 Lite**, restart the
 game, and pick its upscaler. That's it.
 
-<!-- Screenshot suggestion: docs/widget.png, the widget over a game with the green "FSR 4.1 Lite active" badge -->
+<p align="center">
+  <img src="docs/images/widget-active.jpg" width="520"
+       alt="FSR 4.1 Lite widget over Valor Mortis, with the green FSR 4.1 Lite active badge and rendering 960x540 to 1920x1080" />
+</p>
 
 ## What you get
 
@@ -86,13 +89,31 @@ tells you when it's done; open Game Bar again to use the new version. Your setti
 
 1. Start the game, open Game Bar and the widget. It picks up the game you're playing.
 2. Press **Install FSR 4.1 Lite**.
+
+   <img src="docs/images/widget-install.jpg" width="560"
+        alt="The game card before installing: upscalers found and the Install FSR 4.1 Lite button" />
+
 3. Restart the game and turn on its upscaler. Pick **FSR** when the card says FSR was found; if it tells you to pick
    **DLSS** or **XeSS**, use that, because that game's FSR is built in.
 
 Once it's running, the badge turns green and a notification confirms it.
 
-**Want proof on screen?** Press **Insert** in the game to open the OptiScaler menu: the FSR4 model reads
-**INT8 Lite**. The widget's **Show FPS and render resolution in game** switch adds a small overlay too.
+**Want proof on screen?** The widget's **Show FPS and render resolution in game** switch adds a small overlay in the
+corner, and pressing **Insert** in the game opens OptiScaler's menu, where the FSR4 model reads **INT8 Lite**.
+
+<p align="center">
+  <img src="docs/images/overlay.jpg" width="720"
+       alt="In-game overlay showing FFX to FSR 4.1.2 and 960x540 upscaled to 1920x1080 in Valor Mortis" />
+</p>
+
+<details>
+<summary><strong>OptiScaler's menu, for the full detail</strong></summary>
+<br>
+<p align="center">
+  <img src="docs/images/optiscaler-lite.jpg" width="460"
+       alt="OptiScaler's menu showing FSR 4.1.2 as the upscaler and FSR4 Model: INT8 Lite" />
+</p>
+</details>
 
 > [!TIP]
 > If the card says a game is rendering at full resolution, change the game's resolution once and back. Some games,
