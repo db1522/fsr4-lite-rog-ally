@@ -44,7 +44,7 @@ editing an ini file and picking the model in an in-game menu, for every game.
 game, and pick its upscaler. That's it.
 
 <p align="center">
-  <img src="docs/images/widget-active.jpg" width="520"
+  <img src="docs/images/widget-active.png" width="800"
        alt="FSR 4.1 Lite widget over Valor Mortis, with the green FSR 4.1 Lite active badge and rendering 960x540 to 1920x1080" />
 </p>
 
@@ -90,7 +90,7 @@ tells you when it's done; open Game Bar again to use the new version. Your setti
 1. Start the game, open Game Bar and the widget. It picks up the game you're playing.
 2. Press **Install FSR 4.1 Lite**.
 
-   <img src="docs/images/widget-install.jpg" width="560"
+   <img src="docs/images/widget-install.png" width="720"
         alt="The game card before installing: upscalers found and the Install FSR 4.1 Lite button" />
 
 3. Restart the game and turn on its upscaler. Pick **FSR** when the card says FSR was found; if it tells you to pick
@@ -102,7 +102,7 @@ Once it's running, the badge turns green and a notification confirms it.
 corner, and pressing **Insert** in the game opens OptiScaler's menu, where the FSR4 model reads **INT8 Lite**.
 
 <p align="center">
-  <img src="docs/images/overlay.jpg" width="720"
+  <img src="docs/images/overlay.png" width="800"
        alt="In-game overlay showing FFX to FSR 4.1.2 and 960x540 upscaled to 1920x1080 in Valor Mortis" />
 </p>
 
@@ -110,7 +110,7 @@ corner, and pressing **Insert** in the game opens OptiScaler's menu, where the F
 <summary><strong>OptiScaler's menu, for the full detail</strong></summary>
 <br>
 <p align="center">
-  <img src="docs/images/optiscaler-lite.jpg" width="460"
+  <img src="docs/images/optiscaler-lite.png" width="800"
        alt="OptiScaler's menu showing FSR 4.1.2 as the upscaler and FSR4 Model: INT8 Lite" />
 </p>
 </details>
