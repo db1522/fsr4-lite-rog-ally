@@ -1,0 +1,383 @@
+{
+  "version": 4,
+  "targets": {
+    "net8.0-windows10.0.22621.0": {
+      "Microsoft.NET.ILLink.Tasks/8.0.32": {
+        "type": "package",
+        "build": {
+          "build/Microsoft.NET.ILLink.Tasks.props": {}
+        }
+      },
+      "SharpCompress/0.48.0": {
+        "type": "package",
+        "compile": {
+          "lib/net8.0/SharpCompress.dll": {}
+        },
+        "runtime": {
+          "lib/net8.0/SharpCompress.dll": {}
+        }
+      },
+      "System.CodeDom/8.0.0": {
+        "type": "package",
+        "compile": {
+          "lib/net8.0/System.CodeDom.dll": {
+            "related": ".xml"
+          }
+        },
+        "runtime": {
+          "lib/net8.0/System.CodeDom.dll": {
+            "related": ".xml"
+          }
+        },
+        "build": {
+          "buildTransitive/net6.0/_._": {}
+        }
+      },
+      "System.Management/8.0.0": {
+        "type": "package",
+        "dependencies": {
+          "System.CodeDom": "8.0.0"
+        },
+        "compile": {
+          "lib/net8.0/System.Management.dll": {
+            "related": ".xml"
+          }
+        },
+        "runtime": {
+          "lib/net8.0/System.Management.dll": {
+            "related": ".xml"
+          }
+        },
+        "build": {
+          "buildTransitive/net6.0/_._": {}
+        },
+        "runtimeTargets": {
+          "runtimes/win/lib/net8.0/System.Management.dll": {
+            "assetType": "runtime",
+            "rid": "win"
+          }
+        }
+      }
+    },
+    "net8.0-windows10.0.22621.0/win-x64": {
+      "Microsoft.NET.ILLink.Tasks/8.0.32": {
+        "type": "package",
+        "build": {
+          "build/Microsoft.NET.ILLink.Tasks.props": {}
+        }
+      },
+      "SharpCompress/0.48.0": {
+        "type": "package",
+        "compile": {
+          "lib/net8.0/SharpCompress.dll": {}
+        },
+        "runtime": {
+          "lib/net8.0/SharpCompress.dll": {}
+        }
+      },
+      "System.CodeDom/8.0.0": {
+        "type": "package",
+        "compile": {
+          "lib/net8.0/System.CodeDom.dll": {
+            "related": ".xml"
+          }
+        },
+        "runtime": {
+          "lib/net8.0/System.CodeDom.dll": {
+            "related": ".xml"
+          }
+        },
+        "build": {
+          "buildTransitive/net6.0/_._": {}
+        }
+      },
+      "System.Management/8.0.0": {
+        "type": "package",
+        "dependencies": {
+          "System.CodeDom": "8.0.0"
+        },
+        "compile": {
+          "lib/net8.0/System.Management.dll": {
+            "related": ".xml"
+          }
+        },
+        "runtime": {
+          "runtimes/win/lib/net8.0/System.Management.dll": {
+            "related": ".xml"
+          }
+        },
+        "build": {
+          "buildTransitive/net6.0/_._": {}
+        }
+      }
+    }
+  },
+  "libraries": {
+    "Microsoft.NET.ILLink.Tasks/8.0.32": {
+      "sha512": "FQXkG87JK9+SEbF6vRcWmevk0Pjqgehhz+9e1hHATDh7U8EvgmVQQcEUJTXj1IKi8VqLrdi/c1QHOpVjZcd9ng==",
+      "type": "package",
+      "path": "microsoft.net.illink.tasks/8.0.32",
+      "hasTools": true,
+      "files": [
+        ".nupkg.metadata",
+        ".signature.p7s",
+        "Icon.png",
+        "LICENSE.TXT",
+        "Sdk/Sdk.props",
+        "THIRD-PARTY-NOTICES.TXT",
+        "analyzers/dotnet/cs/ILLink.CodeFixProvider.dll",
+        "analyzers/dotnet/cs/ILLink.RoslynAnalyzer.dll",
+        "build/Microsoft.NET.ILLink.Analyzers.props",
+        "build/Microsoft.NET.ILLink.Tasks.props",
+        "build/Microsoft.NET.ILLink.targets",
+        "microsoft.net.illink.tasks.8.0.32.nupkg.sha512",
+        "microsoft.net.illink.tasks.nuspec",
+        "tools/net472/ILLink.Tasks.dll",
+        "tools/net472/ILLink.Tasks.dll.config",
+        "tools/net472/Mono.Cecil.Mdb.dll",
+        "tools/net472/Mono.Cecil.Pdb.dll",
+        "tools/net472/Mono.Cecil.Rocks.dll",
+        "tools/net472/Mono.Cecil.dll",
+        "tools/net472/Sdk/Sdk.props",
+        "tools/net472/System.Buffers.dll",
+        "tools/net472/System.Collections.Immutable.dll",
+        "tools/net472/System.Memory.dll",
+        "tools/net472/System.Numerics.Vectors.dll",
+        "tools/net472/System.Reflection.Metadata.dll",
+        "tools/net472/System.Runtime.CompilerServices.Unsafe.dll",
+        "tools/net472/build/Microsoft.NET.ILLink.Analyzers.props",
+        "tools/net472/build/Microsoft.NET.ILLink.Tasks.props",
+        "tools/net472/build/Microsoft.NET.ILLink.targets",
+        "tools/net8.0/ILLink.Tasks.deps.json",
+        "tools/net8.0/ILLink.Tasks.dll",
+        "tools/net8.0/Mono.Cecil.Mdb.dll",
+        "tools/net8.0/Mono.Cecil.Pdb.dll",
+        "tools/net8.0/Mono.Cecil.Rocks.dll",
+        "tools/net8.0/Mono.Cecil.dll",
+        "tools/net8.0/Sdk/Sdk.props",
+        "tools/net8.0/build/Microsoft.NET.ILLink.Analyzers.props",
+        "tools/net8.0/build/Microsoft.NET.ILLink.Tasks.props",
+        "tools/net8.0/build/Microsoft.NET.ILLink.targets",
+        "tools/net8.0/illink.deps.json",
+        "tools/net8.0/illink.dll",
+        "tools/net8.0/illink.runtimeconfig.json",
+        "useSharedDesignerContext.txt"
+      ]
+    },
+    "SharpCompress/0.48.0": {
+      "sha512": "6k0Sa9gf85Sz9Npy7jnn5UPerejrAa3FxU9Gq5T6PwFWHUhUIdF903TjPiJtrYjXFJsXbnccaWSNMHzEg27DwQ==",
+      "type": "package",
+      "path": "sharpcompress/0.48.0",
+      "files": [
+        ".nupkg.metadata",
+        ".signature.p7s",
+        "README.md",
+        "lib/net10.0/SharpCompress.dll",
+        "lib/net48/SharpCompress.dll",
+        "lib/net5.0/SharpCompress.dll",
+        "lib/net6.0/SharpCompress.dll",
+        "lib/net7.0/SharpCompress.dll",
+        "lib/net8.0/SharpCompress.dll",
+        "lib/net9.0/SharpCompress.dll",
+        "lib/netstandard2.0/SharpCompress.dll",
+        "lib/netstandard2.1/SharpCompress.dll",
+        "sharpcompress.0.48.0.nupkg.sha512",
+        "sharpcompress.nuspec"
+      ]
+    },
+    "System.CodeDom/8.0.0": {
+      "sha512": "WTlRjL6KWIMr/pAaq3rYqh0TJlzpouaQ/W1eelssHgtlwHAH25jXTkUphTYx9HaIIf7XA6qs/0+YhtLEQRkJ+Q==",
+      "type": "package",
+      "path": "system.codedom/8.0.0",
+      "files": [
+        ".nupkg.metadata",
+        ".signature.p7s",
+        "Icon.png",
+        "LICENSE.TXT",
+        "THIRD-PARTY-NOTICES.TXT",
+        "buildTransitive/net461/System.CodeDom.targets",
+        "buildTransitive/net462/_._",
+        "buildTransitive/net6.0/_._",
+        "buildTransitive/netcoreapp2.0/System.CodeDom.targets",
+        "lib/net462/System.CodeDom.dll",
+        "lib/net462/System.CodeDom.xml",
+        "lib/net6.0/System.CodeDom.dll",
+        "lib/net6.0/System.CodeDom.xml",
+        "lib/net7.0/System.CodeDom.dll",
+        "lib/net7.0/System.CodeDom.xml",
+        "lib/net8.0/System.CodeDom.dll",
+        "lib/net8.0/System.CodeDom.xml",
+        "lib/netstandard2.0/System.CodeDom.dll",
+        "lib/netstandard2.0/System.CodeDom.xml",
+        "system.codedom.8.0.0.nupkg.sha512",
+        "system.codedom.nuspec",
+        "useSharedDesignerContext.txt"
+      ]
+    },
+    "System.Management/8.0.0": {
+      "sha512": "jrK22i5LRzxZCfGb+tGmke2VH7oE0DvcDlJ1HAKYU8cPmD8XnpUT0bYn2Gy98GEhGjtfbR/sxKTVb+dE770pfA==",
+      "type": "package",
+      "path": "system.management/8.0.0",
+      "files": [
+        ".nupkg.metadata",
+        ".signature.p7s",
+        "Icon.png",
+        "LICENSE.TXT",
+        "PACKAGE.md",
+        "THIRD-PARTY-NOTICES.TXT",
+        "buildTransitive/net6.0/_._",
+        "buildTransitive/netcoreapp2.0/System.Management.targets",
+        "lib/net462/_._",
+        "lib/net6.0/System.Management.dll",
+        "lib/net6.0/System.Management.xml",
+        "lib/net7.0/System.Management.dll",
+        "lib/net7.0/System.Management.xml",
+        "lib/net8.0/System.Management.dll",
+        "lib/net8.0/System.Management.xml",
+        "lib/netstandard2.0/System.Management.dll",
+        "lib/netstandard2.0/System.Management.xml",
+        "runtimes/win/lib/net6.0/System.Management.dll",
+        "runtimes/win/lib/net6.0/System.Management.xml",
+        "runtimes/win/lib/net7.0/System.Management.dll",
+        "runtimes/win/lib/net7.0/System.Management.xml",
+        "runtimes/win/lib/net8.0/System.Management.dll",
+        "runtimes/win/lib/net8.0/System.Management.xml",
+        "system.management.8.0.0.nupkg.sha512",
+        "system.management.nuspec",
+        "useSharedDesignerContext.txt"
+      ]
+    }
+  },
+  "projectFileDependencyGroups": {
+    "net8.0-windows10.0.22621.0": [
+      "Microsoft.NET.ILLink.Tasks >= 8.0.32",
+      "SharpCompress >= 0.48.0",
+      "System.Management >= 8.0.0"
+    ]
+  },
+  "packageFolders": {
+    "C:\\Users\\Drew\\.nuget\\packages\\": {}
+  },
+  "project": {
+    "version": "0.1.0",
+    "restore": {
+      "projectUniqueName": "F:\\fsr4-lite-rog-ally\\src\\RalFsr.Host\\RalFsr.Host.csproj",
+      "projectName": "RalFsr.Host",
+      "projectPath": "F:\\fsr4-lite-rog-ally\\src\\RalFsr.Host\\RalFsr.Host.csproj",
+      "packagesPath": "C:\\Users\\Drew\\.nuget\\packages\\",
+      "outputPath": "F:\\fsr4-lite-rog-ally\\src\\RalFsr.Host\\obj\\",
+      "projectStyle": "PackageReference",
+      "configFilePaths": [
+        "C:\\Users\\Drew\\AppData\\Roaming\\NuGet\\NuGet.Config"
+      ],
+      "originalTargetFrameworks": [
+        "net8.0-windows10.0.22621.0"
+      ],
+      "sources": {
+        "https://api.nuget.org/v3/index.json": {}
+      },
+      "frameworks": {
+        "net8.0-windows10.0.22621.0": {
+          "framework": "net8.0-windows10.0.22621",
+          "targetAlias": "net8.0-windows10.0.22621.0",
+          "projectReferences": {}
+        }
+      },
+      "warningProperties": {
+        "warnAsError": [
+          "NU1605"
+        ]
+      },
+      "restoreAuditProperties": {
+        "enableAudit": "true",
+        "auditLevel": "low",
+        "auditMode": "direct"
+      },
+      "SdkAnalysisLevel": "10.0.400"
+    },
+    "frameworks": {
+      "net8.0-windows10.0.22621.0": {
+        "framework": "net8.0-windows10.0.22621",
+        "targetAlias": "net8.0-windows10.0.22621.0",
+        "dependencies": {
+          "Microsoft.NET.ILLink.Tasks": {
+            "suppressParent": "All",
+            "target": "Package",
+            "version": "[8.0.32, )",
+            "autoReferenced": true
+          },
+          "SharpCompress": {
+            "target": "Package",
+            "version": "[0.48.0, )"
+          },
+          "System.Management": {
+            "target": "Package",
+            "version": "[8.0.0, )"
+          }
+        },
+        "imports": [
+          "net461",
+          "net462",
+          "net47",
+          "net471",
+          "net472",
+          "net48",
+          "net481"
+        ],
+        "assetTargetFallback": true,
+        "warn": true,
+        "downloadDependencies": [
+          {
+            "name": "Microsoft.AspNetCore.App.Ref",
+            "version": "[8.0.32, 8.0.32]"
+          },
+          {
+            "name": "Microsoft.AspNetCore.App.Runtime.win-x64",
+            "version": "[8.0.32, 8.0.32]"
+          },
+          {
+            "name": "Microsoft.NETCore.App.Host.win-x64",
+            "version": "[8.0.32, 8.0.32]"
+          },
+          {
+            "name": "Microsoft.NETCore.App.Ref",
+            "version": "[8.0.32, 8.0.32]"
+          },
+          {
+            "name": "Microsoft.NETCore.App.Runtime.win-x64",
+            "version": "[8.0.32, 8.0.32]"
+          },
+          {
+            "name": "Microsoft.Windows.SDK.NET.Ref",
+            "version": "[10.0.22621.57, 10.0.22621.57]"
+          },
+          {
+            "name": "Microsoft.WindowsDesktop.App.Ref",
+            "version": "[8.0.32, 8.0.32]"
+          },
+          {
+            "name": "Microsoft.WindowsDesktop.App.Runtime.win-x64",
+            "version": "[8.0.32, 8.0.32]"
+          }
+        ],
+        "frameworkReferences": {
+          "Microsoft.NETCore.App": {
+            "privateAssets": "all"
+          },
+          "Microsoft.Windows.SDK.NET.Ref.Windows": {
+            "privateAssets": "all"
+          },
+          "Microsoft.WindowsDesktop.App.WindowsForms": {
+            "privateAssets": "none"
+          }
+        },
+        "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\10.0.402/PortableRuntimeIdentifierGraph.json"
+      }
+    },
+    "runtimes": {
+      "win-x64": {
+        "#import": []
+      }
+    }
+  }
+}

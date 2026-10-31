@@ -303,6 +303,11 @@ public sealed class HostService
                     ? $"Rendering {live.RenderWidth}x{live.RenderHeight} → {live.DisplayWidth}x{live.DisplayHeight}"
                     : $"Rendering {live.RenderWidth} → {live.DisplayWidth} pixels wide")
                 : "",
+            // The same sizes as numbers, for the card's render to output readout and bar.
+            renderWidth = live.RenderWidth,
+            renderHeight = live.RenderHeight,
+            displayWidth = live.DisplayWidth,
+            displayHeight = live.DisplayHeight,
             renderScales = InstallConfig.RenderScales.Select(r => new { key = r.Key, label = r.Label }).ToList(),
             optiBuild = manifest is null ? "" : OptiPackage.Label(manifest.OptiBuild),
             optiOutdated = IsOutdated(manifest),

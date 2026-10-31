@@ -13,6 +13,16 @@
             <SolidColorBrush x:Key="GoodBrush" Color="#FF39C27A" />
             <SolidColorBrush x:Key="WarnBrush" Color="#FFE8A23A" />
             <FontFamily x:Key="DisplayFont">Bahnschrift</FontFamily>
+            <!-- Icons: Segoe Fluent Icons on Windows 11, Segoe MDL2 Assets (same glyph codes) on Windows 10 -->
+            <FontFamily x:Key="IconFont">Segoe Fluent Icons,Segoe MDL2 Assets</FontFamily>
+            <SolidColorBrush x:Key="PanelBrush" Color="#FF1E2027" />
+            <SolidColorBrush x:Key="LineBrush" Color="#FF2C2F37" />
+            <SolidColorBrush x:Key="ChipBrush" Color="#FF2A2D35" />
+            <SolidColorBrush x:Key="GoodTintBrush" Color="#FF173226" />
+            <SolidColorBrush x:Key="GoodLineBrush" Color="#FF2A6B4B" />
+            <SolidColorBrush x:Key="GoodTextBrush" Color="#FF9EE6BD" />
+            <SolidColorBrush x:Key="WarnTintBrush" Color="#FF3A2C17" />
+            <SolidColorBrush x:Key="WarnTextBrush" Color="#FFF2C27A" />
 
             <!-- No BasedOn: the default Button template is used, and colours come from the button's own resources
                  (WidgetPage.xaml), so hover and pressed states stay red instead of turning grey. -->

@@ -5,12 +5,67 @@
     xmlns:local="using:RalFsr.Widget"
     Background="{StaticResource SurfaceBrush}">
 
+    <Page.Resources>
+        <!-- Render resolution choices: one row of buttons, one D-pad press per option. The chosen one turns red (code). -->
+        <Style x:Key="ChipButton" TargetType="Button" BasedOn="{StaticResource QuietButton}">
+            <Setter Property="HorizontalAlignment" Value="Stretch" />
+            <Setter Property="Padding" Value="0,8" />
+            <Setter Property="FontSize" Value="13" />
+            <Setter Property="Background" Value="{StaticResource ChipBrush}" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="CornerRadius" Value="8" />
+        </Style>
+
+        <!-- A tappable row in the Setup and Installed lists: icon, text, chevron or switch -->
+        <Style x:Key="RowButton" TargetType="Button" BasedOn="{StaticResource QuietButton}">
+            <Setter Property="HorizontalAlignment" Value="Stretch" />
+            <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="CornerRadius" Value="0" />
+            <Setter Property="Padding" Value="14,11" />
+        </Style>
+
+        <Style x:Key="RowIcon" TargetType="FontIcon">
+            <Setter Property="FontFamily" Value="{StaticResource IconFont}" />
+            <Setter Property="FontSize" Value="16" />
+            <Setter Property="VerticalAlignment" Value="Center" />
+            <Setter Property="Margin" Value="0,0,12,0" />
+        </Style>
+
+        <Style x:Key="SectionLabel" TargetType="TextBlock">
+            <Setter Property="FontSize" Value="12" />
+            <Setter Property="Foreground" Value="{StaticResource MutedBrush}" />
+            <Setter Property="Margin" Value="4,0,0,-8" />
+        </Style>
+
+        <Style x:Key="Panel" TargetType="Border">
+            <Setter Property="Background" Value="{StaticResource PanelBrush}" />
+            <Setter Property="BorderBrush" Value="{StaticResource LineBrush}" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="CornerRadius" Value="12" />
+        </Style>
+
+        <!-- The thin line between rows in a list panel -->
+        <Style x:Key="RowLine" TargetType="Border">
+            <Setter Property="Height" Value="1" />
+            <Setter Property="Background" Value="{StaticResource LineBrush}" />
+        </Style>
+
+        <!-- Switch without its On/Off text, so it sits at the right end of a row -->
+        <Style x:Key="RowSwitch" TargetType="ToggleSwitch">
+            <Setter Property="OnContent" Value="" />
+            <Setter Property="OffContent" Value="" />
+            <Setter Property="MinWidth" Value="0" />
+            <Setter Property="Margin" Value="0,-6,-12,-6" />
+            <Setter Property="VerticalAlignment" Value="Center" />
+        </Style>
+    </Page.Resources>
+
     <ScrollViewer x:Name="PageScroll" VerticalScrollBarVisibility="Auto">
-        <!-- Controller and arrow-key navigation: move to the nearest control in the pressed direction. The default
-             (projection) only considers controls directly in line, so pressing down from the right-hand Refresh button
-             skipped the left-aligned Setup controls and jumped to the full-width Installed list. Inherited by every
-             control inside. -->
-        <StackPanel Padding="20,16,20,20" Spacing="16" XYFocusKeyboardNavigation="Enabled"
+        <!-- Controller and arrow-key navigation: move to the nearest control in the pressed direction. Inherited by
+             every control inside. -->
+        <StackPanel Padding="14,14,14,18" Spacing="14" XYFocusKeyboardNavigation="Enabled"
                     XYFocusUpNavigationStrategy="NavigationDirectionDistance"
                     XYFocusDownNavigationStrategy="NavigationDirectionDistance"
                     XYFocusLeftNavigationStrategy="NavigationDirectionDistance"
@@ -23,206 +78,356 @@
             </StackPanel.ChildrenTransitions>
 
             <!-- Header -->
-            <Grid>
+            <Grid Padding="2,0,0,0">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*" />
                     <ColumnDefinition Width="Auto" />
                 </Grid.ColumnDefinitions>
-                <StackPanel Orientation="Horizontal" Spacing="12">
-                    <Image Source="Assets/RalLogo.png" Width="48" Height="48" VerticalAlignment="Center"
+                <StackPanel Orientation="Horizontal" Spacing="10">
+                    <Image Source="Assets/RalLogo.png" Width="36" Height="36" VerticalAlignment="Center"
                            AutomationProperties.Name="ROG Ally Life" />
-                    <StackPanel Spacing="2" VerticalAlignment="Center">
-                        <TextBlock Text="FSR 4.1 Lite" FontFamily="{StaticResource DisplayFont}" FontSize="28" FontWeight="SemiBold" />
-                        <TextBlock x:Name="DeviceText" Text="Checking this handheld..." FontSize="12"
+                    <StackPanel VerticalAlignment="Center">
+                        <TextBlock Text="FSR 4.1 Lite" FontFamily="{StaticResource DisplayFont}" FontSize="20" FontWeight="SemiBold" />
+                        <TextBlock x:Name="DeviceText" Text="Checking this handheld..." FontSize="11"
                                    Foreground="{StaticResource MutedBrush}" TextWrapping="Wrap" />
                     </StackPanel>
                 </StackPanel>
-                <Button x:Name="RefreshButton" Grid.Column="1" VerticalAlignment="Top" Style="{StaticResource QuietButton}"
-                        Content="Refresh" Click="Refresh_Click" />
+                <Button x:Name="RefreshButton" Grid.Column="1" VerticalAlignment="Center" Style="{StaticResource QuietButton}"
+                        Background="Transparent" BorderThickness="0" Padding="10" Click="Refresh_Click"
+                        AutomationProperties.Name="Refresh">
+                    <FontIcon FontFamily="{StaticResource IconFont}" Glyph="&#xE72C;" FontSize="16"
+                              Foreground="{StaticResource MutedBrush}" />
+                </Button>
             </Grid>
 
             <!-- Device problems (wrong device, or the official ASUS route applies) -->
-            <Border x:Name="DeviceBanner" Visibility="Collapsed" Padding="12" CornerRadius="4"
-                    Background="#33E8A23A" BorderBrush="{StaticResource WarnBrush}" BorderThickness="3,0,0,0">
+            <Border x:Name="DeviceBanner" Visibility="Collapsed" Padding="12" CornerRadius="10"
+                    Background="{StaticResource WarnTintBrush}" BorderBrush="{StaticResource WarnBrush}" BorderThickness="1">
                 <TextBlock x:Name="DeviceBannerText" TextWrapping="Wrap" FontSize="13" />
             </Border>
 
             <!-- The game under the overlay -->
-            <Border x:Name="GameCard" Padding="16" CornerRadius="6" Background="{StaticResource CardBrush}"
-                    BorderBrush="{StaticResource RalRedBrush}" BorderThickness="3,0,0,0">
-                <StackPanel Spacing="8">
-                    <StackPanel.ChildrenTransitions>
-                        <TransitionCollection>
-                            <RepositionThemeTransition />
-                        </TransitionCollection>
-                    </StackPanel.ChildrenTransitions>
-                    <TextBlock x:Name="GameName" Text="Looking for your game..." FontFamily="{StaticResource DisplayFont}"
-                               FontSize="22" TextWrapping="Wrap" />
-                    <TextBlock x:Name="GameMeta" FontSize="12" Foreground="{StaticResource MutedBrush}" TextWrapping="Wrap" />
-
-                    <!-- Live status: is FSR 4.1 Lite really running in the game right now -->
-                    <Border x:Name="ActiveBadge" Visibility="Collapsed" HorizontalAlignment="Left" Padding="10,5"
-                            CornerRadius="12" BorderThickness="1">
-                        <StackPanel Orientation="Horizontal" Spacing="8">
-                            <Ellipse x:Name="ActiveDot" Width="9" Height="9" VerticalAlignment="Center" />
-                            <TextBlock x:Name="ActiveText" FontSize="13" FontWeight="SemiBold" TextWrapping="Wrap" />
+            <Border x:Name="GameCard" Style="{StaticResource Panel}">
+                <StackPanel>
+                    <!-- Title area: game name and details on a slightly lighter band -->
+                    <Border Background="{StaticResource CardBrush}" CornerRadius="11,11,0,0" Padding="16,14">
+                        <StackPanel Spacing="2">
+                            <TextBlock x:Name="GameName" Text="Looking for your game..." FontFamily="{StaticResource DisplayFont}"
+                                       FontSize="21" FontWeight="SemiBold" TextWrapping="Wrap" />
+                            <TextBlock x:Name="GameMeta" FontSize="12" Foreground="{StaticResource MutedBrush}" TextWrapping="Wrap" />
                         </StackPanel>
                     </Border>
-                    <TextBlock x:Name="GameStatus" FontSize="14" TextWrapping="Wrap" />
-                    <!-- From OptiScaler's community Compatibility List: the upscalers that work in this game -->
-                    <TextBlock x:Name="CompatText" Visibility="Collapsed" FontSize="13" TextWrapping="Wrap"
-                               Foreground="{StaticResource MutedBrush}" />
 
-                    <Button x:Name="SwitchLoaderButton" Style="{StaticResource QuietButton}" Content="Try another loader"
-                            Visibility="Collapsed" Click="SwitchLoader_Click" />
-                    <TextBlock x:Name="ResolutionText" FontSize="12" Foreground="{StaticResource MutedBrush}"
-                               Visibility="Collapsed" />
-                    <Border x:Name="AutoFixBanner" Visibility="Collapsed" Padding="10" CornerRadius="4"
-                            Background="#2639C27A" BorderBrush="{StaticResource GoodBrush}" BorderThickness="3,0,0,0">
-                        <TextBlock x:Name="AutoFixText" FontSize="13" TextWrapping="Wrap" />
-                    </Border>
+                    <StackPanel Padding="14" Spacing="12">
+                        <StackPanel.ChildrenTransitions>
+                            <TransitionCollection>
+                                <RepositionThemeTransition />
+                            </TransitionCollection>
+                        </StackPanel.ChildrenTransitions>
 
-                    <!-- Per-game render resolution: fixes games that stay on Native AA whatever preset they're set to -->
-                    <ComboBox x:Name="RenderScaleBox" Header="Render resolution" Visibility="Collapsed"
-                              HorizontalAlignment="Stretch" SelectionChanged="RenderScale_Changed" />
-                    <StackPanel x:Name="GameActions" Orientation="Horizontal" Spacing="8" Margin="0,4,0,0">
-                        <Button x:Name="PrimaryButton" Style="{StaticResource AccentButton}" Content="Install FSR 4.1 Lite"
-                                Click="Primary_Click">
-                            <Button.Resources>
-                                <SolidColorBrush x:Key="ButtonBackground" Color="#E50007" />
-                                <SolidColorBrush x:Key="ButtonBackgroundPointerOver" Color="#FF1A22" />
-                                <SolidColorBrush x:Key="ButtonBackgroundPressed" Color="#B80006" />
-                                <SolidColorBrush x:Key="ButtonBackgroundDisabled" Color="#4DE50007" />
-                                <SolidColorBrush x:Key="ButtonForeground" Color="White" />
-                                <SolidColorBrush x:Key="ButtonForegroundPointerOver" Color="White" />
-                                <SolidColorBrush x:Key="ButtonForegroundPressed" Color="White" />
-                                <SolidColorBrush x:Key="ButtonForegroundDisabled" Color="#99FFFFFF" />
-                                <SolidColorBrush x:Key="ButtonBorderBrush" Color="Transparent" />
-                                <SolidColorBrush x:Key="ButtonBorderBrushPointerOver" Color="Transparent" />
-                                <SolidColorBrush x:Key="ButtonBorderBrushPressed" Color="Transparent" />
-                            </Button.Resources>
-                        </Button>
+                        <!-- Live status: is FSR 4.1 Lite really running in the game right now -->
+                        <Border x:Name="ActiveBadge" Visibility="Collapsed" Padding="12,10" CornerRadius="10" BorderThickness="1">
+                            <Grid ColumnSpacing="12">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto" />
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+                                <Ellipse x:Name="ActiveDot" Width="10" Height="10" VerticalAlignment="Center" />
+                                <TextBlock x:Name="ActiveText" Grid.Column="1" FontSize="14" FontWeight="SemiBold" TextWrapping="Wrap"
+                                           VerticalAlignment="Center" />
+                                <FontIcon x:Name="ActiveIcon" Grid.Column="2" FontFamily="{StaticResource IconFont}" Glyph="&#xE930;"
+                                          FontSize="18" VerticalAlignment="Center" />
+                            </Grid>
+                        </Border>
+
+                        <!-- Render to output resolution, with a bar showing how far it's upscaling -->
+                        <StackPanel x:Name="ResolutionPanel" Visibility="Collapsed" Spacing="2">
+                            <Grid>
+                                <TextBlock Text="Render" FontSize="11" Foreground="{StaticResource MutedBrush}" />
+                                <TextBlock Text="Output" FontSize="11" Foreground="{StaticResource MutedBrush}" HorizontalAlignment="Right" />
+                            </Grid>
+                            <Grid>
+                                <TextBlock x:Name="RenderResText" FontFamily="{StaticResource DisplayFont}" FontSize="16" />
+                                <FontIcon FontFamily="{StaticResource IconFont}" Glyph="&#xE72A;" FontSize="13"
+                                          Foreground="{StaticResource MutedBrush}" HorizontalAlignment="Center" />
+                                <TextBlock x:Name="OutputResText" FontFamily="{StaticResource DisplayFont}" FontSize="16"
+                                           HorizontalAlignment="Right" />
+                            </Grid>
+                            <ProgressBar x:Name="ResolutionBar" Minimum="0" Maximum="100" Height="6" Margin="0,6,0,0"
+                                         Foreground="{StaticResource RalRedBrush}" Background="{StaticResource ChipBrush}" />
+                        </StackPanel>
+                        <!-- Fallback text when only widths are known -->
+                        <TextBlock x:Name="ResolutionText" FontSize="12" Foreground="{StaticResource MutedBrush}" Visibility="Collapsed" />
+
+                        <TextBlock x:Name="GameStatus" FontSize="14" TextWrapping="Wrap" />
+                        <!-- From OptiScaler's community Compatibility List: the upscalers that work in this game -->
+                        <TextBlock x:Name="CompatText" Visibility="Collapsed" FontSize="13" TextWrapping="Wrap"
+                                   Foreground="{StaticResource MutedBrush}" />
+
+                        <Border x:Name="AutoFixBanner" Visibility="Collapsed" Padding="10" CornerRadius="10"
+                                Background="{StaticResource GoodTintBrush}" BorderBrush="{StaticResource GoodLineBrush}" BorderThickness="1">
+                            <TextBlock x:Name="AutoFixText" FontSize="13" TextWrapping="Wrap" />
+                        </Border>
+
+                        <!-- Per-game render resolution: fixes games that stay on Native AA whatever preset they're set to -->
+                        <StackPanel x:Name="ScalePanel" Visibility="Collapsed" Spacing="6">
+                            <TextBlock Text="Render resolution" FontSize="12" Foreground="{StaticResource MutedBrush}" />
+                            <Grid x:Name="ScaleChips" ColumnSpacing="6" />
+                        </StackPanel>
+
+                        <Grid x:Name="GameActions" ColumnSpacing="8" Margin="0,2,0,0">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+                            <Button x:Name="PrimaryButton" Style="{StaticResource AccentButton}" HorizontalAlignment="Stretch"
+                                    CornerRadius="8" Click="Primary_Click">
+                                <Button.Resources>
+                                    <SolidColorBrush x:Key="ButtonBackground" Color="#E50007" />
+                                    <SolidColorBrush x:Key="ButtonBackgroundPointerOver" Color="#FF1A22" />
+                                    <SolidColorBrush x:Key="ButtonBackgroundPressed" Color="#B80006" />
+                                    <SolidColorBrush x:Key="ButtonBackgroundDisabled" Color="#4DE50007" />
+                                    <SolidColorBrush x:Key="ButtonForeground" Color="White" />
+                                    <SolidColorBrush x:Key="ButtonForegroundPointerOver" Color="White" />
+                                    <SolidColorBrush x:Key="ButtonForegroundPressed" Color="White" />
+                                    <SolidColorBrush x:Key="ButtonForegroundDisabled" Color="#99FFFFFF" />
+                                    <SolidColorBrush x:Key="ButtonBorderBrush" Color="Transparent" />
+                                    <SolidColorBrush x:Key="ButtonBorderBrushPointerOver" Color="Transparent" />
+                                    <SolidColorBrush x:Key="ButtonBorderBrushPressed" Color="Transparent" />
+                                </Button.Resources>
+                                <StackPanel Orientation="Horizontal" Spacing="8">
+                                    <FontIcon x:Name="PrimaryIcon" FontFamily="{StaticResource IconFont}" Glyph="&#xE896;" FontSize="15" />
+                                    <TextBlock x:Name="PrimaryText" Text="Install FSR 4.1 Lite" />
+                                </StackPanel>
+                            </Button>
+                            <Button x:Name="SwitchLoaderButton" Grid.Column="1" Style="{StaticResource QuietButton}" CornerRadius="8"
+                                    Background="{StaticResource ChipBrush}" BorderThickness="0" Visibility="Collapsed"
+                                    Click="SwitchLoader_Click">
+                                <StackPanel Orientation="Horizontal" Spacing="8">
+                                    <FontIcon FontFamily="{StaticResource IconFont}" Glyph="&#xE8AB;" FontSize="15" />
+                                    <TextBlock Text="Try another loader" />
+                                </StackPanel>
+                            </Button>
+                        </Grid>
                     </StackPanel>
                 </StackPanel>
             </Border>
 
-            <!-- One-time setup -->
-            <StackPanel Spacing="8">
-                <TextBlock Text="Setup" FontFamily="{StaticResource DisplayFont}" FontSize="17" FontWeight="SemiBold" />
-                <!-- The widget's own version, and a one-tap update when a newer release is out -->
-                <TextBlock x:Name="AppVersionText" FontSize="13" TextWrapping="Wrap" Foreground="{StaticResource MutedBrush}" />
-                <!-- Update progress: determinate while downloading, moving while installing -->
-                <ProgressBar x:Name="WidgetUpdateBar" Visibility="Collapsed" Minimum="0" Maximum="100" Height="6"
-                             Foreground="{StaticResource RalRedBrush}" />
-                <TextBlock x:Name="WidgetUpdateText" Visibility="Collapsed" FontSize="13" TextWrapping="Wrap" />
-                <!-- One column, every button as wide as the widest: Update (when there is one), Check for updates, and
-                     the support report (one zip on the Desktop with logs and settings, user name removed). Margins
-                     instead of Spacing: a StackPanel still adds spacing for a collapsed child, which shifted Check for
-                     updates to the right whenever there was no update. -->
-                <StackPanel HorizontalAlignment="Left">
-                    <Button x:Name="UpdateWidgetButton" Style="{StaticResource AccentButton}" Visibility="Collapsed"
-                            HorizontalAlignment="Stretch" Margin="0,0,0,8" Click="UpdateWidget_Click" />
-                    <Button x:Name="CheckUpdatesButton" Style="{StaticResource QuietButton}" HorizontalAlignment="Stretch"
-                            Margin="0,0,0,8" Content="Check for updates" Click="CheckUpdates_Click" />
-                    <Button x:Name="SupportReportButton" Style="{StaticResource QuietButton}" HorizontalAlignment="Stretch"
-                            Content="Create support report" Click="SupportReport_Click" />
+            <!-- Setup: one grouped list -->
+            <TextBlock Text="Setup" Style="{StaticResource SectionLabel}" />
+            <Border Style="{StaticResource Panel}">
+                <StackPanel>
+                    <!-- The widget's own version; the row checks for updates -->
+                    <Button x:Name="CheckUpdatesButton" Style="{StaticResource RowButton}" Click="CheckUpdates_Click"
+                            CornerRadius="11,11,0,0">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+                            <FontIcon Style="{StaticResource RowIcon}" Glyph="&#xE896;" Foreground="{StaticResource RalRedBrush}" />
+                            <StackPanel Grid.Column="1">
+                                <TextBlock x:Name="AppVersionText" FontSize="14" TextWrapping="Wrap" />
+                                <TextBlock x:Name="CheckUpdatesText" Text="Check for updates" FontSize="12"
+                                           Foreground="{StaticResource MutedBrush}" />
+                            </StackPanel>
+                            <FontIcon Grid.Column="2" FontFamily="{StaticResource IconFont}" Glyph="&#xE76C;" FontSize="12"
+                                      Foreground="{StaticResource MutedBrush}" VerticalAlignment="Center" />
+                        </Grid>
+                    </Button>
+                    <!-- Update progress and the Update button, when a newer release is out -->
+                    <StackPanel x:Name="WidgetUpdatePanel" Padding="14,0,14,12" Spacing="8" Visibility="Collapsed">
+                        <ProgressBar x:Name="WidgetUpdateBar" Visibility="Collapsed" Minimum="0" Maximum="100" Height="6"
+                                     Foreground="{StaticResource RalRedBrush}" />
+                        <TextBlock x:Name="WidgetUpdateText" Visibility="Collapsed" FontSize="13" TextWrapping="Wrap" />
+                        <Button x:Name="UpdateWidgetButton" Style="{StaticResource AccentButton}" Visibility="Collapsed"
+                                HorizontalAlignment="Stretch" CornerRadius="8" Click="UpdateWidget_Click">
+                            <Button.Resources>
+                                <SolidColorBrush x:Key="ButtonBackground" Color="#E50007" />
+                                <SolidColorBrush x:Key="ButtonBackgroundPointerOver" Color="#FF1A22" />
+                                <SolidColorBrush x:Key="ButtonBackgroundPressed" Color="#B80006" />
+                                <SolidColorBrush x:Key="ButtonForeground" Color="White" />
+                                <SolidColorBrush x:Key="ButtonForegroundPointerOver" Color="White" />
+                                <SolidColorBrush x:Key="ButtonForegroundPressed" Color="White" />
+                            </Button.Resources>
+                        </Button>
+                    </StackPanel>
+                    <Border Style="{StaticResource RowLine}" />
+
+                    <!-- OptiScaler and the FSR 4 files: status lines, and the manual import fallback -->
+                    <StackPanel Padding="14,11" Spacing="4" Orientation="Horizontal">
+                        <FontIcon Style="{StaticResource RowIcon}" Glyph="&#xE9F5;" />
+                        <StackPanel Spacing="2">
+                            <TextBlock x:Name="OptiText" FontSize="13" TextWrapping="Wrap" MaxWidth="340" />
+                            <TextBlock x:Name="Fsr4Text" FontSize="12" TextWrapping="Wrap" MaxWidth="340"
+                                       Foreground="{StaticResource MutedBrush}" />
+                        </StackPanel>
+                    </StackPanel>
+                    <Button x:Name="ImportButton" Style="{StaticResource QuietButton}" Content="Import files manually"
+                            Visibility="Collapsed" Margin="14,0,14,12" Click="Import_Click" />
+                    <Border Style="{StaticResource RowLine}" />
+
+                    <Grid Padding="14,11">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <FontIcon Style="{StaticResource RowIcon}" Glyph="&#xEA8F;" />
+                        <TextBlock Grid.Column="1" Text="Notify when active" FontSize="14" VerticalAlignment="Center" />
+                        <ToggleSwitch x:Name="NotifySwitch" Grid.Column="2" Style="{StaticResource RowSwitch}"
+                                      Toggled="Notify_Toggled" AutomationProperties.Name="Notify when active" />
+                    </Grid>
+                    <Border Style="{StaticResource RowLine}" />
+
+                    <Grid Padding="14,11">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <FontIcon Style="{StaticResource RowIcon}" Glyph="&#xE895;" />
+                        <TextBlock Grid.Column="1" Text="Update games automatically" FontSize="14" VerticalAlignment="Center" />
+                        <ToggleSwitch x:Name="AutoUpdateSwitch" Grid.Column="2" Style="{StaticResource RowSwitch}"
+                                      Toggled="AutoUpdate_Toggled" AutomationProperties.Name="Update games automatically" />
+                    </Grid>
+                    <Border Style="{StaticResource RowLine}" />
+
+                    <Grid Padding="14,11">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <FontIcon Style="{StaticResource RowIcon}" Glyph="&#xE9D2;" />
+                        <TextBlock Grid.Column="1" Text="FPS and resolution overlay" FontSize="14" VerticalAlignment="Center" />
+                        <ToggleSwitch x:Name="OverlaySwitch" Grid.Column="2" Style="{StaticResource RowSwitch}"
+                                      Toggled="Overlay_Toggled" AutomationProperties.Name="FPS and resolution overlay" />
+                    </Grid>
+                    <!-- Shown while the overlay is on: its size and corner -->
+                    <StackPanel x:Name="OverlayOptions" Padding="14,0,14,12" Spacing="8" Visibility="Collapsed">
+                        <ComboBox x:Name="OverlaySizeBox" Header="Overlay size" HorizontalAlignment="Stretch"
+                                  SelectionChanged="OverlaySize_Changed">
+                            <x:String>Small</x:String>
+                            <x:String>Medium</x:String>
+                            <x:String>Large</x:String>
+                            <x:String>Extra large</x:String>
+                            <x:String>Huge</x:String>
+                            <x:String>Maximum</x:String>
+                        </ComboBox>
+                        <ComboBox x:Name="OverlayPositionBox" Header="Overlay position" HorizontalAlignment="Stretch"
+                                  SelectionChanged="OverlayPosition_Changed">
+                            <x:String>Top left</x:String>
+                            <x:String>Top right</x:String>
+                            <x:String>Bottom left</x:String>
+                            <x:String>Bottom right</x:String>
+                        </ComboBox>
+                        <TextBlock FontSize="12" TextWrapping="Wrap" Foreground="{StaticResource MutedBrush}"
+                                   Text="Size and position changes show after you restart the game." />
+                    </StackPanel>
+                    <Border Style="{StaticResource RowLine}" />
+
+                    <!-- Support: one zip on the Desktop with logs and settings (user name removed), for sending to ROG Ally Life -->
+                    <Button x:Name="SupportReportButton" Style="{StaticResource RowButton}" Click="SupportReport_Click"
+                            CornerRadius="0,0,11,11">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+                            <FontIcon Style="{StaticResource RowIcon}" Glyph="&#xE897;" />
+                            <StackPanel Grid.Column="1">
+                                <TextBlock x:Name="SupportReportText" Text="Create support report" FontSize="14" />
+                                <TextBlock Text="Saves the details ROG Ally Life needs to your Desktop" FontSize="12"
+                                           Foreground="{StaticResource MutedBrush}" TextWrapping="Wrap" />
+                            </StackPanel>
+                            <FontIcon Grid.Column="2" FontFamily="{StaticResource IconFont}" Glyph="&#xE76C;" FontSize="12"
+                                      Foreground="{StaticResource MutedBrush}" VerticalAlignment="Center" />
+                        </Grid>
+                    </Button>
                 </StackPanel>
-                <TextBlock FontSize="12" TextWrapping="Wrap" Foreground="{StaticResource MutedBrush}"
-                           Text="Something not working? This saves a file to your Desktop with the details ROG Ally Life needs to help. Open the widget over the game first if it's about one game." />
-                <TextBlock x:Name="OptiText" FontSize="13" TextWrapping="Wrap" />
-                <TextBlock x:Name="Fsr4Text" FontSize="13" TextWrapping="Wrap" />
-                <!-- Fallback only: shown when the automatic FSR 4 download hasn't worked (offline, blocked host) -->
-                <Button x:Name="ImportButton" Style="{StaticResource QuietButton}" Content="Import files manually"
-                        Visibility="Collapsed" Click="Import_Click" />
-                <ToggleSwitch x:Name="OverlaySwitch" Header="Show FPS and render resolution in game"
-                              Toggled="Overlay_Toggled" />
-                <!-- Shown while the overlay is on: how big the overlay text is in game -->
-                <ComboBox x:Name="OverlaySizeBox" Header="Overlay size" Visibility="Collapsed" HorizontalAlignment="Stretch"
-                          SelectionChanged="OverlaySize_Changed">
-                    <x:String>Small</x:String>
-                    <x:String>Medium</x:String>
-                    <x:String>Large</x:String>
-                    <x:String>Extra large</x:String>
-                    <x:String>Huge</x:String>
-                    <x:String>Maximum</x:String>
-                </ComboBox>
-                <ComboBox x:Name="OverlayPositionBox" Header="Overlay position" Visibility="Collapsed" HorizontalAlignment="Stretch"
-                          SelectionChanged="OverlayPosition_Changed">
-                    <x:String>Top left</x:String>
-                    <x:String>Top right</x:String>
-                    <x:String>Bottom left</x:String>
-                    <x:String>Bottom right</x:String>
-                </ComboBox>
-                <TextBlock x:Name="OverlayRestartNote" Visibility="Collapsed" FontSize="12" TextWrapping="Wrap"
-                           Foreground="{StaticResource MutedBrush}"
-                           Text="Size and position changes show after you restart the game." />
-                <ToggleSwitch x:Name="NotifySwitch" Header="Notify me when FSR 4.1 Lite is active"
-                              Toggled="Notify_Toggled" />
-                <ToggleSwitch x:Name="AutoUpdateSwitch" Header="Update games automatically"
-                              Toggled="AutoUpdate_Toggled" />
-                <TextBlock FontSize="12" TextWrapping="Wrap" Foreground="{StaticResource MutedBrush}" Margin="0,-4,0,0"
-                           Text="Windows holds notifications during fullscreen games. To see them in game, add FSR 4.1 Lite in Settings &gt; System &gt; Notifications &gt; Set priority notifications." />
-            </StackPanel>
+            </Border>
+            <TextBlock FontSize="12" TextWrapping="Wrap" Foreground="{StaticResource MutedBrush}" Margin="4,-6,4,0"
+                       Text="Windows holds notifications during fullscreen games. To see them in game, add FSR 4.1 Lite in Settings &gt; System &gt; Notifications &gt; Set priority notifications." />
 
             <!-- Everything installed through the widget, removable without the game running -->
-            <StackPanel x:Name="InstalledPanel" Spacing="4" Visibility="Collapsed">
-                <!-- Collapsed by default: one line with the count, tap to show every installed game -->
+            <StackPanel x:Name="InstalledPanel" Spacing="14" Visibility="Collapsed">
                 <Button x:Name="InstalledToggle" Click="InstalledToggle_Click" HorizontalAlignment="Stretch"
-                        HorizontalContentAlignment="Left" Background="Transparent" BorderThickness="0" Padding="0,6"
-                        FocusVisualPrimaryBrush="{StaticResource RalRedBrush}" FocusVisualPrimaryThickness="3">
-                    <TextBlock x:Name="InstalledToggleText" Text="Installed in" FontFamily="{StaticResource DisplayFont}"
-                               FontSize="17" FontWeight="SemiBold" />
+                        HorizontalContentAlignment="Left" Background="Transparent" BorderThickness="0" Padding="4,0"
+                        Margin="0,0,0,-8" FocusVisualPrimaryBrush="{StaticResource RalRedBrush}" FocusVisualPrimaryThickness="3">
+                    <TextBlock x:Name="InstalledToggleText" Text="Installed in" FontSize="12" Foreground="{StaticResource MutedBrush}" />
                 </Button>
                 <!-- Shown when installed games are on an older OptiScaler build than the one downloaded -->
                 <Button x:Name="UpdateAllButton" Style="{StaticResource AccentButton}" Visibility="Collapsed"
-                        HorizontalAlignment="Stretch" Click="UpdateAll_Click" />
-                <ItemsControl x:Name="InstalledList" Visibility="Collapsed">
-                    <ItemsControl.ItemTemplate>
-                        <DataTemplate x:DataType="local:InstalledRow">
-                            <Grid Padding="0,6">
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="*" />
-                                    <ColumnDefinition Width="Auto" />
-                                </Grid.ColumnDefinitions>
-                                <StackPanel VerticalAlignment="Center">
-                                    <TextBlock Text="{x:Bind Name}" FontSize="14" TextTrimming="CharacterEllipsis" />
-                                    <TextBlock Text="{x:Bind Note}" FontSize="12" Foreground="{StaticResource MutedBrush}" />
-                                </StackPanel>
-                                <Button Grid.Column="1" Style="{StaticResource QuietButton}" Content="Uninstall"
-                                        Tag="{x:Bind ExeDir}" Click="Remove_Click" />
-                            </Grid>
-                        </DataTemplate>
-                    </ItemsControl.ItemTemplate>
-                </ItemsControl>
+                        HorizontalAlignment="Stretch" CornerRadius="8" Click="UpdateAll_Click" />
+                <Border x:Name="InstalledListPanel" Style="{StaticResource Panel}" Visibility="Collapsed">
+                    <ItemsControl x:Name="InstalledList">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate x:DataType="local:InstalledRow">
+                                <Grid Padding="14,10" ColumnSpacing="10" BorderBrush="{StaticResource LineBrush}" BorderThickness="0,0,0,1">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="Auto" />
+                                        <ColumnDefinition Width="Auto" />
+                                    </Grid.ColumnDefinitions>
+                                    <StackPanel VerticalAlignment="Center">
+                                        <TextBlock Text="{x:Bind Name}" FontSize="14" TextTrimming="CharacterEllipsis" />
+                                        <TextBlock Text="{x:Bind Note}" FontSize="12" Foreground="{StaticResource MutedBrush}"
+                                                   TextTrimming="CharacterEllipsis" />
+                                    </StackPanel>
+                                    <Border Grid.Column="1" Visibility="{x:Bind StatusVisibility}" Background="{x:Bind StatusBackground}"
+                                            CornerRadius="6" Padding="8,3" VerticalAlignment="Center">
+                                        <TextBlock Text="{x:Bind Status}" FontSize="11" Foreground="{x:Bind StatusForeground}" />
+                                    </Border>
+                                    <Button Grid.Column="2" Style="{StaticResource QuietButton}" Background="Transparent"
+                                            BorderThickness="0" Padding="8" Tag="{x:Bind ExeDir}" Click="Remove_Click"
+                                            AutomationProperties.Name="Uninstall">
+                                        <FontIcon FontFamily="{StaticResource IconFont}" Glyph="&#xE74D;" FontSize="15"
+                                                  Foreground="{StaticResource MutedBrush}" />
+                                    </Button>
+                                </Grid>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </Border>
             </StackPanel>
 
-            <TextBlock x:Name="StatusText" FontSize="13" TextWrapping="Wrap" Foreground="{StaticResource MutedBrush}" />
+            <TextBlock x:Name="StatusText" FontSize="13" TextWrapping="Wrap" Foreground="{StaticResource MutedBrush}" Margin="4,0" />
 
             <!-- Credits: the widget is a front end; OptiScaler does the work -->
-            <Border Padding="14" CornerRadius="6" Background="{StaticResource CardBrush}">
+            <Border Style="{StaticResource Panel}" Padding="14">
                 <StackPanel Spacing="6">
-                    <TextBlock Text="Powered by OptiScaler" FontFamily="{StaticResource DisplayFont}" FontSize="16"
+                    <TextBlock Text="Powered by OptiScaler" FontFamily="{StaticResource DisplayFont}" FontSize="15"
                                FontWeight="SemiBold" />
-                    <TextBlock FontSize="13" TextWrapping="Wrap" Foreground="{StaticResource MutedBrush}"
+                    <TextBlock FontSize="12" TextWrapping="Wrap" Foreground="{StaticResource MutedBrush}"
                                Text="FSR 4.1 Lite installs and configures OptiScaler, the free, open-source upscaler tool created by cdozdil and the OptiScaler contributors (GPL-3.0). The widget downloads their official builds unmodified. All the upscaling work is theirs." />
-                    <TextBlock FontSize="13" TextWrapping="Wrap" Foreground="{StaticResource MutedBrush}"
+                    <TextBlock FontSize="12" TextWrapping="Wrap" Foreground="{StaticResource MutedBrush}"
                                Text="FSR 4 is by AMD. Thanks to TheRazerMD for sharing the FSR 4.1.2 Lite driver files, to the OptiScaler community for the Compatibility List shown on game cards, and to praydog for REFramework, which Capcom RE Engine games need." />
                     <StackPanel Orientation="Horizontal" Spacing="4">
-                        <HyperlinkButton Content="OptiScaler on GitHub" FontSize="13"
+                        <HyperlinkButton Content="OptiScaler on GitHub" FontSize="12"
                                          NavigateUri="https://github.com/optiscaler/OptiScaler" />
-                        <HyperlinkButton Content="Support the OptiScaler developer" FontSize="13"
+                        <HyperlinkButton Content="Support the OptiScaler developer" FontSize="12"
                                          NavigateUri="https://github.com/sponsors/cdozdil" />
                     </StackPanel>
-                    <TextBlock FontSize="13" TextWrapping="Wrap" Foreground="{StaticResource MutedBrush}" Margin="0,6,0,0"
+                    <TextBlock FontSize="12" TextWrapping="Wrap" Foreground="{StaticResource MutedBrush}" Margin="0,4,0,0"
                                Text="FSR 4.1 Lite is free. If it saves you time, you can support ROG Ally Life too." />
-                    <HyperlinkButton Content="Support ROG Ally Life on Ko-fi" FontSize="13"
+                    <HyperlinkButton Content="Support ROG Ally Life on Ko-fi" FontSize="12"
                                      NavigateUri="https://ko-fi.com/rogallylife" />
                 </StackPanel>
             </Border>
 
             <!-- Clean uninstall: restore every game folder, then hand over to Windows to remove the widget -->
-            <Button x:Name="UninstallButton" Style="{StaticResource QuietButton}" Content="Uninstall FSR 4.1 Lite"
-                    Foreground="{StaticResource RalRedBrush}" Margin="0,8,0,0" Click="Uninstall_Click" />
+            <Button x:Name="UninstallButton" Style="{StaticResource QuietButton}" HorizontalAlignment="Stretch"
+                    Background="Transparent" BorderBrush="{StaticResource LineBrush}" CornerRadius="8"
+                    Foreground="{StaticResource RalRedBrush}" Click="Uninstall_Click">
+                <StackPanel Orientation="Horizontal" Spacing="8">
+                    <FontIcon FontFamily="{StaticResource IconFont}" Glyph="&#xE74D;" FontSize="14" />
+                    <TextBlock Text="Uninstall FSR 4.1 Lite" />
+                </StackPanel>
+            </Button>
         </StackPanel>
     </ScrollViewer>
 </Page>

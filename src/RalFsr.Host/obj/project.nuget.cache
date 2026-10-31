@@ -1,0 +1,21 @@
+{
+  "version": 2,
+  "dgSpecHash": "AOIHuO0uvoE=",
+  "success": true,
+  "projectFilePath": "F:\\fsr4-lite-rog-ally\\src\\RalFsr.Host\\RalFsr.Host.csproj",
+  "expectedPackageFiles": [
+    "C:\\Users\\Drew\\.nuget\\packages\\microsoft.net.illink.tasks\\8.0.32\\microsoft.net.illink.tasks.8.0.32.nupkg.sha512",
+    "C:\\Users\\Drew\\.nuget\\packages\\sharpcompress\\0.48.0\\sharpcompress.0.48.0.nupkg.sha512",
+    "C:\\Users\\Drew\\.nuget\\packages\\system.codedom\\8.0.0\\system.codedom.8.0.0.nupkg.sha512",
+    "C:\\Users\\Drew\\.nuget\\packages\\system.management\\8.0.0\\system.management.8.0.0.nupkg.sha512",
+    "C:\\Users\\Drew\\.nuget\\packages\\microsoft.netcore.app.ref\\8.0.32\\microsoft.netcore.app.ref.8.0.32.nupkg.sha512",
+    "C:\\Users\\Drew\\.nuget\\packages\\microsoft.netcore.app.runtime.win-x64\\8.0.32\\microsoft.netcore.app.runtime.win-x64.8.0.32.nupkg.sha512",
+    "C:\\Users\\Drew\\.nuget\\packages\\microsoft.windowsdesktop.app.ref\\8.0.32\\microsoft.windowsdesktop.app.ref.8.0.32.nupkg.sha512",
+    "C:\\Users\\Drew\\.nuget\\packages\\microsoft.windowsdesktop.app.runtime.win-x64\\8.0.32\\microsoft.windowsdesktop.app.runtime.win-x64.8.0.32.nupkg.sha512",
+    "C:\\Users\\Drew\\.nuget\\packages\\microsoft.aspnetcore.app.ref\\8.0.32\\microsoft.aspnetcore.app.ref.8.0.32.nupkg.sha512",
+    "C:\\Users\\Drew\\.nuget\\packages\\microsoft.aspnetcore.app.runtime.win-x64\\8.0.32\\microsoft.aspnetcore.app.runtime.win-x64.8.0.32.nupkg.sha512",
+    "C:\\Users\\Drew\\.nuget\\packages\\microsoft.netcore.app.host.win-x64\\8.0.32\\microsoft.netcore.app.host.win-x64.8.0.32.nupkg.sha512",
+    "C:\\Users\\Drew\\.nuget\\packages\\microsoft.windows.sdk.net.ref\\10.0.22621.57\\microsoft.windows.sdk.net.ref.10.0.22621.57.nupkg.sha512"
+  ],
+  "logs": []
+}

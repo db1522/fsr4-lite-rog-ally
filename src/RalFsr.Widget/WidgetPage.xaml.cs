@@ -30,7 +30,6 @@ namespace RalFsr.Widget
         private string _gameBarHint = "press Win + G to open Game Bar";
         private bool _setupReady;
         private bool _suppressOverlayEvent;
-        private bool _suppressScaleEvent;
         private readonly List<string> _scaleKeys = new List<string>();
         private bool _busy;
         private int _installedCount;
@@ -175,11 +174,9 @@ namespace RalFsr.Widget
             OverlaySwitch.IsOn = Json.Bool(state, "overlay");
             var sizeIndex = Array.IndexOf(OverlaySizeKeys, Json.Str(state, "overlaySize", "medium"));
             OverlaySizeBox.SelectedIndex = sizeIndex >= 0 ? sizeIndex : OverlaySizeKeys.Length - 1;
-            OverlaySizeBox.Visibility = OverlaySwitch.IsOn ? Visibility.Visible : Visibility.Collapsed;
             var positionIndex = Array.IndexOf(OverlayPositionKeys, Json.Str(state, "overlayPosition", "topleft"));
             OverlayPositionBox.SelectedIndex = positionIndex >= 0 ? positionIndex : 0;
-            OverlayPositionBox.Visibility = OverlaySizeBox.Visibility;
-            OverlayRestartNote.Visibility = OverlaySizeBox.Visibility;
+            OverlayOptions.Visibility = OverlaySwitch.IsOn ? Visibility.Visible : Visibility.Collapsed;
             NotifySwitch.IsOn = Json.Bool(state, "notify");
             AutoUpdateSwitch.IsOn = Json.Bool(state, "autoUpdate");
             RenderWidgetVersion(Json.Obj(state, "widget"));
@@ -206,7 +203,8 @@ namespace RalFsr.Widget
                 GameStatus.Text = "Start a game, then " + _gameBarHint + " and open this widget over it.";
                 GameActions.Visibility = Visibility.Collapsed;
                 ActiveBadge.Visibility = Visibility.Collapsed;
-                RenderScaleBox.Visibility = Visibility.Collapsed;
+                ScalePanel.Visibility = Visibility.Collapsed;
+                ResolutionPanel.Visibility = Visibility.Collapsed;
                 ResolutionText.Visibility = Visibility.Collapsed;
                 AutoFixBanner.Visibility = Visibility.Collapsed;
                 SwitchLoaderButton.Visibility = Visibility.Collapsed;
@@ -218,9 +216,7 @@ namespace RalFsr.Widget
 
             SwitchLoaderButton.Visibility = Json.Bool(game, "canSwitchLoader") ? Visibility.Visible : Visibility.Collapsed;
 
-            var resolution = Json.Str(game, "resolutionText");
-            ResolutionText.Text = resolution;
-            ResolutionText.Visibility = string.IsNullOrEmpty(resolution) ? Visibility.Collapsed : Visibility.Visible;
+            RenderResolution(game);
 
             var autoFix = Json.Str(game, "autoFix");
             if (!string.IsNullOrEmpty(autoFix))
@@ -249,65 +245,117 @@ namespace RalFsr.Widget
 
             if (_gameInstalled)
             {
-                PrimaryButton.Content = "Uninstall from this game";
+                PrimaryText.Text = "Uninstall from this game";
+                PrimaryIcon.Glyph = "\uE74D";
                 PrimaryButton.IsEnabled = true;
             }
             else
             {
-                PrimaryButton.Content = "Install FSR 4.1 Lite";
+                PrimaryText.Text = "Install FSR 4.1 Lite";
+                PrimaryIcon.Glyph = "\uE896";
                 PrimaryButton.IsEnabled = Json.Bool(game, "canInstall") && _deviceSupported && _setupReady;
                 if (Json.Bool(game, "canInstall") && !_setupReady)
                     GameStatus.Text += " Finish setup below to install.";
             }
         }
 
-        /// <summary>Fills the render resolution picker for an installed game and selects its current choice.</summary>
+        /// <summary>Short chip labels for the render resolution keys; the helper's longer labels are the fallback.</summary>
+        private static string ChipLabel(string key, string label)
+        {
+            switch (key)
+            {
+                case "game": return "Game";
+                case "native": return "Native";
+                case "quality": return "Quality";
+                case "balanced": return "Balanced";
+                case "performance": return "Perf.";
+                default: return label;
+            }
+        }
+
+        /// <summary>
+        /// Fills the render resolution chips for an installed game and marks its current choice in red. The chips are
+        /// built once; later refreshes only move the highlight, so controller focus stays on the chip just pressed.
+        /// </summary>
         private void RenderScaleOptions(JsonObject game)
         {
             if (!Json.Bool(game, "installed"))
             {
-                RenderScaleBox.Visibility = Visibility.Collapsed;
+                ScalePanel.Visibility = Visibility.Collapsed;
                 return;
             }
 
-            _suppressScaleEvent = true;
-            try
+            var options = Json.Arr(game, "renderScales");
+            if (ScaleChips.Children.Count != options.Count)
             {
-                var options = Json.Arr(game, "renderScales");
-                if (RenderScaleBox.Items.Count != options.Count)
+                ScaleChips.Children.Clear();
+                ScaleChips.ColumnDefinitions.Clear();
+                _scaleKeys.Clear();
+                foreach (var item in options)
                 {
-                    RenderScaleBox.Items.Clear();
-                    _scaleKeys.Clear();
-                    foreach (var item in options)
+                    if (item.ValueType != JsonValueType.Object) continue;
+                    var o = item.GetObject();
+                    var key = Json.Str(o, "key");
+                    var chip = new Button
                     {
-                        if (item.ValueType != JsonValueType.Object) continue;
-                        var o = item.GetObject();
-                        _scaleKeys.Add(Json.Str(o, "key"));
-                        RenderScaleBox.Items.Add(Json.Str(o, "label"));
-                    }
+                        Style = (Style)Resources["ChipButton"],
+                        Content = ChipLabel(key, Json.Str(o, "label")),
+                        Tag = key,
+                    };
+                    ToolTipService.SetToolTip(chip, Json.Str(o, "label"));
+                    chip.Click += ScaleChip_Click;
+                    ScaleChips.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+                    Grid.SetColumn(chip, _scaleKeys.Count);
+                    ScaleChips.Children.Add(chip);
+                    _scaleKeys.Add(key);
                 }
+            }
 
-                var index = _scaleKeys.IndexOf(Json.Str(game, "renderScale", "game"));
-                RenderScaleBox.SelectedIndex = index >= 0 ? index : 0;
-                RenderScaleBox.Visibility = Visibility.Visible;
-            }
-            finally
+            var current = Json.Str(game, "renderScale", "game");
+            foreach (var child in ScaleChips.Children)
             {
-                _suppressScaleEvent = false;
+                var chip = child as Button;
+                if (chip == null) continue;
+                var on = (chip.Tag as string) == current;
+                chip.Background = on ? (Brush)Application.Current.Resources["RalRedBrush"] : (Brush)Application.Current.Resources["ChipBrush"];
+                chip.Foreground = new SolidColorBrush(on ? Colors.White : Color.FromArgb(255, 0xB9, 0xBF, 0xCA));
+                chip.FontWeight = on ? Windows.UI.Text.FontWeights.SemiBold : Windows.UI.Text.FontWeights.Normal;
             }
+            ScalePanel.Visibility = Visibility.Visible;
+        }
+
+        private async void ScaleChip_Click(object sender, RoutedEventArgs e)
+        {
+            var key = (sender as Button)?.Tag as string;
+            if (string.IsNullOrEmpty(_exeDir) || string.IsNullOrEmpty(key)) return;
+            await RunCommandAsync("renderScale", "exeDir", _exeDir, "value", key);
+        }
+
+        /// <summary>"1280 x 720" to "1920 x 1080" with a bar for the render share of the output width.</summary>
+        private void RenderResolution(JsonObject game)
+        {
+            var rw = (int)Json.Num(game, "renderWidth");
+            var rh = (int)Json.Num(game, "renderHeight");
+            var dw = (int)Json.Num(game, "displayWidth");
+            var dh = (int)Json.Num(game, "displayHeight");
+            if (rw > 0 && dw > 0)
+            {
+                RenderResText.Text = rh > 0 ? rw + " \u00D7 " + rh : rw + " wide";
+                OutputResText.Text = dh > 0 ? dw + " \u00D7 " + dh : dw + " wide";
+                ResolutionBar.Value = Math.Min(100, Math.Round(100.0 * rw / dw));
+                ResolutionPanel.Visibility = Visibility.Visible;
+                ResolutionText.Visibility = Visibility.Collapsed;
+                return;
+            }
+            ResolutionPanel.Visibility = Visibility.Collapsed;
+            var text = Json.Str(game, "resolutionText");
+            ResolutionText.Text = text;
+            ResolutionText.Visibility = string.IsNullOrEmpty(text) ? Visibility.Collapsed : Visibility.Visible;
         }
 
         private async void SwitchLoader_Click(object sender, RoutedEventArgs e)
         {
             if (!string.IsNullOrEmpty(_exeDir)) await RunCommandAsync("switchLoader", "exeDir", _exeDir);
-        }
-
-        private async void RenderScale_Changed(object sender, SelectionChangedEventArgs e)
-        {
-            if (_suppressScaleEvent || string.IsNullOrEmpty(_exeDir)) return;
-            var index = RenderScaleBox.SelectedIndex;
-            if (index < 0 || index >= _scaleKeys.Count) return;
-            await RunCommandAsync("renderScale", "exeDir", _exeDir, "value", _scaleKeys[index]);
         }
 
         private void RenderBadge(string stage, string text)
@@ -324,9 +372,12 @@ namespace RalFsr.Widget
                 : Color.FromArgb(255, 0xE8, 0xA2, 0x3A);
 
             ActiveDot.Fill = new SolidColorBrush(color);
-            ActiveBadge.BorderBrush = new SolidColorBrush(color);
+            ActiveBadge.BorderBrush = new SolidColorBrush(Color.FromArgb(0x99, color.R, color.G, color.B));
             ActiveBadge.Background = new SolidColorBrush(Color.FromArgb(0x26, color.R, color.G, color.B));
             ActiveText.Text = text;
+            ActiveText.Foreground = new SolidColorBrush(stage == "Active" ? Color.FromArgb(255, 0x9E, 0xE6, 0xBD) : Color.FromArgb(255, 0xF2, 0xC2, 0x7A));
+            ActiveIcon.Glyph = stage == "Active" ? "\uE930" : "\uE7BA";
+            ActiveIcon.Foreground = new SolidColorBrush(color);
             ActiveBadge.Visibility = Visibility.Visible;
         }
 
@@ -365,7 +416,7 @@ namespace RalFsr.Widget
         {
             var games = _installedCount == 1 ? "1 game" : _installedCount + " games";
             InstalledToggleText.Text = "Installed in " + games + (_installedExpanded ? "  \u25BE" : "  \u25B8");
-            InstalledList.Visibility = _installedExpanded ? Visibility.Visible : Visibility.Collapsed;
+            InstalledListPanel.Visibility = _installedExpanded ? Visibility.Visible : Visibility.Collapsed;
         }
 
         /// <summary>"OptiScaler v10.0.0-pre1 (Oct 25, 2026) · update available", or that it's running.</summary>
@@ -373,8 +424,6 @@ namespace RalFsr.Widget
         {
             var build = Json.Str(o, "build");
             var note = string.IsNullOrEmpty(build) ? "FSR 4.1 Lite installed" : build;
-            if (Json.Bool(o, "outdated")) note += " \u00B7 update available";
-            if (Json.Bool(o, "running")) note += " \u00B7 running now";
             return note;
         }
 
@@ -385,12 +434,26 @@ namespace RalFsr.Widget
             {
                 if (item.ValueType != JsonValueType.Object) continue;
                 var o = item.GetObject();
-                rows.Add(new InstalledRow
+                var row = new InstalledRow
                 {
                     Name = Json.Str(o, "name"),
                     ExeDir = Json.Str(o, "exeDir"),
                     Note = InstalledNote(o),
-                });
+                };
+                // Tags: running now (green) wins over a pending update (amber).
+                if (Json.Bool(o, "running"))
+                {
+                    row.Status = "Running";
+                    row.StatusForeground = (Brush)Application.Current.Resources["GoodTextBrush"];
+                    row.StatusBackground = (Brush)Application.Current.Resources["GoodTintBrush"];
+                }
+                else if (Json.Bool(o, "outdated"))
+                {
+                    row.Status = "Update";
+                    row.StatusForeground = (Brush)Application.Current.Resources["WarnTextBrush"];
+                    row.StatusBackground = (Brush)Application.Current.Resources["WarnTintBrush"];
+                }
+                rows.Add(row);
             }
             InstalledList.ItemsSource = rows;
             _installedCount = rows.Count;
@@ -439,9 +502,7 @@ namespace RalFsr.Widget
         private async void Overlay_Toggled(object sender, RoutedEventArgs e)
         {
             if (_suppressOverlayEvent) return;
-            OverlaySizeBox.Visibility = OverlaySwitch.IsOn ? Visibility.Visible : Visibility.Collapsed;
-            OverlayPositionBox.Visibility = OverlaySizeBox.Visibility;
-            OverlayRestartNote.Visibility = OverlaySizeBox.Visibility;
+            OverlayOptions.Visibility = OverlaySwitch.IsOn ? Visibility.Visible : Visibility.Collapsed;
             await RunCommandAsync("overlay", "on", OverlaySwitch.IsOn ? "true" : "false");
         }
 
@@ -459,8 +520,8 @@ namespace RalFsr.Widget
             var percent = (int)Json.Num(widget, "percent");
             var hasUpdate = !string.IsNullOrEmpty(update);
 
-            AppVersionText.Text = "FSR 4.1 Lite " + version +
-                (hasUpdate ? " \u00B7 version " + update + " is available" : " \u00B7 up to date");
+            AppVersionText.Text = "Version " + version;
+            CheckUpdatesText.Text = hasUpdate ? "Version " + update + " is available" : "Up to date \u00B7 check for updates";
 
             WidgetUpdateBar.Visibility = updating ? Visibility.Visible : Visibility.Collapsed;
             WidgetUpdateBar.IsIndeterminate = updating && percent < 0;
@@ -474,24 +535,27 @@ namespace RalFsr.Widget
             UpdateWidgetButton.Content = failed ? "Try again" : "Update to " + update;
             UpdateWidgetButton.Visibility = hasUpdate && !updating ? Visibility.Visible : Visibility.Collapsed;
             CheckUpdatesButton.IsEnabled = !updating;
+            WidgetUpdatePanel.Visibility = WidgetUpdateBar.Visibility == Visibility.Visible ||
+                                           WidgetUpdateText.Visibility == Visibility.Visible ||
+                                           UpdateWidgetButton.Visibility == Visibility.Visible
+                ? Visibility.Visible : Visibility.Collapsed;
         }
 
         private async void SupportReport_Click(object sender, RoutedEventArgs e)
         {
-            SupportReportButton.Content = "Creating report...";
+            SupportReportText.Text = "Creating report...";
             try
             {
                 await RunCommandAsync("supportReport", "exeDir", _exeDir ?? "", "gameName", GameName.Text ?? "",
                     "cardText", GameStatus.Text ?? "");
             }
-            finally { SupportReportButton.Content = "Create support report"; }
+            finally { SupportReportText.Text = "Create support report"; }
         }
 
         private async void CheckUpdates_Click(object sender, RoutedEventArgs e)
         {
-            CheckUpdatesButton.Content = "Checking...";
-            try { await RunCommandAsync("checkWidgetUpdate"); }
-            finally { CheckUpdatesButton.Content = "Check for updates"; }
+            CheckUpdatesText.Text = "Checking...";
+            await RunCommandAsync("checkWidgetUpdate");
         }
 
         private async void UpdateWidget_Click(object sender, RoutedEventArgs e)
@@ -657,7 +721,7 @@ namespace RalFsr.Widget
             NotifySwitch.IsEnabled = on;
             AutoUpdateSwitch.IsEnabled = on;
             UninstallButton.IsEnabled = on;
-            RenderScaleBox.IsEnabled = on;
+            ScaleChips.IsHitTestVisible = on;
             if (!on) PrimaryButton.IsEnabled = false;
         }
 
