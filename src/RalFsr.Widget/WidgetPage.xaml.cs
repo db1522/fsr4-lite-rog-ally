@@ -471,10 +471,23 @@ namespace RalFsr.Widget
             await RunCommandAsync(_gameInstalled ? "remove" : "install", "exeDir", _exeDir);
         }
 
+        /// <summary>A row in the Installed list: asks first, since the whole row is the button.</summary>
         private async void Remove_Click(object sender, RoutedEventArgs e)
         {
-            var dir = (sender as Button)?.Tag as string;
-            if (!string.IsNullOrEmpty(dir)) await RunCommandAsync("remove", "exeDir", dir);
+            var button = sender as Button;
+            var dir = button?.Tag as string;
+            if (string.IsNullOrEmpty(dir)) return;
+            var row = button.DataContext as InstalledRow;
+            var dialog = new ContentDialog
+            {
+                Title = "Uninstall from " + (row != null ? row.Name : "this game") + "?",
+                Content = "This removes FSR 4.1 Lite from the game and puts its folder back the way it was.",
+                PrimaryButtonText = "Uninstall",
+                CloseButtonText = "Cancel",
+                DefaultButton = ContentDialogButton.Close,
+            };
+            if (await dialog.ShowAsync() != ContentDialogResult.Primary) return;
+            await RunCommandAsync("remove", "exeDir", dir);
         }
 
         /// <summary>Same order as the ComboBox items: Small, Medium, Large, Extra large.</summary>

@@ -367,28 +367,31 @@
                     <ItemsControl x:Name="InstalledList">
                         <ItemsControl.ItemTemplate>
                             <DataTemplate x:DataType="local:InstalledRow">
-                                <Grid Padding="14,10" ColumnSpacing="10" BorderBrush="{StaticResource LineBrush}" BorderThickness="0,0,0,1">
-                                    <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="*" />
-                                        <ColumnDefinition Width="Auto" />
-                                        <ColumnDefinition Width="Auto" />
-                                    </Grid.ColumnDefinitions>
-                                    <StackPanel VerticalAlignment="Center">
-                                        <TextBlock Text="{x:Bind Name}" FontSize="14" TextTrimming="CharacterEllipsis" />
-                                        <TextBlock Text="{x:Bind Note}" FontSize="12" Foreground="{StaticResource MutedBrush}"
-                                                   TextTrimming="CharacterEllipsis" />
-                                    </StackPanel>
-                                    <Border Grid.Column="1" Visibility="{x:Bind StatusVisibility}" Background="{x:Bind StatusBackground}"
-                                            CornerRadius="6" Padding="8,3" VerticalAlignment="Center">
-                                        <TextBlock Text="{x:Bind Status}" FontSize="11" Foreground="{x:Bind StatusForeground}" />
-                                    </Border>
-                                    <Button Grid.Column="2" Style="{StaticResource QuietButton}" Background="Transparent"
-                                            BorderThickness="0" Padding="8" Tag="{x:Bind ExeDir}" Click="Remove_Click"
-                                            AutomationProperties.Name="Uninstall">
-                                        <FontIcon FontFamily="{StaticResource IconFont}" Glyph="&#xE74D;" FontSize="15"
-                                                  Foreground="{StaticResource MutedBrush}" />
-                                    </Button>
-                                </Grid>
+                                <!-- The whole row is one full-width button. The D-pad moves to whatever is most in line with
+                                     the current control, and a small icon at the right edge was skipped from the full-width
+                                     header above. Pressing a row asks before uninstalling. -->
+                                <Button Style="{StaticResource RowButton}" Padding="14,10" Tag="{x:Bind ExeDir}"
+                                        Click="Remove_Click" BorderBrush="{StaticResource LineBrush}" BorderThickness="0,0,0,1"
+                                        AutomationProperties.Name="{x:Bind Name}">
+                                    <Grid ColumnSpacing="10">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*" />
+                                            <ColumnDefinition Width="Auto" />
+                                            <ColumnDefinition Width="Auto" />
+                                        </Grid.ColumnDefinitions>
+                                        <StackPanel VerticalAlignment="Center">
+                                            <TextBlock Text="{x:Bind Name}" FontSize="14" TextTrimming="CharacterEllipsis" />
+                                            <TextBlock Text="{x:Bind Note}" FontSize="12" Foreground="{StaticResource MutedBrush}"
+                                                       TextTrimming="CharacterEllipsis" />
+                                        </StackPanel>
+                                        <Border Grid.Column="1" Visibility="{x:Bind StatusVisibility}" Background="{x:Bind StatusBackground}"
+                                                CornerRadius="6" Padding="8,3" VerticalAlignment="Center">
+                                            <TextBlock Text="{x:Bind Status}" FontSize="11" Foreground="{x:Bind StatusForeground}" />
+                                        </Border>
+                                        <FontIcon Grid.Column="2" FontFamily="{StaticResource IconFont}" Glyph="&#xE74D;" FontSize="15"
+                                                  Foreground="{StaticResource MutedBrush}" VerticalAlignment="Center" />
+                                    </Grid>
+                                </Button>
                             </DataTemplate>
                         </ItemsControl.ItemTemplate>
                     </ItemsControl>
