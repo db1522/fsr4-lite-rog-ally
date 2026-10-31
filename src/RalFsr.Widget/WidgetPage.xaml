@@ -73,7 +73,8 @@
             <StackPanel.ChildrenTransitions>
                 <TransitionCollection>
                     <EntranceThemeTransition FromVerticalOffset="16" IsStaggeringEnabled="True" />
-                    <RepositionThemeTransition />
+                    <!-- No RepositionThemeTransition here: when a section grew (update progress in Setup), the
+                         sections below slid into place and briefly overlapped it. They now move at once. -->
                 </TransitionCollection>
             </StackPanel.ChildrenTransitions>
 
