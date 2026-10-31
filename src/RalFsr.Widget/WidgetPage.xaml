@@ -364,7 +364,8 @@
                 <Button x:Name="UpdateAllButton" Style="{StaticResource AccentButton}" Visibility="Collapsed"
                         HorizontalAlignment="Stretch" CornerRadius="8" Click="UpdateAll_Click" />
                 <Border x:Name="InstalledListPanel" Style="{StaticResource Panel}" Visibility="Collapsed">
-                    <ItemsControl x:Name="InstalledList">
+                    <!-- IsTabStop off: the list itself took a D-pad stop with no highlight before the first row -->
+                    <ItemsControl x:Name="InstalledList" IsTabStop="False">
                         <ItemsControl.ItemTemplate>
                             <DataTemplate x:DataType="local:InstalledRow">
                                 <!-- The whole row is one full-width button. The D-pad moves to whatever is most in line with
