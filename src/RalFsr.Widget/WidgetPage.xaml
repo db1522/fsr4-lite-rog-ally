@@ -354,11 +354,13 @@
                        Text="Windows holds notifications during fullscreen games. To see them in game, add FSR 4.1 Lite in Settings &gt; System &gt; Notifications &gt; Set priority notifications." />
 
             <!-- Everything installed through the widget, removable without the game running -->
-            <StackPanel x:Name="InstalledPanel" Spacing="14" Visibility="Collapsed">
+            <StackPanel x:Name="InstalledPanel" Spacing="10" Visibility="Collapsed">
+                <!-- A heading-sized header, so it reads as something to open: tap it to show every installed game -->
                 <Button x:Name="InstalledToggle" Click="InstalledToggle_Click" HorizontalAlignment="Stretch"
-                        HorizontalContentAlignment="Left" Background="Transparent" BorderThickness="0" Padding="4,0"
-                        Margin="0,0,0,-8" FocusVisualPrimaryBrush="{StaticResource RalRedBrush}" FocusVisualPrimaryThickness="3">
-                    <TextBlock x:Name="InstalledToggleText" Text="Installed in" FontSize="12" Foreground="{StaticResource MutedBrush}" />
+                        HorizontalContentAlignment="Left" Background="Transparent" BorderThickness="0" Padding="4,6"
+                        FocusVisualPrimaryBrush="{StaticResource RalRedBrush}" FocusVisualPrimaryThickness="3">
+                    <TextBlock x:Name="InstalledToggleText" Text="Installed in" FontFamily="{StaticResource DisplayFont}"
+                               FontSize="17" FontWeight="SemiBold" />
                 </Button>
                 <!-- Shown when installed games are on an older OptiScaler build than the one downloaded -->
                 <Button x:Name="UpdateAllButton" Style="{StaticResource AccentButton}" Visibility="Collapsed"
