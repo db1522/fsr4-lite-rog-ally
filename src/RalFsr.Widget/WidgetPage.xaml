@@ -339,7 +339,7 @@
                                 <ColumnDefinition Width="*" />
                                 <ColumnDefinition Width="Auto" />
                             </Grid.ColumnDefinitions>
-                            <FontIcon Style="{StaticResource RowIcon}" Glyph="&#xE897;" />
+                            <FontIcon Style="{StaticResource RowIcon}" Glyph="&#xE9F9;" />
                             <StackPanel Grid.Column="1">
                                 <TextBlock x:Name="SupportReportText" Text="Create support report" FontSize="14" />
                                 <TextBlock Text="Saves the details ROG Ally Life needs to your Desktop" FontSize="12"
