@@ -546,8 +546,14 @@ namespace RalFsr.Widget
             WidgetUpdateText.Foreground = (Brush)Application.Current.Resources[failed ? "WarnBrush" : "MutedBrush"];
 
             UpdateWidgetButton.Content = failed ? "Try again" : "Update to " + update;
-            UpdateWidgetButton.Visibility = hasUpdate && !updating ? Visibility.Visible : Visibility.Collapsed;
-            CheckUpdatesButton.IsEnabled = !updating;
+            // While an update downloads the Update button hides. If it had controller focus, Windows would move focus
+            // to the next button down the page and scroll there on every refresh, so hand focus to Check for updates,
+            // right above it. That one stays enabled throughout (pressing it during an update just says "Updating...").
+            var showUpdate = hasUpdate && !updating;
+            if (!showUpdate && UpdateWidgetButton.Visibility == Visibility.Visible &&
+                FocusManager.GetFocusedElement() == UpdateWidgetButton)
+                CheckUpdatesButton.Focus(FocusState.Programmatic);
+            UpdateWidgetButton.Visibility = showUpdate ? Visibility.Visible : Visibility.Collapsed;
             WidgetUpdatePanel.Visibility = WidgetUpdateBar.Visibility == Visibility.Visible ||
                                            WidgetUpdateText.Visibility == Visibility.Visible ||
                                            UpdateWidgetButton.Visibility == Visibility.Visible
@@ -573,9 +579,9 @@ namespace RalFsr.Widget
 
         private async void UpdateWidget_Click(object sender, RoutedEventArgs e)
         {
-            UpdateWidgetButton.IsEnabled = false;
-            try { await RunCommandAsync("updateWidget"); }
-            finally { UpdateWidgetButton.IsEnabled = true; }
+            // Not disabled while it runs: a disabled button loses controller focus and the page scrolls away.
+            // RunCommandAsync already ignores a second press while the first is running.
+            await RunCommandAsync("updateWidget");
         }
 
         private async void AutoUpdate_Toggled(object sender, RoutedEventArgs e)
