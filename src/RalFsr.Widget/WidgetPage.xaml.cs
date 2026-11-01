@@ -86,12 +86,23 @@ namespace RalFsr.Widget
                 if (!a.Visible) return;
                 await TellHelperWidgetOpenedAsync();
                 await RefreshAsync(quiet: true);
+                FocusTop();
             };
 
             await TellHelperWidgetOpenedAsync();
             await RefreshAsync(quiet: false);
 
-            // Controller users land on the main action straight away.
+            FocusTop();
+        }
+
+        /// <summary>
+        /// Every time the widget is shown: back to the top, with the controller selection on the main action. Without it,
+        /// moving the controller into the widget from Game Bar entered from the bottom edge, so the selection landed on the
+        /// Uninstall button at the end and the page opened scrolled to the bottom.
+        /// </summary>
+        private void FocusTop()
+        {
+            PageScroll.ChangeView(null, 0, null, disableAnimation: true);
             var first = PrimaryButton.Visibility == Visibility.Visible && GameActions.Visibility == Visibility.Visible
                 ? (Control)PrimaryButton
                 : RefreshButton;

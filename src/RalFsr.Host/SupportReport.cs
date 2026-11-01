@@ -40,6 +40,14 @@ public static class SupportReport
         {
             var dir = game.ExeDir;
             AddIfExists(zip, "game/OptiScaler.log", Path.Combine(dir, "OptiScaler.log"), tail: true);
+            // Frame generation starts early in a session, often before the tail above: every line about it, from the
+            // whole log.
+            var optiLogPath = Path.Combine(dir, "OptiScaler.log");
+            if (File.Exists(optiLogPath))
+                Add(zip, "game/OptiScaler-framegen.log", string.Join('\n', ReadShared(optiLogPath).Split('\n')
+                    .Where(l => Regex.IsMatch(l, @"FrameGen|FSRFG|XeFG|OptiFG|Hudfix|HUDFix|Nukem|DLSSG|SetEnabled|D3D12_Configure|FGInput|FGOutput|swapchain",
+                        RegexOptions.IgnoreCase))
+                    .Take(5000)));
             AddIfExists(zip, "game/OptiScaler.ini", Path.Combine(dir, "OptiScaler.ini"), tail: false);
             AddIfExists(zip, "game/install-record.json",
                 Path.Combine(dir, InstallConfig.MetaFolder, "manifest.json"), tail: false);
