@@ -9,7 +9,7 @@
       "hudFix": true,
       "hudLimit": 1,
       "immediate": false,
-      "note": "Tested: 47 to 87 FPS. If the HUD flickers, turn on V-Sync in the game.",
+      "note": "If the HUD flickers, turn on V-Sync in the game.",
       "source": "rogallylife"
     },
     {
@@ -19,7 +19,7 @@
       "hudFix": false,
       "hudLimit": 1,
       "immediate": false,
-      "note": "Tested: 66 to 94 FPS with XeSS. Keep the game's brightness at default, and Film Grain and Motion Blur off.",
+      "note": "Keep the game's brightness at default, and Film Grain and Motion Blur off.",
       "source": "rogallylife"
     },
     {
@@ -29,7 +29,7 @@
       "hudFix": true,
       "hudLimit": 1,
       "immediate": true,
-      "note": "Tested: about 30 FPS more, with brief HUD ghosting. Keep the game's brightness at default.",
+      "note": "Keep the game's brightness at default. The HUD may ghost briefly.",
       "source": "rogallylife"
     },
     {
