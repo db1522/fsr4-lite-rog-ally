@@ -627,8 +627,8 @@ namespace RalFsr.Widget
                 Content = "This removes FSR 4.1 Lite from the game and puts its folder back the way it was.",
                 PrimaryButtonText = "Uninstall",
                 CloseButtonText = "Cancel",
-                DefaultButton = ContentDialogButton.Close,
-            };
+                            };
+            UseRedPrimaryButton(dialog);
             if (await dialog.ShowAsync() != ContentDialogResult.Primary) return;
             await RunCommandAsync("remove", "exeDir", dir);
         }
@@ -776,8 +776,8 @@ namespace RalFsr.Widget
                     : "Windows Settings will open so you can uninstall the widget.",
                 PrimaryButtonText = "Uninstall",
                 CloseButtonText = "Cancel",
-                DefaultButton = ContentDialogButton.Close,
-            };
+                            };
+            UseRedPrimaryButton(dialog);
             if (await dialog.ShowAsync() != ContentDialogResult.Primary) return;
 
             var result = await RunCommandAsync("removeAll");
@@ -897,6 +897,24 @@ namespace RalFsr.Widget
                 catch (Exception ex) { tcs.TrySetException(ex); }
             });
             await tcs.Task;
+        }
+        /// <summary>
+        /// Makes the dialog's Uninstall button the default and ROG red. The default button takes the accent colour, which
+        /// had highlighted Cancel instead; the accent brushes are overridden on the dialog itself.
+        /// </summary>
+        private static void UseRedPrimaryButton(ContentDialog dialog)
+        {
+            dialog.DefaultButton = ContentDialogButton.Primary;
+            var red = Color.FromArgb(255, 0xE5, 0x00, 0x07);
+            dialog.Resources["AccentButtonBackground"] = new SolidColorBrush(red);
+            dialog.Resources["AccentButtonBackgroundPointerOver"] = new SolidColorBrush(Color.FromArgb(255, 0xFF, 0x1A, 0x22));
+            dialog.Resources["AccentButtonBackgroundPressed"] = new SolidColorBrush(Color.FromArgb(255, 0xB8, 0x00, 0x06));
+            dialog.Resources["AccentButtonForeground"] = new SolidColorBrush(Colors.White);
+            dialog.Resources["AccentButtonForegroundPointerOver"] = new SolidColorBrush(Colors.White);
+            dialog.Resources["AccentButtonForegroundPressed"] = new SolidColorBrush(Colors.White);
+            dialog.Resources["AccentButtonBorderBrush"] = new SolidColorBrush(red);
+            dialog.Resources["AccentButtonBorderBrushPointerOver"] = new SolidColorBrush(Colors.Transparent);
+            dialog.Resources["AccentButtonBorderBrushPressed"] = new SolidColorBrush(Colors.Transparent);
         }
     }
 }
