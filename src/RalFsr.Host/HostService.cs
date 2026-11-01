@@ -128,6 +128,7 @@ public sealed class HostService
         {
             _compatRefreshStarted = true;
             _ = Task.Run(CompatList.RefreshAsync);
+            _ = Task.Run(FrameGenPresets.RefreshAsync);
             // REFramework, for RE Engine games that need it: kept current in the background, once a day.
             _ = Task.Run(async () => { var pkg = await REFrameworkSource.EnsureLatestAsync(); if (pkg is not null) _ref = pkg; });
         }
@@ -335,7 +336,8 @@ public sealed class HostService
     {
         if (manifest is null || LoadedModules.GraphicsApi(pid) != "DX12") return null;
         var fg = manifest.FrameGen;
-        var input = fg.Input.Length > 0 ? fg.Input : scan.FrameGen.Input;
+        var preset = FrameGenPresets.Find(scan.Game.Name);
+        var input = fg.Input.Length > 0 ? fg.Input : preset?.InputFor(scan.Game.Source) ?? scan.FrameGen.Input;
         var running = fg.Enabled && live.Stage is LoadedModules.Stage.Active or LoadedModules.Stage.WaitingForFsr
             ? LoadedModules.FrameGenOutput(exeDir)
             : "";
@@ -349,6 +351,10 @@ public sealed class HostService
             hudLimit = fg.HudLimit,
             immediate = fg.Immediate,
             engineIni = fg.EngineIniPath.Length > 0,
+            presetNote = preset is null ? "" : (preset.Note.Length > 0 ? preset.Note + " " : "") + preset.SourceText,
+            hudFixWarning = input == FrameGen.OptiFg && FrameGenPresets.HudFixIncompatible(scan.Game.Name)
+                ? "OptiScaler's HUD fix doesn't work in this game, so menus may ghost."
+                : "",
             activeText = running.Length > 0 ? $"Frame generation active ({running})" : "",
         };
     }
@@ -367,12 +373,18 @@ public sealed class HostService
         if (scan.FrameGen.HasOwnFsrFg) return Fail("This game has its own FSR frame generation: turn it on in its graphics settings.");
 
         var fg = manifest.FrameGen;
+        var preset = FrameGenPresets.Find(scan.Game.Name);
         switch (what)
         {
             case "enabled":
                 fg.Enabled = value == "true";
-                // The input is picked when frame generation is turned on, from the game's files at that moment.
-                if (fg.Enabled) fg.Input = scan.FrameGen.Input;
+                if (fg.Enabled)
+                {
+                    // The first time in this game, start from its recommended settings (its preset, else the defaults).
+                    if (fg.Input.Length == 0) fg.ApplyRecommended(preset);
+                    // The input is picked each time it's turned on: the preset's choice, else from the game's files.
+                    fg.Input = preset?.InputFor(scan.Game.Source) ?? scan.FrameGen.Input;
+                }
                 break;
             case "output":
                 fg.Output = value == FrameGen.XessOutput ? FrameGen.XessOutput : FrameGen.FsrOutput;
@@ -388,7 +400,7 @@ public sealed class HostService
                 fg.Immediate = value == "true";
                 break;
             case "reset":
-                fg.ResetFineTune();
+                fg.ApplyRecommended(preset);
                 break;
             default:
                 return Fail("Unknown frame generation setting.");

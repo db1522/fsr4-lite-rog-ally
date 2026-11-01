@@ -1,0 +1,71 @@
+{
+  "updated": "2026-11-01",
+  "about": "Recommended frame generation settings per game for FSR 4.1 Lite's Experimental section. A copy is built into the widget; the widget also reads this file from GitHub every 6 hours. output: fsrfg or xefg. hudFix, hudLimit (1 to 5) and immediate apply to OptiFG only. input (optional) overrides the automatic choice; xboxInput does the same for the Xbox app / Game Pass version. source: rogallylife (tested on a ROG Ally X) or wiki (OptiScaler's game page). The widget adds OptiScaler's own list of games where HUDFix doesn't work.",
+  "games": [
+    {
+      "name": "Red Dead Redemption 2",
+      "aliases": ["Red Dead Redemption II"],
+      "output": "fsrfg",
+      "hudFix": true,
+      "hudLimit": 1,
+      "immediate": false,
+      "note": "Tested: 47 to 87 FPS. If the HUD flickers, turn on V-Sync in the game.",
+      "source": "rogallylife"
+    },
+    {
+      "name": "Control Ultimate Edition",
+      "aliases": ["Control"],
+      "output": "xefg",
+      "hudFix": false,
+      "hudLimit": 1,
+      "immediate": false,
+      "note": "Tested: 66 to 94 FPS with XeSS. Keep the game's brightness at default, and Film Grain and Motion Blur off.",
+      "source": "rogallylife"
+    },
+    {
+      "name": "UNCHARTED: Legacy of Thieves Collection",
+      "aliases": ["Uncharted Legacy of Thieves Collection"],
+      "output": "fsrfg",
+      "hudFix": true,
+      "hudLimit": 1,
+      "immediate": true,
+      "note": "Tested: about 30 FPS more, with brief HUD ghosting. Keep the game's brightness at default.",
+      "source": "rogallylife"
+    },
+    {
+      "name": "Palworld",
+      "output": "fsrfg",
+      "hudFix": true,
+      "hudLimit": 1,
+      "immediate": false,
+      "xboxInput": "optifg",
+      "note": "The Xbox app version's own DLSS frame generation is broken, so it uses OptiFG instead.",
+      "source": "wiki"
+    },
+    {
+      "name": "Kingdom Come: Deliverance II",
+      "output": "xefg",
+      "hudFix": true,
+      "hudLimit": 1,
+      "immediate": false,
+      "note": "With HDR on, XeSS may need r_HDRPipeline=2 in the game's user.cfg.",
+      "source": "wiki"
+    },
+    {
+      "name": "Dead Island 2",
+      "output": "fsrfg",
+      "hudFix": true,
+      "hudLimit": 1,
+      "immediate": false,
+      "note": "",
+      "source": "wiki"
+    }
+  ],
+  "hudFixIncompatible": [
+    "Alan Wake 2", "Assassin's Creed: Mirage", "Avatar Frontiers of Pandora", "Cyberpunk 2077", "Dragon Age: The Veilguard",
+    "Dragon's Dogma 2", "Dying Light 2", "F1 2020", "F1 2021", "Final Fantasy VII Rebirth", "Ghost of Tsushima",
+    "Grand Theft Auto V Enhanced", "Marvel's Guardians of the Galaxy", "Marvel's Spider-Man", "Marvel's Spider-Man: Miles Morales",
+    "Marvel's Spider-Man 2", "Metro Exodus Enhanced Edition", "Ninja Gaiden 4", "Rise of the Tomb Raider",
+    "Shadow of the Tomb Raider", "Star Wars Outlaws", "Stellar Blade", "The Last of Us Part 1", "Uncharted 4"
+  ]
+}

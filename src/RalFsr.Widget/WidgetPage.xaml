@@ -258,6 +258,11 @@
                                                       Toggled="FgSwitch_Toggled" AutomationProperties.Name="Frame generation" />
                                     </Grid>
                                     <TextBlock x:Name="FgInputText" FontSize="12" TextWrapping="Wrap" Foreground="{StaticResource MutedBrush}" />
+                                    <!-- This game's recommended settings (preset list), and OptiScaler's HUDFix warning -->
+                                    <TextBlock x:Name="FgPresetText" Visibility="Collapsed" FontSize="12" TextWrapping="Wrap"
+                                               Foreground="{StaticResource GoodTextBrush}" />
+                                    <TextBlock x:Name="FgHudFixWarning" Visibility="Collapsed" FontSize="12" TextWrapping="Wrap"
+                                               Foreground="{StaticResource WarnTextBrush}" />
 
                                     <StackPanel x:Name="FgOptions" Spacing="10" Visibility="Collapsed">
                                         <!-- Output: FSR frame generation (default, more FPS) or XeSS (cleaner image) -->

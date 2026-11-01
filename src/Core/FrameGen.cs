@@ -30,12 +30,13 @@ public sealed class FrameGenSettings
     /// <summary>The top config folder the widget had to create (the game hadn't run yet), removed again when empty.</summary>
     public string EngineIniCreatedDir { get; set; } = "";
 
-    public void ResetFineTune()
+    /// <summary>The recommended output and fine-tune values: the game's preset when it has one, else the general defaults.</summary>
+    public void ApplyRecommended(FrameGenPreset? preset)
     {
-        Output = FrameGen.DefaultOutput;
-        HudFix = true;
-        HudLimit = FrameGen.DefaultHudLimit;
-        Immediate = false;
+        Output = preset?.Output == FrameGen.XessOutput ? FrameGen.XessOutput : FrameGen.DefaultOutput;
+        HudFix = preset?.HudFix ?? true;
+        HudLimit = Math.Clamp(preset?.HudLimit ?? FrameGen.DefaultHudLimit, FrameGen.MinHudLimit, FrameGen.MaxHudLimit);
+        Immediate = preset?.Immediate ?? false;
     }
 }
 

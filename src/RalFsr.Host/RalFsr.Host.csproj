@@ -29,6 +29,8 @@
 
   <ItemGroup>
     <Compile Include="..\Core\**\*.cs" Link="Core\%(RecursiveDir)%(Filename)%(Extension)" />
+    <!-- Recommended frame generation settings per game, used until the online copy can be fetched -->
+    <EmbeddedResource Include="..\..\data\framegen-presets.json" LogicalName="RalFsrHelper.framegen-presets.json" />
   </ItemGroup>
 
   <ItemGroup>

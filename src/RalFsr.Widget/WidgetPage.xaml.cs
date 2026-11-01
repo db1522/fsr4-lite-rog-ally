@@ -422,6 +422,13 @@ namespace RalFsr.Widget
                     break;
             }
 
+            var presetNote = Json.Str(fg, "presetNote");
+            FgPresetText.Text = presetNote;
+            FgPresetText.Visibility = string.IsNullOrEmpty(presetNote) ? Visibility.Collapsed : Visibility.Visible;
+            var hudFixWarning = Json.Str(fg, "hudFixWarning");
+            FgHudFixWarning.Text = hudFixWarning;
+            FgHudFixWarning.Visibility = string.IsNullOrEmpty(hudFixWarning) ? Visibility.Collapsed : Visibility.Visible;
+
             FgOptions.Visibility = enabled ? Visibility.Visible : Visibility.Collapsed;
             // Nukem's always outputs FSR 3 frame generation; fine-tuning only applies to OptiFG.
             FgOutputChips.Visibility = input == "nukems" ? Visibility.Collapsed : Visibility.Visible;
