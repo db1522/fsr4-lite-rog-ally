@@ -146,8 +146,11 @@ public sealed class HostService
                     Installer.ApplyOverlay(dir, _settings.ShowResolutionOverlay, OverlayScaleFor(dir), _settings.OverlayPosition);
                     Installer.ApplyWatermark(dir, _settings.ShowFsr4Watermark);
                     Installer.ApplyRenderScale(dir, InstallManifest.TryLoad(dir)?.RenderScale ?? "game");
-                    // Frame generation too, so a setting OptiScaler wrote back can't leave it on (or off) by surprise.
-                    if (InstallManifest.TryLoad(dir) is { } fgManifest && File.Exists(Path.Combine(dir, "OptiScaler.ini")))
+                    // Frame generation too, so a setting OptiScaler wrote back can't leave it on (or off) by surprise. Only
+                    // in games where the player has used the switch: frame generation set up by hand in OptiScaler's own
+                    // menu is left alone until then.
+                    if (InstallManifest.TryLoad(dir) is { FrameGen.Input.Length: > 0 } fgManifest &&
+                        File.Exists(Path.Combine(dir, "OptiScaler.ini")))
                         IniFile.SetValues(Path.Combine(dir, "OptiScaler.ini"), FrameGen.IniValues(fgManifest.FrameGen));
                 }
                 catch (Exception ex)
