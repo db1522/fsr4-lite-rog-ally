@@ -1,0 +1,9 @@
+bin/
+obj/
+.vs/
+*.user
+dist/
+src/RalFsr.Widget/Host/
+src/RalFsr.Widget/BundleArtifacts/
+src/RalFsr.Widget/AppPackages/
+TestResults/
