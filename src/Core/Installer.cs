@@ -77,6 +77,9 @@ public static class Installer
     {
         manifest ??= InstallManifest.TryLoad(exeDir) ?? throw new InvalidOperationException("No install record found.");
 
+        // Frame generation's Unreal Engine.ini line lives outside the game folder, so it's taken out separately.
+        FrameGen.UndoEngineIni(manifest.FrameGen);
+
         foreach (var rel in manifest.CreatedFiles)
         {
             DeleteFile(Path.Combine(exeDir, rel));
@@ -182,6 +185,31 @@ public static class Installer
         }
     }
 
+    /// <summary>
+    /// Writes a game's frame generation settings into OptiScaler.ini, and adds or removes the Unreal Engine.ini fix: only
+    /// for OptiFG in Unreal games that offer DLSS, where OptiScaler's wiki says dilated motion vectors smear.
+    /// </summary>
+    public static void ApplyFrameGen(string exeDir, InstallManifest manifest, bool unrealWithDlss)
+    {
+        var fg = manifest.FrameGen;
+        var wantEngineIni = fg.Enabled && fg.Input == FrameGen.OptiFg && unrealWithDlss;
+        if (wantEngineIni) FrameGen.ApplyEngineIni(exeDir, fg);
+        else if (!fg.Enabled || fg.Input != FrameGen.OptiFg) FrameGen.UndoEngineIni(fg);
+        manifest.Save(exeDir);
+
+        var ini = Path.Combine(exeDir, "OptiScaler.ini");
+        if (File.Exists(ini)) IniFile.SetValues(ini, FrameGen.IniValues(fg));
+    }
+
+    /// <summary>Frame generation fully off, with the Engine.ini fix taken out. The player's choices stay remembered.</summary>
+    public static void TurnOffFrameGen(string exeDir, InstallManifest manifest)
+    {
+        manifest.FrameGen.Enabled = false;
+        FrameGen.UndoEngineIni(manifest.FrameGen);
+        var ini = Path.Combine(exeDir, "OptiScaler.ini");
+        if (File.Exists(ini)) IniFile.SetValues(ini, FrameGen.IniValues(manifest.FrameGen));
+    }
+
     /// <summary>Changes only the watermark key in an installed game's ini.</summary>
     public static void ApplyWatermark(string exeDir, bool on)
     {
@@ -214,6 +242,8 @@ public static class Installer
         if (index >= 0) manifest.CreatedFiles[index] = next; else manifest.CreatedFiles.Add(next);
         manifest.ProxyName = next;
         manifest.InstalledAt = DateTime.Now; // the next launch counts as "after the change"
+        // A different loader is a fresh start for the game, so frame generation goes back to off (choices are kept).
+        TurnOffFrameGen(exeDir, manifest);
         manifest.Save(exeDir);
         Log.Info($"Switched OptiScaler loader in {exeDir} to {next}");
         return next;

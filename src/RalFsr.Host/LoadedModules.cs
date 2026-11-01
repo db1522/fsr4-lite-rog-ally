@@ -93,6 +93,9 @@ public static class LoadedModules
         return probe.HasResolution ? probe with { Stage = Stage.Fsr3Fallback } : probe;
     }
 
+    /// <summary>"FSR" or "XeSS" when this session's OptiScaler.log shows frame generation running, else "".</summary>
+    public static string FrameGenOutput(string exeDir) => FrameGen.ActiveOutput(ReadOptiLog(exeDir));
+
     private static readonly System.Text.RegularExpressions.Regex FeatureLine = new(
         @"Render Resolution: (\d+)x(\d+), Display Resolution (\d+)x(\d+)",
         System.Text.RegularExpressions.RegexOptions.Compiled);

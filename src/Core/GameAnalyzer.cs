@@ -33,6 +33,9 @@ public sealed class GameScan
     public string? AntiCheat { get; init; }
     public InstallManifest? Manifest { get; init; }
     public GameState State { get; init; }
+
+    /// <summary>The game's own frame generation, from its files (for the Experimental frame generation option).</summary>
+    public FrameGenSupport FrameGen { get; init; } = new(false, false, false);
 }
 
 /// <summary>Works out where OptiScaler has to go for a game and whether it is safe to install there.</summary>
@@ -137,7 +140,8 @@ public static class GameAnalyzer
         }
 
         var manifest = InstallManifest.TryLoad(exeDir);
-        var upscalers = FindUpscalers(game.InstallRoot);
+        var files = GameFiles(game.InstallRoot);
+        var upscalers = FindUpscalers(files);
         var antiCheat = (exeName is not null && AntiCheatFiles.TryGetValue(exeName, out var byExe) ? byExe : null)
                         ?? FindAntiCheat(game.InstallRoot);
 
@@ -158,6 +162,7 @@ public static class GameAnalyzer
             AntiCheat = antiCheat,
             Manifest = manifest,
             State = state,
+            FrameGen = Core.FrameGen.Detect(game.Name, exeName, files, manifest),
         };
     }
 
@@ -208,16 +213,21 @@ public static class GameAnalyzer
     /// (Engine\Plugins and the game's own), where DLSS, Streamline and FSR plugins keep their DLLs, e.g.
     /// Engine\Plugins\Marketplace\DLSS\Binaries\ThirdParty\Win64\nvngx_dlss.dll, 7 folders down.
     /// </summary>
-    private static List<string> FindUpscalers(string root) =>
-        FilesUpTo(root, 5)
-            .Concat(DirsUpTo(root, 3)
-                .Where(d => Path.GetFileName(d).Equals("Plugins", StringComparison.OrdinalIgnoreCase))
-                .SelectMany(d => FilesUpTo(d, 7)))
+    private static List<string> FindUpscalers(List<string> files) =>
+        files
             .Select(Path.GetFileName)
             .Where(n => n is not null && UpscalerDlls.ContainsKey(n))
             .Select(n => UpscalerDlls[n!])
             .Distinct()
             .OrderBy(n => n)
+            .ToList();
+
+    /// <summary>Every file the upscaler and frame generation checks look at (see FindUpscalers), listed once.</summary>
+    private static List<string> GameFiles(string root) =>
+        FilesUpTo(root, 5)
+            .Concat(DirsUpTo(root, 3)
+                .Where(d => Path.GetFileName(d).Equals("Plugins", StringComparison.OrdinalIgnoreCase))
+                .SelectMany(d => FilesUpTo(d, 7)))
             .ToList();
 
     private static string? FindAntiCheat(string root)

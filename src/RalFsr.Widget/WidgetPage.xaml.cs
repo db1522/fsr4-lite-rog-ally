@@ -209,6 +209,7 @@ namespace RalFsr.Widget
                 AutoFixBanner.Visibility = Visibility.Collapsed;
                 SwitchLoaderButton.Visibility = Visibility.Collapsed;
                 CompatText.Visibility = Visibility.Collapsed;
+                RenderFrameGen(null);
                 return;
             }
 
@@ -242,6 +243,7 @@ namespace RalFsr.Widget
             GameActions.Visibility = Visibility.Visible;
 
             RenderScaleOptions(game);
+            RenderFrameGen(Json.Obj(game, "frameGen"));
 
             if (_gameInstalled)
             {
@@ -352,6 +354,140 @@ namespace RalFsr.Widget
             ResolutionText.Text = text;
             ResolutionText.Visibility = string.IsNullOrEmpty(text) ? Visibility.Collapsed : Visibility.Visible;
         }
+
+        // ---------------------------------------------------------------- Experimental: frame generation
+
+        private bool _suppressFgEvent;
+        private bool _experimentalExpanded;
+        private string _experimentalGame;
+
+        /// <summary>
+        /// The Experimental section: frame generation for DirectX 12 games with FSR 4.1 Lite installed (the helper sends
+        /// nothing otherwise). Starts closed for each game, or open when frame generation is already on in it.
+        /// </summary>
+        private void RenderFrameGen(JsonObject fg)
+        {
+            FgBadge.Visibility = Visibility.Collapsed;
+            if (fg == null)
+            {
+                ExperimentalPanel.Visibility = Visibility.Collapsed;
+                _experimentalGame = null;
+                return;
+            }
+
+            var enabled = Json.Bool(fg, "enabled");
+            if (_experimentalGame != _exeDir)
+            {
+                _experimentalGame = _exeDir;
+                _experimentalExpanded = enabled;
+            }
+            UpdateExperimentalToggle();
+            ExperimentalPanel.Visibility = Visibility.Visible;
+
+            var badge = Json.Str(fg, "activeText");
+            FgBadgeText.Text = badge;
+            FgBadge.Visibility = string.IsNullOrEmpty(badge) ? Visibility.Collapsed : Visibility.Visible;
+
+            // Games with their own FSR frame generation: just say where to turn it on.
+            var own = Json.Bool(fg, "ownFsrFg");
+            OwnFsrFgText.Visibility = own ? Visibility.Visible : Visibility.Collapsed;
+            FgControls.Visibility = own ? Visibility.Collapsed : Visibility.Visible;
+            if (own) return;
+
+            var input = Json.Str(fg, "input");
+            var output = Json.Str(fg, "output", "fsrfg");
+            _suppressFgEvent = true;
+            try
+            {
+                FgSwitch.IsOn = enabled;
+                FgHudFixSwitch.IsOn = Json.Bool(fg, "hudFix");
+                FgImmediateSwitch.IsOn = Json.Bool(fg, "immediate");
+            }
+            finally
+            {
+                _suppressFgEvent = false;
+            }
+
+            switch (input)
+            {
+                case "dlssg":
+                    FgInputText.Text = "Uses the game's DLSS frame generation. Turn on DLSS frame generation in the game's settings too.";
+                    break;
+                case "nukems":
+                    FgInputText.Text = "Uses the game's DLSS frame generation through Nukem's FSR 3 frame generation. " +
+                                       "Turn on DLSS frame generation in the game's settings too.";
+                    break;
+                default:
+                    FgInputText.Text = "This game has no frame generation of its own, so OptiScaler adds it (OptiFG).";
+                    break;
+            }
+
+            FgOptions.Visibility = enabled ? Visibility.Visible : Visibility.Collapsed;
+            // Nukem's always outputs FSR 3 frame generation; fine-tuning only applies to OptiFG.
+            FgOutputChips.Visibility = input == "nukems" ? Visibility.Collapsed : Visibility.Visible;
+            FgXessText.Visibility = input != "nukems" && output == "xefg" ? Visibility.Visible : Visibility.Collapsed;
+            FgFineTune.Visibility = input == "optifg" ? Visibility.Visible : Visibility.Collapsed;
+            FgLimitText.Text = ((int)Json.Num(fg, "hudLimit")).ToString();
+            HighlightChip(FgFsrChip, output != "xefg");
+            HighlightChip(FgXessChip, output == "xefg");
+        }
+
+        private static void HighlightChip(Button chip, bool on)
+        {
+            chip.Background = on ? (Brush)Application.Current.Resources["RalRedBrush"] : (Brush)Application.Current.Resources["ChipBrush"];
+            chip.Foreground = new SolidColorBrush(on ? Colors.White : Color.FromArgb(255, 0xB9, 0xBF, 0xCA));
+            chip.FontWeight = on ? Windows.UI.Text.FontWeights.SemiBold : Windows.UI.Text.FontWeights.Normal;
+        }
+
+        private void UpdateExperimentalToggle()
+        {
+            ExperimentalChevron.Text = _experimentalExpanded ? "▾" : "▸";
+            ExperimentalBody.Visibility = _experimentalExpanded ? Visibility.Visible : Visibility.Collapsed;
+        }
+
+        private void ExperimentalToggle_Click(object sender, RoutedEventArgs e)
+        {
+            _experimentalExpanded = !_experimentalExpanded;
+            UpdateExperimentalToggle();
+        }
+
+        private async Task SetFrameGenAsync(string what, string value)
+        {
+            if (string.IsNullOrEmpty(_exeDir)) return;
+            await RunCommandAsync("frameGen", "exeDir", _exeDir, "what", what, "value", value);
+        }
+
+        private async void FgSwitch_Toggled(object sender, RoutedEventArgs e)
+        {
+            if (_suppressFgEvent) return;
+            await SetFrameGenAsync("enabled", FgSwitch.IsOn ? "true" : "false");
+        }
+
+        private async void FgOutput_Click(object sender, RoutedEventArgs e)
+        {
+            var value = (sender as Button)?.Tag as string;
+            if (!string.IsNullOrEmpty(value)) await SetFrameGenAsync("output", value);
+        }
+
+        private async void FgHudFix_Toggled(object sender, RoutedEventArgs e)
+        {
+            if (_suppressFgEvent) return;
+            await SetFrameGenAsync("hudFix", FgHudFixSwitch.IsOn ? "true" : "false");
+        }
+
+        private async void FgLimit_Click(object sender, RoutedEventArgs e)
+        {
+            var step = (sender as Button)?.Tag as string;
+            if (!string.IsNullOrEmpty(step)) await SetFrameGenAsync("hudLimit", step);
+        }
+
+        private async void FgImmediate_Toggled(object sender, RoutedEventArgs e)
+        {
+            if (_suppressFgEvent) return;
+            await SetFrameGenAsync("immediate", FgImmediateSwitch.IsOn ? "true" : "false");
+        }
+
+        private async void FgReset_Click(object sender, RoutedEventArgs e) => await SetFrameGenAsync("reset", "");
 
         private async void SwitchLoader_Click(object sender, RoutedEventArgs e)
         {
@@ -741,6 +877,7 @@ namespace RalFsr.Widget
             AutoUpdateSwitch.IsEnabled = on;
             UninstallButton.IsEnabled = on;
             ScaleChips.IsHitTestVisible = on;
+            ExperimentalBody.IsHitTestVisible = on;
             if (!on) PrimaryButton.IsEnabled = false;
         }
 

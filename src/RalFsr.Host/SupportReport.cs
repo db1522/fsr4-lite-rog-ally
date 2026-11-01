@@ -90,6 +90,15 @@ public static class SupportReport
                 ? "Installed:        no"
                 : $"Installed:        yes, as {m.ProxyName}, {OptiPackage.Label(m.OptiBuild)}, FSR 4 {m.Fsr4Version}, " +
                   $"render scale {m.RenderScale}, on {m.InstalledAt:yyyy-MM-dd HH:mm}");
+            if (m is not null)
+            {
+                var fg = m.FrameGen;
+                s.AppendLine($"Frame generation: {(fg.Enabled ? "on" : "off")}, input {(fg.Input.Length > 0 ? fg.Input : "not chosen yet")}, " +
+                             $"output {fg.Output}, HUDFix {(fg.HudFix ? "on" : "off")}, limit {fg.HudLimit}, " +
+                             $"Immediate Capture {(fg.Immediate ? "on" : "off")}, Engine.ini change {(fg.EngineIniPath.Length > 0 ? Redact(fg.EngineIniPath) : "none")}");
+                var running = LoadedModules.FrameGenOutput(game.ExeDir);
+                if (running.Length > 0) s.AppendLine($"Frame generation in the last OptiScaler.log: running ({running})");
+            }
             var optiLog = Path.Combine(game.ExeDir, "OptiScaler.log");
             if (File.Exists(optiLog))
             {

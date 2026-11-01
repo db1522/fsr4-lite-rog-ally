@@ -74,6 +74,7 @@ public sealed class HostService
                 "watermark" => Watermark(Arg(args, "on") == "true"),
                 "notify" => Notify(Arg(args, "on") == "true"),
                 "renderScale" => RenderScale(Arg(args, "exeDir") ?? "", Arg(args, "value") ?? "game"),
+                "frameGen" => FrameGenCommand(Arg(args, "exeDir") ?? "", Arg(args, "what") ?? "", Arg(args, "value") ?? ""),
                 "switchLoader" => SwitchLoader(Arg(args, "exeDir") ?? ""),
                 "updateAll" => UpdateAll(),
                 "updateWidget" => UpdateWidget(),
@@ -145,6 +146,9 @@ public sealed class HostService
                     Installer.ApplyOverlay(dir, _settings.ShowResolutionOverlay, OverlayScaleFor(dir), _settings.OverlayPosition);
                     Installer.ApplyWatermark(dir, _settings.ShowFsr4Watermark);
                     Installer.ApplyRenderScale(dir, InstallManifest.TryLoad(dir)?.RenderScale ?? "game");
+                    // Frame generation too, so a setting OptiScaler wrote back can't leave it on (or off) by surprise.
+                    if (InstallManifest.TryLoad(dir) is { } fgManifest && File.Exists(Path.Combine(dir, "OptiScaler.ini")))
+                        IniFile.SetValues(Path.Combine(dir, "OptiScaler.ini"), FrameGen.IniValues(fgManifest.FrameGen));
                 }
                 catch (Exception ex)
                 {
@@ -278,6 +282,7 @@ public sealed class HostService
             : "";
 
         var compat = CompatList.Find(scan.Game.Name, scan.ExeName);
+        var frameGen = FrameGenJson(scan, manifest, window.ProcessId, exeDir, live);
 
         return new
         {
@@ -315,7 +320,88 @@ public sealed class HostService
             loaderName = manifest?.ProxyName ?? "",
             activeStage = live.Stage.ToString(),
             activeText = ActiveText(live, scan.Game.Name),
+            frameGen,
         };
+    }
+
+    /// <summary>
+    /// The Experimental frame generation section: only for DirectX 12 games with FSR 4.1 Lite installed (games with
+    /// anti-cheat never get an install). Null hides the section.
+    /// </summary>
+    private static object? FrameGenJson(GameScan scan, InstallManifest? manifest, int pid, string exeDir, LoadedModules.Status live)
+    {
+        if (manifest is null || LoadedModules.GraphicsApi(pid) != "DX12") return null;
+        var fg = manifest.FrameGen;
+        var input = fg.Input.Length > 0 ? fg.Input : scan.FrameGen.Input;
+        var running = fg.Enabled && live.Stage is LoadedModules.Stage.Active or LoadedModules.Stage.WaitingForFsr
+            ? LoadedModules.FrameGenOutput(exeDir)
+            : "";
+        return new
+        {
+            ownFsrFg = scan.FrameGen.HasOwnFsrFg,
+            input,
+            enabled = fg.Enabled,
+            output = fg.Output,
+            hudFix = fg.HudFix,
+            hudLimit = fg.HudLimit,
+            immediate = fg.Immediate,
+            engineIni = fg.EngineIniPath.Length > 0,
+            activeText = running.Length > 0 ? $"Frame generation active ({running})" : "",
+        };
+    }
+
+    /// <summary>
+    /// The frame generation switch and its options. Every change is written straight into OptiScaler.ini; OptiScaler
+    /// reads it when the game starts, hence "Restart the game to apply."
+    /// </summary>
+    private object FrameGenCommand(string exeDir, string what, string value)
+    {
+        var manifest = InstallManifest.TryLoad(exeDir);
+        if (manifest is null) return Fail("FSR 4.1 Lite isn't installed in this game.");
+        GameScan? scan;
+        lock (_seen) _seen.TryGetValue(exeDir, out scan);
+        if (scan is null) return Fail("Open the widget over the game again, then try again.");
+        if (scan.FrameGen.HasOwnFsrFg) return Fail("This game has its own FSR frame generation: turn it on in its graphics settings.");
+
+        var fg = manifest.FrameGen;
+        switch (what)
+        {
+            case "enabled":
+                fg.Enabled = value == "true";
+                // The input is picked when frame generation is turned on, from the game's files at that moment.
+                if (fg.Enabled) fg.Input = scan.FrameGen.Input;
+                break;
+            case "output":
+                fg.Output = value == FrameGen.XessOutput ? FrameGen.XessOutput : FrameGen.FsrOutput;
+                break;
+            case "hudFix":
+                fg.HudFix = value == "true";
+                break;
+            case "hudLimit":
+                fg.HudLimit = Math.Clamp(fg.HudLimit + (int.TryParse(value, out var step) ? Math.Sign(step) : 0),
+                    FrameGen.MinHudLimit, FrameGen.MaxHudLimit);
+                break;
+            case "immediate":
+                fg.Immediate = value == "true";
+                break;
+            case "reset":
+                fg.ResetFineTune();
+                break;
+            default:
+                return Fail("Unknown frame generation setting.");
+        }
+
+        if (fg.Enabled)
+            Installer.ApplyFrameGen(exeDir, manifest, scan.IsUnreal && scan.Upscalers.Contains("DLSS"));
+        else
+        {
+            Installer.TurnOffFrameGen(exeDir, manifest);
+            manifest.Save(exeDir);
+        }
+        Forget(exeDir);
+        Log.Info($"Frame generation for {manifest.GameName}: {(fg.Enabled ? "on" : "off")}, input {fg.Input}, output {fg.Output}, " +
+                 $"HUDFix {fg.HudFix} limit {fg.HudLimit}, Immediate Capture {fg.Immediate}, Engine.ini {(fg.EngineIniPath.Length > 0 ? fg.EngineIniPath : "unchanged")}");
+        return new { ok = true, message = what == "reset" ? "Recommended settings restored. Restart the game to apply." : "Restart the game to apply." };
     }
 
     private GameScan? CachedScan(string exeDir)
@@ -918,9 +1004,15 @@ public sealed class HostService
     {
         var manifest = InstallManifest.TryLoad(exeDir);
         if (manifest is null) return Fail("FSR 4.1 Lite isn't installed in this game.");
-        var next = Installer.SwitchProxy(exeDir);
+        var hadFrameGen = manifest.FrameGen.Enabled;
+        var next = Installer.SwitchProxy(exeDir); // also turns frame generation off
         Forget(exeDir);
-        return new { ok = true, message = $"OptiScaler now loads as {next}. Restart {manifest.GameName} to try it." };
+        return new
+        {
+            ok = true,
+            message = $"OptiScaler now loads as {next}. Restart {manifest.GameName} to try it." +
+                      (hadFrameGen ? " Frame generation is off again; turn it back on once FSR 4.1 Lite is running." : ""),
+        };
     }
 
     private object RenderScale(string exeDir, string key)

@@ -29,6 +29,9 @@ public sealed class InstallManifest
     /// <summary>REFramework's runtime files and folders that already existed before install, so uninstall leaves them.</summary>
     public List<string> REFrameworkPreexisting { get; set; } = new();
 
+    /// <summary>The Experimental frame generation option for this game (off unless the player turned it on).</summary>
+    public FrameGenSettings FrameGen { get; set; } = new();
+
     /// <summary>Files the app created, relative to the exe folder.</summary>
     public List<string> CreatedFiles { get; set; } = new();
 

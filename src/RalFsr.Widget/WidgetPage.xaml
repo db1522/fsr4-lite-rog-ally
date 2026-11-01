@@ -142,6 +142,21 @@
                             </Grid>
                         </Border>
 
+                        <!-- Frame generation confirmed running from OptiScaler's log (Experimental section) -->
+                        <Border x:Name="FgBadge" Visibility="Collapsed" Padding="12,10" CornerRadius="10" BorderThickness="1"
+                                Background="{StaticResource GoodTintBrush}" BorderBrush="{StaticResource GoodLineBrush}">
+                            <Grid ColumnSpacing="12">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto" />
+                                    <ColumnDefinition Width="*" />
+                                </Grid.ColumnDefinitions>
+                                <FontIcon FontFamily="{StaticResource IconFont}" Glyph="&#xE945;" FontSize="16"
+                                          Foreground="{StaticResource GoodBrush}" VerticalAlignment="Center" />
+                                <TextBlock x:Name="FgBadgeText" Grid.Column="1" FontSize="14" FontWeight="SemiBold" TextWrapping="Wrap"
+                                           Foreground="{StaticResource GoodTextBrush}" VerticalAlignment="Center" />
+                            </Grid>
+                        </Border>
+
                         <!-- Render to output resolution, with a bar showing how far it's upscaling -->
                         <StackPanel x:Name="ResolutionPanel" Visibility="Collapsed" Spacing="2">
                             <Grid>
@@ -211,6 +226,102 @@
                                 </StackPanel>
                             </Button>
                         </Grid>
+
+                        <!-- Experimental: OptiScaler features still being tried out. Closed unless one is on for this game. -->
+                        <StackPanel x:Name="ExperimentalPanel" Visibility="Collapsed" Spacing="10">
+                            <Border Style="{StaticResource RowLine}" Margin="0,2,0,0" />
+                            <Button x:Name="ExperimentalToggle" Style="{StaticResource RowButton}" Padding="2,4"
+                                    Click="ExperimentalToggle_Click">
+                                <Grid>
+                                    <StackPanel Orientation="Horizontal" Spacing="8">
+                                        <FontIcon FontFamily="{StaticResource IconFont}" Glyph="&#xE7BA;" FontSize="15"
+                                                  Foreground="{StaticResource WarnBrush}" />
+                                        <TextBlock Text="Experimental" FontSize="14" FontWeight="SemiBold" />
+                                    </StackPanel>
+                                    <TextBlock x:Name="ExperimentalChevron" Text="&#x25B8;" HorizontalAlignment="Right"
+                                               Foreground="{StaticResource MutedBrush}" />
+                                </Grid>
+                            </Button>
+
+                            <StackPanel x:Name="ExperimentalBody" Visibility="Collapsed" Spacing="10">
+                                <TextBlock x:Name="OwnFsrFgText" Visibility="Collapsed" FontSize="13" TextWrapping="Wrap"
+                                           Text="This game has its own FSR frame generation: turn it on in its graphics settings." />
+
+                                <StackPanel x:Name="FgControls" Spacing="10">
+                                    <Grid>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*" />
+                                            <ColumnDefinition Width="Auto" />
+                                        </Grid.ColumnDefinitions>
+                                        <TextBlock Text="Frame generation" FontSize="14" VerticalAlignment="Center" />
+                                        <ToggleSwitch x:Name="FgSwitch" Grid.Column="1" Style="{StaticResource RowSwitch}"
+                                                      Toggled="FgSwitch_Toggled" AutomationProperties.Name="Frame generation" />
+                                    </Grid>
+                                    <TextBlock x:Name="FgInputText" FontSize="12" TextWrapping="Wrap" Foreground="{StaticResource MutedBrush}" />
+
+                                    <StackPanel x:Name="FgOptions" Spacing="10" Visibility="Collapsed">
+                                        <!-- Output: FSR frame generation (default, more FPS) or XeSS (cleaner image) -->
+                                        <Grid x:Name="FgOutputChips" ColumnSpacing="6">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="*" />
+                                                <ColumnDefinition Width="*" />
+                                            </Grid.ColumnDefinitions>
+                                            <Button x:Name="FgFsrChip" Style="{StaticResource ChipButton}" Content="FSR (more FPS)"
+                                                    Tag="fsrfg" Click="FgOutput_Click" />
+                                            <Button x:Name="FgXessChip" Grid.Column="1" Style="{StaticResource ChipButton}"
+                                                    Content="XeSS (cleaner image)" Tag="xefg" Click="FgOutput_Click" />
+                                        </Grid>
+                                        <TextBlock x:Name="FgXessText" Visibility="Collapsed" FontSize="12" TextWrapping="Wrap"
+                                                   Foreground="{StaticResource WarnTextBrush}"
+                                                   Text="XeSS needs borderless or windowed fullscreen, and one extra restart the first time." />
+
+                                        <!-- Fine-tune: OptiFG only (the other inputs bring the game's own HUD-less image) -->
+                                        <StackPanel x:Name="FgFineTune" Spacing="8">
+                                            <TextBlock Text="Fine-tune" FontSize="12" Foreground="{StaticResource MutedBrush}" />
+                                            <Grid>
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="*" />
+                                                    <ColumnDefinition Width="Auto" />
+                                                </Grid.ColumnDefinitions>
+                                                <TextBlock Text="HUDFix" FontSize="14" VerticalAlignment="Center" />
+                                                <ToggleSwitch x:Name="FgHudFixSwitch" Grid.Column="1" Style="{StaticResource RowSwitch}"
+                                                              Toggled="FgHudFix_Toggled" AutomationProperties.Name="HUDFix" />
+                                            </Grid>
+                                            <Grid ColumnSpacing="8">
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="*" />
+                                                    <ColumnDefinition Width="Auto" />
+                                                    <ColumnDefinition Width="40" />
+                                                    <ColumnDefinition Width="Auto" />
+                                                </Grid.ColumnDefinitions>
+                                                <TextBlock Text="HUDFix limit" FontSize="14" VerticalAlignment="Center" />
+                                                <Button x:Name="FgLimitDown" Grid.Column="1" Style="{StaticResource ChipButton}" Width="44"
+                                                        Content="&#x2212;" Tag="-1" Click="FgLimit_Click"
+                                                        AutomationProperties.Name="HUDFix limit down" />
+                                                <TextBlock x:Name="FgLimitText" Grid.Column="2" HorizontalAlignment="Center"
+                                                           VerticalAlignment="Center" FontFamily="{StaticResource DisplayFont}" FontSize="16" />
+                                                <Button x:Name="FgLimitUp" Grid.Column="3" Style="{StaticResource ChipButton}" Width="44"
+                                                        Content="+" Tag="1" Click="FgLimit_Click" AutomationProperties.Name="HUDFix limit up" />
+                                            </Grid>
+                                            <Grid>
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="*" />
+                                                    <ColumnDefinition Width="Auto" />
+                                                </Grid.ColumnDefinitions>
+                                                <TextBlock Text="Immediate Capture" FontSize="14" VerticalAlignment="Center" />
+                                                <ToggleSwitch x:Name="FgImmediateSwitch" Grid.Column="1" Style="{StaticResource RowSwitch}"
+                                                              Toggled="FgImmediate_Toggled" AutomationProperties.Name="Immediate Capture" />
+                                            </Grid>
+                                            <TextBlock FontSize="12" TextWrapping="Wrap" Foreground="{StaticResource MutedBrush}"
+                                                       Text="If menus or subtitles smear, try a higher limit or Immediate Capture. Close RTSS, or turn on 'Use Microsoft Detours API hooking' in its settings. Restart the game after changing." />
+                                        </StackPanel>
+                                        <Button x:Name="FgResetButton" Style="{StaticResource QuietButton}" HorizontalAlignment="Stretch"
+                                                Background="{StaticResource ChipBrush}" BorderThickness="0" CornerRadius="8"
+                                                Content="Reset to recommended" Click="FgReset_Click" />
+                                    </StackPanel>
+                                </StackPanel>
+                            </StackPanel>
+                        </StackPanel>
                     </StackPanel>
                 </StackPanel>
             </Border>
