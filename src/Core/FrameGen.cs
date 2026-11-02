@@ -267,23 +267,28 @@ public static class FrameGen
 
     // ------------------------------------------------------------------ log
 
-    // OptiScaler logs these at info level when frame generation is switched on or off in the game:
-    //   FSR frame generation (FSRFG_Dx12)  "D3D12_Configure Enabled: true, result: ..."
-    //   XeSS frame generation (XeFG_Dx12)  "SetEnabled: true, result: ..."
-    private static readonly Regex FsrFgLine = new(@"D3D12_Configure Enabled: (true|false)", RegexOptions.Compiled);
-    private static readonly Regex XeFgLine = new(@"SetEnabled: (true|false)", RegexOptions.Compiled);
+    // What OptiScaler logs at info level about frame generation, read as events in order (the last one wins):
+    //   FSR (FSRFG_Dx12)   on:  "FSRFG_Dx12::CreateContext D3D12_CreateContext result: 0" (seen on a ROG Ally X: this is
+    //                           the only info line when OptiFG starts; the switch itself is logged at debug level)
+    //                           or "D3D12_Configure Enabled: true"
+    //                      off: "FSRFG_Dx12::... D3D12_DestroyContext" or "D3D12_Configure Enabled: false"
+    //   XeSS (XeFG_Dx12)   on:  "SetEnabled: true"   off: "SetEnabled: false"
+    // Nukem's runs FSR 3 frame generation inside its own DLL and logs none of these, so it's never confirmed here.
+    private static readonly Regex FgEvent = new(
+        @"(?<fsrOn>FSRFG_Dx12::\w+ D3D12_CreateContext result: 0\b|D3D12_Configure Enabled: true)" +
+        @"|(?<fsrOff>FSRFG_Dx12::\w+ D3D12_DestroyContext|D3D12_Configure Enabled: false)" +
+        @"|(?<xeOn>SetEnabled: true)|(?<xeOff>SetEnabled: false)",
+        RegexOptions.Compiled);
 
-    /// <summary>"FSR" or "XeSS" when OptiScaler's log shows frame generation running (the last switch was on), else "".</summary>
+    /// <summary>"FSR" or "XeSS" when OptiScaler's log shows frame generation running (its last event was "on"), else "".</summary>
     public static string ActiveOutput(string log)
     {
         if (log.Length == 0) return "";
-        var fsr = FsrFgLine.Matches(log);
-        var xe = XeFgLine.Matches(log);
-        var lastFsr = fsr.Count > 0 ? fsr[^1] : null;
-        var lastXe = xe.Count > 0 ? xe[^1] : null;
-        var last = lastFsr is null ? lastXe : lastXe is null ? lastFsr : (lastFsr.Index > lastXe.Index ? lastFsr : lastXe);
-        // Nukem's runs FSR 3 frame generation inside its own DLL and logs no on/off switch, so it's never confirmed here.
-        if (last is null || last.Groups[1].Value != "true") return "";
-        return last == lastXe ? "XeSS" : "FSR";
+        var events = FgEvent.Matches(log);
+        if (events.Count == 0) return "";
+        var last = events[^1];
+        if (last.Groups["fsrOn"].Success) return "FSR";
+        if (last.Groups["xeOn"].Success) return "XeSS";
+        return "";
     }
 }
