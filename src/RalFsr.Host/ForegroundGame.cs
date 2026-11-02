@@ -10,7 +10,8 @@ namespace RalFsrHelper.Host;
 /// </summary>
 public static class ForegroundGame
 {
-    public sealed record Window(int ProcessId, string ExePath, string Title);
+    /// <param name="ClientHeight">The window's inner height in physical pixels (0 if unknown): the size the game draws at.</param>
+    public sealed record Window(int ProcessId, string ExePath, string Title, int ClientHeight = 0);
 
     private static readonly HashSet<string> SkipExes = new(StringComparer.OrdinalIgnoreCase)
     {
@@ -64,7 +65,7 @@ public static class ForegroundGame
             if (IsProtectedAppPath(exe)) return true;
             if (exe.StartsWith(windowsDir, StringComparison.OrdinalIgnoreCase)) return true;
 
-            found = new Window((int)pid, exe, Title(hwnd));
+            found = new Window((int)pid, exe, Title(hwnd), ClientHeight(hwnd));
             return false; // stop at the top-most match
         }, IntPtr.Zero);
 
@@ -141,6 +142,20 @@ public static class ForegroundGame
     [StructLayout(LayoutKind.Sequential)]
     private struct MONITORINFO { public int cbSize; public RECT rcMonitor; public RECT rcWork; public uint dwFlags; }
 
+    /// <summary>
+    /// Inner height in physical pixels. Read with per-monitor DPI awareness for this call, so Windows doesn't scale it to
+    /// the helper's DPI when the game sits on a screen with a different scale (a docked TV, say).
+    /// </summary>
+    private static int ClientHeight(IntPtr hwnd)
+    {
+        var previous = SetThreadDpiAwarenessContext(new IntPtr(-4)); // DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2
+        try { return GetClientRect(hwnd, out var r) ? Math.Max(0, r.Bottom - r.Top) : 0; }
+        catch { return 0; }
+        finally { if (previous != IntPtr.Zero) SetThreadDpiAwarenessContext(previous); }
+    }
+
+    [DllImport("user32.dll")] private static extern bool GetClientRect(IntPtr hwnd, out RECT rect);
+    [DllImport("user32.dll")] private static extern IntPtr SetThreadDpiAwarenessContext(IntPtr context);
     [DllImport("user32.dll")] private static extern bool EnumWindows(EnumWindowsProc proc, IntPtr lParam);
     [DllImport("user32.dll")] private static extern bool IsWindowVisible(IntPtr hwnd);
     [DllImport("user32.dll")] private static extern bool IsIconic(IntPtr hwnd);

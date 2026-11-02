@@ -184,10 +184,15 @@ namespace RalFsr.Widget
 
             _suppressOverlayEvent = true;
             OverlaySwitch.IsOn = Json.Bool(state, "overlay");
-            var sizeIndex = Array.IndexOf(OverlaySizeKeys, Json.Str(state, "overlaySize", "medium"));
-            OverlaySizeBox.SelectedIndex = sizeIndex >= 0 ? sizeIndex : OverlaySizeKeys.Length - 1;
-            var positionIndex = Array.IndexOf(OverlayPositionKeys, Json.Str(state, "overlayPosition", "topleft"));
-            OverlayPositionBox.SelectedIndex = positionIndex >= 0 ? positionIndex : 0;
+            _overlaySize = Json.Str(state, "overlaySize", "large");
+            _overlayPosition = Json.Str(state, "overlayPosition", "topleft");
+            foreach (var item in Json.Arr(state, "overlaySizes"))
+            {
+                if (item.ValueType != JsonValueType.Object) continue;
+                var o = item.GetObject();
+                _overlayShares[Json.Str(o, "key")] = Json.Num(o, "share");
+            }
+            RenderOverlayChoices();
             OverlayOptions.Visibility = OverlaySwitch.IsOn ? Visibility.Visible : Visibility.Collapsed;
             NotifySwitch.IsOn = Json.Bool(state, "notify");
             AutoUpdateSwitch.IsOn = Json.Bool(state, "autoUpdate");
@@ -688,26 +693,83 @@ namespace RalFsr.Widget
             await RunCommandAsync("remove", "exeDir", dir);
         }
 
-        /// <summary>Same order as the ComboBox items: Small, Medium, Large, Extra large.</summary>
-        private static readonly string[] OverlaySizeKeys = { "small", "medium", "large", "xlarge", "huge", "max" };
+        private string _overlaySize = "large";
+        private string _overlayPosition = "topleft";
 
-        /// <summary>Same order as the position ComboBox items.</summary>
-        private static readonly string[] OverlayPositionKeys = { "topleft", "topright", "bottomleft", "bottomright" };
-
-        private async void OverlayPosition_Changed(object sender, SelectionChangedEventArgs e)
+        /// <summary>Text height of each overlay size as a share of the screen, from the helper (these are its defaults).</summary>
+        private readonly Dictionary<string, double> _overlayShares = new Dictionary<string, double>
         {
-            if (_suppressOverlayEvent) return;
-            var index = OverlayPositionBox.SelectedIndex;
-            if (index < 0 || index >= OverlayPositionKeys.Length) return;
-            await RunCommandAsync("overlayPosition", "value", OverlayPositionKeys[index]);
+            ["small"] = 0.015, ["medium"] = 0.020, ["large"] = 0.026, ["xlarge"] = 0.033, ["huge"] = 0.041, ["max"] = 0.050,
+        };
+
+        /// <summary>Marks the chosen size and corner in red and redraws the preview.</summary>
+        private void RenderOverlayChoices()
+        {
+            foreach (var grid in new[] { OverlaySizeChips, OverlayPositionChips })
+            {
+                foreach (var child in grid.Children)
+                {
+                    var chip = child as Button;
+                    if (chip == null) continue;
+                    var key = chip.Tag as string;
+                    var on = key == _overlaySize || key == _overlayPosition;
+                    chip.Background = on ? (Brush)Application.Current.Resources["RalRedBrush"] : (Brush)Application.Current.Resources["ChipBrush"];
+                    chip.Foreground = new SolidColorBrush(on ? Colors.White : Color.FromArgb(255, 0xB9, 0xBF, 0xCA));
+                    chip.FontWeight = on ? Windows.UI.Text.FontWeights.SemiBold : Windows.UI.Text.FontWeights.Normal;
+                }
+            }
+            RenderOverlayPreview();
         }
 
-        private async void OverlaySize_Changed(object sender, SelectionChangedEventArgs e)
+        /// <summary>
+        /// The preview is a 16:9 screen with the overlay's two lines drawn at the chosen size's share of its height, so
+        /// the steps between sizes look the same as they will in the game.
+        /// </summary>
+        private void RenderOverlayPreview()
         {
-            if (_suppressOverlayEvent) return;
-            var index = OverlaySizeBox.SelectedIndex;
-            if (index < 0 || index >= OverlaySizeKeys.Length) return;
-            await RunCommandAsync("overlaySize", "value", OverlaySizeKeys[index]);
+            var width = OverlayPreview.ActualWidth;
+            if (width <= 0) return;
+            var height = Math.Round(width * 9 / 16);
+            if (Math.Abs(OverlayPreview.Height - height) > 0.5) OverlayPreview.Height = height;
+
+            double share;
+            if (!_overlayShares.TryGetValue(_overlaySize, out share)) share = 0.026;
+            var line = Math.Max(2, share * height);      // one text line
+            PreviewLine1.Height = line;
+            PreviewLine1.Width = line * 20;              // the API, upscaler and FPS row, as long as it is in OptiScaler
+            PreviewLine2.Height = line;
+            PreviewLine2.Width = line * 13;              // the render to output resolution row
+            PreviewLine2.Margin = new Thickness(0, line * 0.45, 0, 0);
+            PreviewPanel.Padding = new Thickness(line * 0.5);
+            PreviewPanel.Margin = new Thickness(Math.Max(3, height * 0.02));
+
+            var right = _overlayPosition.EndsWith("right");
+            var bottom = _overlayPosition.StartsWith("bottom");
+            PreviewPanel.HorizontalAlignment = right ? HorizontalAlignment.Right : HorizontalAlignment.Left;
+            PreviewPanel.VerticalAlignment = bottom ? VerticalAlignment.Bottom : VerticalAlignment.Top;
+        }
+
+        private void OverlayPreview_SizeChanged(object sender, SizeChangedEventArgs e)
+        {
+            if (Math.Abs(e.NewSize.Width - e.PreviousSize.Width) > 0.5) RenderOverlayPreview();
+        }
+
+        private async void OverlaySizeChip_Click(object sender, RoutedEventArgs e)
+        {
+            var key = (sender as Button)?.Tag as string;
+            if (string.IsNullOrEmpty(key) || key == _overlaySize) return;
+            _overlaySize = key; // show it straight away; the refresh after the command confirms it
+            RenderOverlayChoices();
+            await RunCommandAsync("overlaySize", "value", key);
+        }
+
+        private async void OverlayPositionChip_Click(object sender, RoutedEventArgs e)
+        {
+            var key = (sender as Button)?.Tag as string;
+            if (string.IsNullOrEmpty(key) || key == _overlayPosition) return;
+            _overlayPosition = key;
+            RenderOverlayChoices();
+            await RunCommandAsync("overlayPosition", "value", key);
         }
 
         private async void Overlay_Toggled(object sender, RoutedEventArgs e)
@@ -942,8 +1004,8 @@ namespace RalFsr.Widget
             RefreshButton.IsEnabled = on;
             ImportButton.IsEnabled = on;
             OverlaySwitch.IsEnabled = on;
-            OverlaySizeBox.IsEnabled = on;
-            OverlayPositionBox.IsEnabled = on;
+            OverlaySizeChips.IsHitTestVisible = on;
+            OverlayPositionChips.IsHitTestVisible = on;
             NotifySwitch.IsEnabled = on;
             AutoUpdateSwitch.IsEnabled = on;
             UninstallButton.IsEnabled = on;

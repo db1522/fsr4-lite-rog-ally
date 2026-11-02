@@ -22,8 +22,14 @@ public sealed class AppSettings
     /// </summary>
     public bool AutoUpdateGames { get; set; } = true;
 
-    /// <summary>Size of the in-game FPS and resolution overlay: small, medium, large, xlarge, huge or max (default).</summary>
-    public string OverlaySize { get; set; } = "max";
+    /// <summary>Size of the in-game FPS and resolution overlay: small, medium, large (default), xlarge, huge or max.</summary>
+    public string OverlaySize { get; set; } = InstallConfig.DefaultOverlaySize;
+
+    /// <summary>
+    /// 2 from 1.1.31, when sizes became a share of the game's screen (the old Maximum is about the new Large). Settings
+    /// from before go back to the default size once, since the same names now mean different sizes.
+    /// </summary>
+    public int OverlaySizeVersion { get; set; }
 
     /// <summary>
     /// The player picked the overlay size themselves. Until then the default applies, which also moves anyone whose
@@ -53,7 +59,9 @@ public sealed class AppSettings
             {
                 var loaded = JsonSerializer.Deserialize<AppSettings>(File.ReadAllText(AppPaths.SettingsFile)) ?? new();
                 loaded.ShowFsr4Watermark = false; // retired setting, see above
-                if (!loaded.OverlaySizeChosen) loaded.OverlaySize = "max"; // the default, unless the player chose a size
+                if (loaded.OverlaySizeVersion < 2) loaded.OverlaySizeChosen = false;
+                loaded.OverlaySizeVersion = 2;
+                if (!loaded.OverlaySizeChosen) loaded.OverlaySize = InstallConfig.DefaultOverlaySize; // unless the player chose one
                 return loaded;
             }
         }
@@ -61,7 +69,7 @@ public sealed class AppSettings
         {
             Log.Warn($"Settings unreadable, using defaults: {ex.Message}");
         }
-        return new AppSettings();
+        return new AppSettings { OverlaySizeVersion = 2 };
     }
 
     public void Save()

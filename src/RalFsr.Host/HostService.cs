@@ -70,7 +70,7 @@ public sealed class HostService
                 "removeAll" => RemoveAll(),
                 "import" => Import(Arg(args, "paths") ?? "", Arg(args, "allowUnverified") == "true"),
                 "overlay" => Overlay(Arg(args, "on") == "true"),
-                "overlaySize" => OverlaySize(Arg(args, "value") ?? "medium"),
+                "overlaySize" => OverlaySize(Arg(args, "value") ?? InstallConfig.DefaultOverlaySize),
                 "overlayPosition" => OverlayPosition(Arg(args, "value") ?? "topleft"),
                 "watermark" => Watermark(Arg(args, "on") == "true"),
                 "hideDeviceNote" => HideDeviceNote(),
@@ -146,7 +146,7 @@ public sealed class HostService
                 if (ForegroundGame.AnyRunningFrom(dir)) continue;
                 try
                 {
-                    Installer.ApplyOverlay(dir, _settings.ShowResolutionOverlay, OverlayScaleFor(dir), _settings.OverlayPosition);
+                    Installer.ApplyOverlay(dir, _settings.ShowResolutionOverlay, OverlayLookFor(dir), _settings.OverlayPosition);
                     Installer.ApplyWatermark(dir, _settings.ShowFsr4Watermark);
                     Installer.ApplyRenderScale(dir, InstallManifest.TryLoad(dir)?.RenderScale ?? "game");
                     // Frame generation too, so a setting OptiScaler wrote back can't leave it on (or off) by surprise. Only
@@ -215,6 +215,8 @@ public sealed class HostService
             },
             autoUpdate = _settings.AutoUpdateGames,
             overlaySize = _settings.OverlaySize,
+            // Each size's text height as a share of the screen, for the widget's preview.
+            overlaySizes = InstallConfig.OverlaySizes.Select(o => new { key = o.Key, label = o.Label, share = o.Share }).ToList(),
             overlayPosition = _settings.OverlayPosition,
             opti = new
             {
@@ -266,6 +268,17 @@ public sealed class HostService
         // choice, including Native AA, is never overridden.
         string? autoFix = null;
         var manifest = InstallManifest.TryLoad(exeDir);
+
+        // The game's window height sizes its overlay. Remember it, and re-size the overlay when it changes (a new
+        // resolution, or the handheld docked to a TV), ready for the next launch.
+        if (manifest is not null && window.ClientHeight >= 360 && Math.Abs(window.ClientHeight - manifest.ScreenHeight) > 8)
+        {
+            manifest.ScreenHeight = window.ClientHeight;
+            manifest.Save(exeDir);
+            Installer.ApplyOverlay(exeDir, _settings.ShowResolutionOverlay, OverlayLookFor(exeDir), _settings.OverlayPosition);
+            Forget(exeDir);
+            Log.Info($"{manifest.GameName} draws at {window.ClientHeight} px tall; overlay sized for it");
+        }
         if (manifest is not null && manifest.RenderScale == "game" && !manifest.AutoFixedNativeAA &&
             live.Stage == LoadedModules.Stage.Active && live.AtFullResolution)
         {
@@ -650,7 +663,7 @@ public sealed class HostService
             return Fail("That's a Windows or Xbox app, not a game, so FSR 4.1 Lite won't install there.");
         if (scan.State is not (GameState.Ready or GameState.NoUpscalerFound)) return Fail(StateText(scan));
 
-        Installer.Install(scan, _opti, fsr4, _settings, OverlayScaleFor(exeDir));
+        Installer.Install(scan, _opti, fsr4, _settings, OverlayLookFor(exeDir));
         InstallRegistry.Add(exeDir);
 
         // Capcom RE Engine games the OptiScaler community says need REFramework get it too.
@@ -814,11 +827,17 @@ public sealed class HostService
     }
 
     /// <summary>
-    /// The overlay scale for one game: the player's size, adjusted for that game's output resolution (from its last
-    /// OptiScaler.log, else the screen's) so it's the same share of the screen everywhere. See InstallConfig.OverlayScale.
+    /// The overlay settings for one game: the player's size as a share of that game's window height (remembered from
+    /// the last time it ran under Game Bar, else the screen's height), using FpsOverlayFontSize when the game's
+    /// OptiScaler build reads it. See InstallConfig.OverlayLookFor.
     /// </summary>
-    private string OverlayScaleFor(string exeDir) =>
-        InstallConfig.OverlayScale(_settings.OverlaySize, LoadedModules.LastDisplayHeight(exeDir) ?? ScreenProbe.Get().HeightPx);
+    private InstallConfig.OverlayLook OverlayLookFor(string exeDir)
+    {
+        var manifest = InstallManifest.TryLoad(exeDir);
+        var height = manifest is { ScreenHeight: > 0 } ? manifest.ScreenHeight : ScreenProbe.Get().HeightPx;
+        var dll = manifest is null ? (_opti is null ? "" : Path.Combine(_opti.Dir, "OptiScaler.dll")) : Path.Combine(exeDir, manifest.ProxyName);
+        return InstallConfig.OverlayLookFor(_settings.OverlaySize, height, Installer.OptiReadsKey(dll, "FpsOverlayFontSize"));
+    }
 
     private object OverlaySize(string size)
     {
@@ -826,9 +845,9 @@ public sealed class HostService
         _settings.OverlaySize = size;
         _settings.OverlaySizeChosen = true;
         _settings.Save();
-        foreach (var dir in InstallRegistry.Load()) Installer.ApplyOverlay(dir, _settings.ShowResolutionOverlay, OverlayScaleFor(dir), _settings.OverlayPosition);
+        foreach (var dir in InstallRegistry.Load()) Installer.ApplyOverlay(dir, _settings.ShowResolutionOverlay, OverlayLookFor(dir), _settings.OverlayPosition);
         var label = InstallConfig.OverlaySizes.First(s => s.Key == size).Label;
-        return new { ok = true, message = $"Overlay size set to {label}. Restart your game to see the new size." };
+        return new { ok = true, message = $"Overlay size: {label}. Restart your game to see it." };
     }
 
     private object OverlayPosition(string position)
@@ -837,7 +856,7 @@ public sealed class HostService
         _settings.OverlayPosition = position;
         _settings.Save();
         foreach (var dir in InstallRegistry.Load())
-            Installer.ApplyOverlay(dir, _settings.ShowResolutionOverlay, OverlayScaleFor(dir), position);
+            Installer.ApplyOverlay(dir, _settings.ShowResolutionOverlay, OverlayLookFor(dir), position);
         var label = InstallConfig.OverlayPositions.First(p => p.Key == position).Label;
         return new { ok = true, message = $"Overlay moved to {label.ToLowerInvariant()}. Restart your game to see it there." };
     }
@@ -846,7 +865,7 @@ public sealed class HostService
     {
         _settings.ShowResolutionOverlay = on;
         _settings.Save();
-        foreach (var dir in InstallRegistry.Load()) Installer.ApplyOverlay(dir, on, OverlayScaleFor(dir), _settings.OverlayPosition);
+        foreach (var dir in InstallRegistry.Load()) Installer.ApplyOverlay(dir, on, OverlayLookFor(dir), _settings.OverlayPosition);
         return new
         {
             ok = true,

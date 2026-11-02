@@ -393,14 +393,14 @@ as a full-screen app afterwards, and the widget never opens as a full-screen app
 Game Bar instead (or just closes right after an update). After an update the widget tries up to three times to start
 its helper.
 
-**Overlay size and position.** The FPS and resolution overlay (Small, Medium, Large, Extra large, Huge, Maximum) takes
-the same share of the
-screen on every handheld, so bigger screens like the Legion Go's show bigger text. OptiScaler draws it in the game's
-pixels and its own automatic scale follows the game's output height (1080p = 1.0, 1200p = 1.1, 1600p = 1.4); the
-original fixed `FpsScale=0.8` ignored that and looked small on a 2560x1600 Legion Go. The widget now writes each game's
-`FpsScale` from OptiScaler's rule for that game's output height (read from its last `OptiScaler.log`, or the screen's
-resolution before the first run), times the chosen size, within OptiScaler's 0.5 to 3.0 range. Medium at 1080p (the
-ROG Ally family) is 0.8; the default size is Maximum (2.0 at 1080p). It's OptiScaler's two-line Simple layout, so even Maximum stays well inside the screen.
+**Overlay size and position.** Each overlay size (Small, Medium, Large, Extra large, Huge, Maximum) is a fixed share
+of the game's screen height for its text: 1.5, 2.0, 2.6, 3.3, 4.1 and 5.0 percent, so every step is about a quarter to a
+third bigger than the last on any handheld, docked screen or resolution. The height is the game window's own, read
+while the game runs under Game Bar and remembered per game (the screen's resolution before the first run). With
+OptiScaler builds that read `FpsOverlayFontSize`, the widget sets the font to the text size itself (8 to 48 px), so it
+stays sharp, and `FpsScale` only takes it past 48 px; older builds get `FpsScale` alone, times the 14 px menu font,
+within OptiScaler's 0.5 to 3.0 range. Large, the default, is about 28 px at 1080p. The widget shows a preview of the
+size and corner.
 **Overlay position** puts it in any corner (`FpsOverlayPos` 0 to 3), for example away from a game's own HUD.
 
 **Support report.** Setup's **Create support report** saves `FSR4Lite-report-<date>.zip` to the Desktop: a

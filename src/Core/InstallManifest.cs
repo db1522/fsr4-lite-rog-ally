@@ -25,6 +25,9 @@ public sealed class InstallManifest
     /// soon as no process from the game's folder is left.
     /// </summary>
     public bool RemoveOnExit { get; set; }
+
+    /// <summary>The game window's height in pixels when last seen (0 = not seen yet). The overlay is sized from it.</summary>
+    public int ScreenHeight { get; set; }
     public string OptiBuild { get; set; } = "";
     public string Fsr4Version { get; set; } = "";
     public DateTime InstalledAt { get; set; } = DateTime.Now;

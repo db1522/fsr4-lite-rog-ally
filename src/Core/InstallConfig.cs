@@ -45,28 +45,45 @@ public static class InstallConfig
     /// e.g. "FSR3 -> FSR 4.1.2", plus the render -> output resolution row) in the top left corner, at the size the player
     /// picked (0.8 by default). The "Detailed" layout at automatic scale runs off the ROG Ally's screen.
     /// </summary>
-    public static IReadOnlyList<IniValue> Overlay(bool on, string scale = "0.8", string position = "topleft") => new[]
+    public static IReadOnlyList<IniValue> Overlay(bool on, OverlayLook? look = null, string position = "topleft")
     {
-        new IniValue("Menu", "ShowFps", on ? "true" : "auto"),
-        new IniValue("Menu", "FpsOverlayType", on ? "1" : "auto"),
-        new IniValue("Menu", "FpsOverlayShowRatio", on ? "true" : "auto"),
-        new IniValue("Menu", "FpsScale", on ? scale : "auto"),
-        new IniValue("Menu", "FpsOverlayPos", on ? OverlayPositionValue(position) : "auto"),
-        new IniValue("Menu", "FpsOverlayHorizontal", on ? "false" : "auto"),
+        look ??= OverlayLookFor(DefaultOverlaySize, 1080, fontSizeKnown: false);
+        return new[]
+        {
+            new IniValue("Menu", "ShowFps", on ? "true" : "auto"),
+            new IniValue("Menu", "FpsOverlayType", on ? "1" : "auto"),
+            new IniValue("Menu", "FpsOverlayShowRatio", on ? "true" : "auto"),
+            new IniValue("Menu", "FpsScale", on ? look.Scale : "auto"),
+            new IniValue("Menu", "FpsOverlayFontSize", on ? look.FontSize : "auto"),
+            new IniValue("Menu", "FpsOverlayPos", on ? OverlayPositionValue(position) : "auto"),
+            new IniValue("Menu", "FpsOverlayHorizontal", on ? "false" : "auto"),
+        };
+    }
+
+    public const string DefaultOverlaySize = "large";
+
+    /// <summary>
+    /// Overlay sizes offered in the widget: key, label, text height as a share of the game's screen height. Each step is
+    /// about a third bigger than the one before, so every choice looks clearly different on every screen. Large at
+    /// 1080p is about 28 pixels, the size of the old Maximum. Measured in OptiScaler (FpsOverlayFontSize 48 at FpsScale
+    /// 1.26): 51 px glyphs and a 31-character row 888 px wide at 1080p, so Maximum stays near two thirds of the width
+    /// with the longer in-game row.
+    /// </summary>
+    public static readonly IReadOnlyList<(string Key, string Label, double Share)> OverlaySizes = new[]
+    {
+        ("small", "Small", 0.015),
+        ("medium", "Medium", 0.020),
+        ("large", "Large", 0.026),
+        ("xlarge", "Extra large", 0.033),
+        ("huge", "Huge", 0.041),
+        ("max", "Maximum", 0.050),
     };
 
-    /// <summary>Overlay sizes offered in the widget: key, label, size relative to Medium.</summary>
-    public static readonly IReadOnlyList<(string Key, string Label, double Factor)> OverlaySizes = new[]
-    {
-        ("small", "Small", 0.75),
-        ("medium", "Medium", 1.0),
-        ("large", "Large", 1.25),
-        ("xlarge", "Extra large", 1.6),
-        // The overlay is OptiScaler's two-line Simple layout, so even these stay well inside the screen
-        // (about a quarter to a third of the width at 1080p).
-        ("huge", "Huge", 2.0),
-        ("max", "Maximum", 2.5),
-    };
+    /// <summary>FpsScale and FpsOverlayFontSize values for OptiScaler.ini ("auto" when not set).</summary>
+    public sealed record OverlayLook(string Scale, string FontSize, int TextPx);
+
+    /// <summary>OptiScaler's menu font size, the overlay's font size when FpsOverlayFontSize isn't set.</summary>
+    private const double OptiBaseFontPx = 14.0;
 
     /// <summary>Overlay corners offered in the widget: key, label, OptiScaler FpsOverlayPos (0 TL, 1 TR, 2 BL, 3 BR).</summary>
     public static readonly IReadOnlyList<(string Key, string Label, string Value)> OverlayPositions = new[]
@@ -81,21 +98,29 @@ public static class InstallConfig
         OverlayPositions.FirstOrDefault(p => p.Key.Equals(position, StringComparison.OrdinalIgnoreCase)).Value ?? "0";
 
     /// <summary>
-    /// OptiScaler FpsScale for an overlay size, so the overlay takes the same share of the screen on every handheld.
+    /// The overlay settings for a size on a screen <paramref name="screenHeightPx"/> pixels tall (the game window's
+    /// height, which is what OptiScaler draws into), so a size is the same share of the screen on every handheld.
     ///
-    /// OptiScaler draws the overlay in the game's own pixels, and its automatic scale grows with the game's output height
-    /// (floor(height / 108) / 10: 1080p = 1.0, 1200p = 1.1, 1600p = 1.4). A fixed FpsScale ignores that, so the original
-    /// fixed 0.8 looked small on a 2560x1600 Legion Go and oversized in a 720p game. Following OptiScaler's rule keeps the
-    /// overlay the same proportion of the screen everywhere, so bigger screens show bigger text, as people expect.
-    /// Medium at 1080p (the whole ROG Ally family) is 0.8, the original value. OptiScaler clamps FpsScale to 0.5-3.0.
+    /// When the game's OptiScaler build has FpsOverlayFontSize, the font is drawn at the text size itself (8-48 px),
+    /// which keeps it sharp, and FpsScale only grows it past 48 px. Older builds only have FpsScale, which multiplies the
+    /// 14 px menu font (0.5-3.0, so Small and Maximum can come out closer together there).
     /// </summary>
-    public static string OverlayScale(string size, int outputHeightPx)
+    public static OverlayLook OverlayLookFor(string size, int screenHeightPx, bool fontSizeKnown)
     {
-        var factor = OverlaySizes.FirstOrDefault(s => s.Key.Equals(size, StringComparison.OrdinalIgnoreCase)).Factor;
-        if (factor <= 0) factor = 1.0;
-        var auto = Math.Clamp(Math.Floor(Math.Max(outputHeightPx, 1) / 108.0) / 10.0, 0.5, 2.0);
-        var scale = Math.Clamp(Math.Round(0.8 * auto * factor, 2), 0.5, 3.0);
-        return scale.ToString("0.00", System.Globalization.CultureInfo.InvariantCulture);
+        var share = OverlaySizes.FirstOrDefault(s => s.Key.Equals(size, StringComparison.OrdinalIgnoreCase)).Share;
+        if (share <= 0) share = OverlaySizes.First(s => s.Key == DefaultOverlaySize).Share;
+        var target = share * Math.Clamp(screenHeightPx, 480, 4320);
+        var inv = System.Globalization.CultureInfo.InvariantCulture;
+
+        if (fontSizeKnown)
+        {
+            var font = Math.Clamp(Math.Round(target), 8, 48);
+            var scale = Math.Clamp(Math.Round(target / font, 2), 1.0, 3.0);
+            return new OverlayLook(scale.ToString("0.00", inv), font.ToString("0", inv), (int)Math.Round(font * scale));
+        }
+
+        var onlyScale = Math.Clamp(Math.Round(target / OptiBaseFontPx, 2), 0.5, 3.0);
+        return new OverlayLook(onlyScale.ToString("0.00", inv), "auto", (int)Math.Round(OptiBaseFontPx * onlyScale));
     }
 
     /// <summary>

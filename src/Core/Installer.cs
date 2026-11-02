@@ -8,7 +8,7 @@ namespace RalFsrHelper.Core;
 public static class Installer
 {
     public static InstallManifest Install(GameScan scan, OptiPackage opti, Fsr4Set fsr4, AppSettings settings,
-        string? overlayScale = null)
+        InstallConfig.OverlayLook? overlayLook = null)
     {
         var exeDir = scan.ExeDir ?? throw new InvalidOperationException("No exe folder for this game.");
         if (!fsr4.IsUsable) throw new InvalidOperationException("Import the FSR 4 files first.");
@@ -57,7 +57,7 @@ public static class Installer
                 RecordNewFile(exeDir, "OptiScaler.ini", manifest);
             }
             IniFile.SetValues(ini, InstallConfig.Base(fsr4.Vulkan is not null)
-                .Concat(InstallConfig.Overlay(settings.ShowResolutionOverlay, overlayScale ?? "0.8", settings.OverlayPosition))
+                .Concat(InstallConfig.Overlay(settings.ShowResolutionOverlay, overlayLook, settings.OverlayPosition))
                 .Concat(InstallConfig.Watermark(settings.ShowFsr4Watermark)));
 
             manifest.InstalledAt = DateTime.Now;
@@ -163,10 +163,37 @@ public static class Installer
     }
 
     /// <summary>Changes only the overlay keys in an installed game's ini.</summary>
-    public static void ApplyOverlay(string exeDir, bool on, string scale = "0.8", string position = "topleft")
+    public static void ApplyOverlay(string exeDir, bool on, InstallConfig.OverlayLook? look = null, string position = "topleft")
     {
         var ini = Path.Combine(exeDir, "OptiScaler.ini");
-        if (File.Exists(ini)) IniFile.SetValues(ini, InstallConfig.Overlay(on, scale, position));
+        if (File.Exists(ini)) IniFile.SetValues(ini, InstallConfig.Overlay(on, look, position));
+    }
+
+    private static readonly Dictionary<string, bool> KnownKeys = new(StringComparer.OrdinalIgnoreCase);
+
+    /// <summary>
+    /// True when an OptiScaler DLL reads the given ini key (its name is in the DLL). Lets newer settings, such as
+    /// FpsOverlayFontSize, be used only with builds that have them. Remembered per file, size and date.
+    /// </summary>
+    public static bool OptiReadsKey(string dllPath, string key)
+    {
+        try
+        {
+            var info = new FileInfo(dllPath);
+            if (!info.Exists) return false;
+            var id = $"{info.FullName}|{info.Length}|{info.LastWriteTimeUtc.Ticks}|{key}";
+            lock (KnownKeys)
+                if (KnownKeys.TryGetValue(id, out var known)) return known;
+
+            var needle = System.Text.Encoding.ASCII.GetBytes(key);
+            var found = File.ReadAllBytes(dllPath).AsSpan().IndexOf(needle) >= 0;
+            lock (KnownKeys) KnownKeys[id] = found;
+            return found;
+        }
+        catch
+        {
+            return false;
+        }
     }
 
     /// <summary>Sets this game's render resolution (OptiScaler's upscale ratio override) and remembers it.</summary>

@@ -457,25 +457,63 @@
                                       Toggled="Overlay_Toggled" AutomationProperties.Name="FPS and resolution overlay" />
                     </Grid>
                     <!-- Shown while the overlay is on: its size and corner -->
-                    <StackPanel x:Name="OverlayOptions" Padding="14,0,14,12" Spacing="8" Visibility="Collapsed">
-                        <ComboBox x:Name="OverlaySizeBox" Header="Overlay size" HorizontalAlignment="Stretch"
-                                  SelectionChanged="OverlaySize_Changed">
-                            <x:String>Small</x:String>
-                            <x:String>Medium</x:String>
-                            <x:String>Large</x:String>
-                            <x:String>Extra large</x:String>
-                            <x:String>Huge</x:String>
-                            <x:String>Maximum</x:String>
-                        </ComboBox>
-                        <ComboBox x:Name="OverlayPositionBox" Header="Overlay position" HorizontalAlignment="Stretch"
-                                  SelectionChanged="OverlayPosition_Changed">
-                            <x:String>Top left</x:String>
-                            <x:String>Top right</x:String>
-                            <x:String>Bottom left</x:String>
-                            <x:String>Bottom right</x:String>
-                        </ComboBox>
-                        <TextBlock FontSize="12" TextWrapping="Wrap" Foreground="{StaticResource MutedBrush}"
-                                   Text="Size and position changes show after you restart the game." />
+                    <StackPanel x:Name="OverlayOptions" Padding="14,0,14,12" Visibility="Collapsed">
+                        <!-- A small screen showing where the overlay goes and how much of the screen it takes -->
+                        <Border x:Name="OverlayPreview" CornerRadius="8" BorderThickness="1" BorderBrush="#33FFFFFF"
+                                Height="150" SizeChanged="OverlayPreview_SizeChanged" AutomationProperties.Name="Overlay preview">
+                            <Border.Background>
+                                <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
+                                    <GradientStop Color="#FF1B2433" Offset="0" />
+                                    <GradientStop Color="#FF2B1A22" Offset="0.6" />
+                                    <GradientStop Color="#FF120F14" Offset="1" />
+                                </LinearGradientBrush>
+                            </Border.Background>
+                            <Border x:Name="PreviewPanel" Background="#B3000000" CornerRadius="3" Margin="6"
+                                    HorizontalAlignment="Left" VerticalAlignment="Top">
+                                <StackPanel x:Name="PreviewLines">
+                                    <Rectangle x:Name="PreviewLine1" Fill="#FFE8ECF2" RadiusX="1" RadiusY="1" HorizontalAlignment="Left" />
+                                    <Rectangle x:Name="PreviewLine2" Fill="#FFB9BFCA" RadiusX="1" RadiusY="1" HorizontalAlignment="Left" />
+                                </StackPanel>
+                            </Border>
+                        </Border>
+
+                        <TextBlock Text="Size" FontSize="12" Foreground="{StaticResource MutedBrush}" Margin="0,12,0,6" />
+                        <Grid x:Name="OverlaySizeChips" ColumnSpacing="6" RowSpacing="6">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                            </Grid.RowDefinitions>
+                            <Button Style="{StaticResource ChipButton}" Tag="small" Content="Small" Click="OverlaySizeChip_Click" />
+                            <Button Style="{StaticResource ChipButton}" Tag="medium" Content="Medium" Grid.Column="1" Click="OverlaySizeChip_Click" />
+                            <Button Style="{StaticResource ChipButton}" Tag="large" Content="Large" Grid.Column="2" Click="OverlaySizeChip_Click" />
+                            <Button Style="{StaticResource ChipButton}" Tag="xlarge" Content="Extra large" Grid.Row="1" Click="OverlaySizeChip_Click" />
+                            <Button Style="{StaticResource ChipButton}" Tag="huge" Content="Huge" Grid.Row="1" Grid.Column="1" Click="OverlaySizeChip_Click" />
+                            <Button Style="{StaticResource ChipButton}" Tag="max" Content="Maximum" Grid.Row="1" Grid.Column="2" Click="OverlaySizeChip_Click" />
+                        </Grid>
+
+                        <TextBlock Text="Position" FontSize="12" Foreground="{StaticResource MutedBrush}" Margin="0,12,0,6" />
+                        <Grid x:Name="OverlayPositionChips" ColumnSpacing="6" RowSpacing="6">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                            </Grid.RowDefinitions>
+                            <Button Style="{StaticResource ChipButton}" Tag="topleft" Content="Top left" Click="OverlayPositionChip_Click" />
+                            <Button Style="{StaticResource ChipButton}" Tag="topright" Content="Top right" Grid.Column="1" Click="OverlayPositionChip_Click" />
+                            <Button Style="{StaticResource ChipButton}" Tag="bottomleft" Content="Bottom left" Grid.Row="1" Click="OverlayPositionChip_Click" />
+                            <Button Style="{StaticResource ChipButton}" Tag="bottomright" Content="Bottom right" Grid.Row="1" Grid.Column="1" Click="OverlayPositionChip_Click" />
+                        </Grid>
+
+                        <TextBlock FontSize="12" TextWrapping="Wrap" Foreground="{StaticResource MutedBrush}" Margin="0,10,0,0"
+                                   Text="Each size is the same share of the screen on every handheld. Changes show after you restart the game." />
                     </StackPanel>
                     <Border Style="{StaticResource RowLine}" />
 
