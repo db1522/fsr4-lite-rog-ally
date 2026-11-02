@@ -13,6 +13,11 @@ public static class GameRules
         // OptiScaler wiki, Red Dead Redemption II: works as winmm.dll or version.dll (dxgi.dll crashes it at startup),
         // with FSR 2 inputs on DirectX 12. Vulkan, the game's default, needs an ASI-loader setup the widget doesn't do.
         ["RDR2.exe"] = new Rule("winmm.dll", Rdr2Tip),
+        // Enshrouded (Vulkan, Steam): skipped dxgi.dll on a ROG Ally X and loaded winmm.dll (2026-11-02). OptiScaler's
+        // Compatibility List: DLSS input. The game only lists DLSS after a restart with its upscaler off.
+        ["enshrouded.exe"] = new Rule("winmm.dll", () =>
+            "In Enshrouded, pick DLSS as the upscaler. If DLSS isn't listed, turn the upscaler off, restart the game, " +
+            "then pick DLSS."),
     };
 
     /// <summary>The loader name a game needs, or null for the default order.</summary>

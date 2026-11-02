@@ -174,6 +174,7 @@ Confirmed on ROG Ally hardware:
 | Dragon's Dogma 2 | Steam | FSR (REFramework added automatically) |
 | Red Dead Redemption 2 | Steam | FSR 2 (set the game to DirectX 12; installed as winmm.dll automatically) |
 | Palworld | Steam | DLSS (add `-dx12` to Palworld's launch options) |
+| Enshrouded | Steam | DLSS (Vulkan; if DLSS isn't listed, turn the upscaler off and restart the game) |
 | The Witcher 3: Wild Hunt | Steam | FSR (the game's own frame generation works alongside it) |
 | Valor Mortis | Game Pass | FSR |
 | Forza Motorsport | Game Pass | DLSS |
