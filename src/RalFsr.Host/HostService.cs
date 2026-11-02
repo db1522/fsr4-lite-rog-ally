@@ -356,6 +356,33 @@ public sealed class HostService
                 ? "OptiScaler's HUD fix doesn't work in this game, so menus may ghost."
                 : "",
             activeText = running.Length > 0 ? $"Frame generation active ({running})" : "",
+            restartText = RestartText(fg, pid),
+        };
+    }
+
+    /// <summary>
+    /// The amber "restart" line: shown while the running game started before the last frame generation change, since
+    /// OptiScaler only reads these settings at launch. Empty once the game has been restarted.
+    /// </summary>
+    private static string RestartText(FrameGenSettings fg, int pid)
+    {
+        if (fg.ChangedAt is not { } changed) return "";
+        DateTime started;
+        try
+        {
+            using var p = System.Diagnostics.Process.GetProcessById(pid);
+            started = p.StartTime;
+        }
+        catch
+        {
+            return ""; // can't tell when the game started
+        }
+        if (started >= changed) return "";
+        return fg.LastChange switch
+        {
+            "on" => "Restart the game to turn frame generation on.",
+            "off" => "Restart the game to turn frame generation off.",
+            _ => "Restart the game to apply the new settings.",
         };
     }
 
@@ -405,6 +432,8 @@ public sealed class HostService
             default:
                 return Fail("Unknown frame generation setting.");
         }
+        fg.ChangedAt = DateTime.Now;
+        fg.LastChange = what == "enabled" ? (fg.Enabled ? "on" : "off") : "settings";
 
         if (fg.Enabled)
             Installer.ApplyFrameGen(exeDir, manifest, scan.IsUnreal && scan.Upscalers.Contains("DLSS"));

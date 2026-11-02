@@ -253,10 +253,28 @@
                                             <ColumnDefinition Width="*" />
                                             <ColumnDefinition Width="Auto" />
                                         </Grid.ColumnDefinitions>
-                                        <TextBlock Text="Frame generation" FontSize="14" VerticalAlignment="Center" />
+                                        <StackPanel VerticalAlignment="Center">
+                                            <TextBlock Text="Frame generation" FontSize="14" />
+                                            <TextBlock Text="Takes effect when you restart the game." FontSize="12"
+                                                       Foreground="{StaticResource MutedBrush}" TextWrapping="Wrap" />
+                                        </StackPanel>
                                         <ToggleSwitch x:Name="FgSwitch" Grid.Column="1" Style="{StaticResource RowSwitch}"
                                                       Toggled="FgSwitch_Toggled" AutomationProperties.Name="Frame generation" />
                                     </Grid>
+                                    <!-- Shown while the running game started before the last change (OptiScaler reads these at launch) -->
+                                    <Border x:Name="FgRestartBanner" Visibility="Collapsed" Padding="12,10" CornerRadius="10"
+                                            Background="{StaticResource WarnTintBrush}" BorderBrush="{StaticResource WarnBrush}" BorderThickness="1">
+                                        <Grid ColumnSpacing="10">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="Auto" />
+                                                <ColumnDefinition Width="*" />
+                                            </Grid.ColumnDefinitions>
+                                            <FontIcon FontFamily="{StaticResource IconFont}" Glyph="&#xE72C;" FontSize="16"
+                                                      Foreground="{StaticResource WarnBrush}" VerticalAlignment="Center" />
+                                            <TextBlock x:Name="FgRestartText" Grid.Column="1" FontSize="13" FontWeight="SemiBold"
+                                                       TextWrapping="Wrap" Foreground="{StaticResource WarnTextBrush}" VerticalAlignment="Center" />
+                                        </Grid>
+                                    </Border>
                                     <TextBlock x:Name="FgInputText" FontSize="12" TextWrapping="Wrap" Foreground="{StaticResource MutedBrush}" />
                                     <!-- This game's recommended settings (preset list), and OptiScaler's HUDFix warning -->
                                     <TextBlock x:Name="FgPresetText" Visibility="Collapsed" FontSize="12" TextWrapping="Wrap"

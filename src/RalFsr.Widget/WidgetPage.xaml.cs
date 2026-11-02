@@ -433,6 +433,10 @@ namespace RalFsr.Widget
                     break;
             }
 
+            var restart = Json.Str(fg, "restartText");
+            FgRestartText.Text = restart;
+            FgRestartBanner.Visibility = string.IsNullOrEmpty(restart) ? Visibility.Collapsed : Visibility.Visible;
+
             var presetNote = Json.Str(fg, "presetNote");
             FgPresetText.Text = presetNote;
             FgPresetText.Visibility = string.IsNullOrEmpty(presetNote) ? Visibility.Collapsed : Visibility.Visible;

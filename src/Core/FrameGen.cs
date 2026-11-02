@@ -18,6 +18,13 @@ public sealed class FrameGenSettings
     public int HudLimit { get; set; } = FrameGen.DefaultHudLimit;
     public bool Immediate { get; set; }
 
+    /// <summary>
+    /// When the player last changed frame generation, and what ("on", "off" or "settings"). OptiScaler reads these settings
+    /// only when the game starts, so a game started before this time still runs the old ones: the card says to restart.
+    /// </summary>
+    public DateTime? ChangedAt { get; set; }
+    public string LastChange { get; set; } = "";
+
     /// <summary>Unreal Engine.ini the widget added r.NGX.DLSS.DilateMotionVectors=0 to ("" = none).</summary>
     public string EngineIniPath { get; set; } = "";
 
