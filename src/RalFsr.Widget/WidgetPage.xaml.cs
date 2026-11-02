@@ -157,6 +157,7 @@ namespace RalFsr.Widget
             // Shown for notes (official driver, experimental) as well as for unsupported devices.
             DeviceBanner.Visibility = Json.Bool(device, "showNote") ? Visibility.Visible : Visibility.Collapsed;
             DeviceBannerText.Text = Json.Str(device, "message");
+            HideNoteButton.Visibility = Json.Bool(device, "canHideNote") ? Visibility.Visible : Visibility.Collapsed;
 
             // Setup
             var opti = Json.Obj(state, "opti");
@@ -465,6 +466,12 @@ namespace RalFsr.Widget
         {
             ExperimentalChevron.Text = _experimentalExpanded ? "▾" : "▸";
             ExperimentalBody.Visibility = _experimentalExpanded ? Visibility.Visible : Visibility.Collapsed;
+        }
+
+        private async void HideNote_Click(object sender, RoutedEventArgs e)
+        {
+            await RunCommandAsync("hideDeviceNote");
+            FocusTop(); // the notice and its button are gone: keep the controller selection at the top
         }
 
         private void ExperimentalToggle_Click(object sender, RoutedEventArgs e)

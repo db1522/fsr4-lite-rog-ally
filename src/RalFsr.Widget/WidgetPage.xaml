@@ -104,7 +104,13 @@
             <!-- Device problems (wrong device, or the official ASUS route applies) -->
             <Border x:Name="DeviceBanner" Visibility="Collapsed" Padding="12" CornerRadius="10"
                     Background="{StaticResource WarnTintBrush}" BorderBrush="{StaticResource WarnBrush}" BorderThickness="1">
-                <TextBlock x:Name="DeviceBannerText" TextWrapping="Wrap" FontSize="13" />
+                <StackPanel Spacing="8">
+                    <TextBlock x:Name="DeviceBannerText" TextWrapping="Wrap" FontSize="13" />
+                    <!-- Informational notes only (ROG Xbox Ally preview driver, experimental RDNA 2) -->
+                    <Button x:Name="HideNoteButton" Style="{StaticResource QuietButton}" Visibility="Collapsed"
+                            HorizontalAlignment="Left" Background="Transparent" BorderBrush="{StaticResource WarnBrush}"
+                            CornerRadius="8" Padding="12,6" FontSize="13" Content="Hide this notice" Click="HideNote_Click" />
+                </StackPanel>
             </Border>
 
             <!-- The game under the overlay -->

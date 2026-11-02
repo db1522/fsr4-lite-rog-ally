@@ -72,6 +72,7 @@ public sealed class HostService
                 "overlaySize" => OverlaySize(Arg(args, "value") ?? "medium"),
                 "overlayPosition" => OverlayPosition(Arg(args, "value") ?? "topleft"),
                 "watermark" => Watermark(Arg(args, "on") == "true"),
+                "hideDeviceNote" => HideDeviceNote(),
                 "notify" => Notify(Arg(args, "on") == "true"),
                 "renderScale" => RenderScale(Arg(args, "exeDir") ?? "", Arg(args, "value") ?? "game"),
                 "frameGen" => FrameGenCommand(Arg(args, "exeDir") ?? "", Arg(args, "what") ?? "", Arg(args, "value") ?? ""),
@@ -191,7 +192,9 @@ public sealed class HostService
             {
                 summary = _device.Summary,
                 supported = _device.CanInstall,
-                showNote = _device.Support != DeviceSupport.Supported,
+                showNote = _device.Support != DeviceSupport.Supported && !NoteHidden,
+                // Informational notes (official driver, experimental) can be hidden; "needs AMD graphics" can't.
+                canHideNote = _device.CanInstall,
                 officialDriver = _device.Support == DeviceSupport.OfficialDriver,
                 experimental = _device.Support == DeviceSupport.Experimental,
                 message = _device.Message,
@@ -1075,6 +1078,17 @@ public sealed class HostService
                 ? $"{manifest.GameName} uses its own resolution setting again" + (running ? " after a restart." : ".")
                 : $"Render resolution set to {label}" + (running ? $". Restart {manifest.GameName} to apply it." : "."),
         };
+    }
+
+    /// <summary>The player hid this device's informational notice; it stays hidden until its text changes.</summary>
+    private bool NoteHidden => _device.CanInstall && _settings.HiddenDeviceNote == _device.Message;
+
+    private object HideDeviceNote()
+    {
+        if (!_device.CanInstall) return Fail("This notice explains why installs are off, so it stays.");
+        _settings.HiddenDeviceNote = _device.Message;
+        _settings.Save();
+        return new { ok = true, message = "Notice hidden." };
     }
 
     private object Notify(bool on)

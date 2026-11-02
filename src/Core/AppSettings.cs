@@ -37,6 +37,12 @@ public sealed class AppSettings
     /// <summary>The OptiScaler build the "updates ready" notification was last shown for, so it's shown once per build.</summary>
     public string LastUpdateNoticeBuild { get; set; } = "";
 
+    /// <summary>
+    /// The device notice the player hid (its exact text), such as the ROG Xbox Ally's note about ASUS's preview driver.
+    /// Only informational notes can be hidden; a different text shows again.
+    /// </summary>
+    public string HiddenDeviceNote { get; set; } = "";
+
     private static readonly JsonSerializerOptions Json = new() { WriteIndented = true };
 
     public static AppSettings Load()
