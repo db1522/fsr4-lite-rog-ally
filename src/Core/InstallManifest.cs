@@ -13,6 +13,12 @@ public sealed class InstallManifest
     public string Source { get; set; } = "";
     public string GameName { get; set; } = "";
     public string ProxyName { get; set; } = "";
+
+    /// <summary>The game exe the install was made for (file name). "" in installs from before 1.1.30.</summary>
+    public string ExeName { get; set; } = "";
+
+    /// <summary>Loader names this game was seen ignoring, in order. The automatic switch never goes back to one.</summary>
+    public List<string> TriedLoaders { get; set; } = new();
     public string OptiBuild { get; set; } = "";
     public string Fsr4Version { get; set; } = "";
     public DateTime InstalledAt { get; set; } = DateTime.Now;

@@ -154,8 +154,8 @@ OptiScaler's HUD fix can't work, from OptiScaler's own list, show a warning on t
 **Unreal Engine games** using OptiFG with DLSS get OptiScaler's recommended fix for smearing
 (`r.NGX.DLSS.DilateMotionVectors=0` in the game's `Engine.ini`), removed again when you turn frame generation off.
 
-Your controller and the Steam overlay keep working with frame generation on. Turning the switch off, **Try another
-loader** or uninstalling turns frame generation off and undoes every change it made.
+Your controller and the Steam overlay keep working with frame generation on. Turning the switch off or uninstalling
+turns frame generation off and undoes every change it made.
 
 ## Tested games
 
@@ -208,8 +208,9 @@ anti-cheat, and it recognises games protected by Riot Vanguard, Valve Anti-Cheat
 - **Image quality first.** FSR 4.1.2 Lite costs more GPU time than FSR 3, so at the same preset it can be a little
   slower. A lower preset with Lite usually looks as good as or better than FSR 3 at a higher one.
 - **The game needs an upscaler:** FSR 2, FSR 3, DLSS or XeSS. FSR 1 can't be upgraded.
-- **Some Game Pass games need a nudge.** If OptiScaler doesn't load after a restart, press **Try another loader**.
-  Games in Windows' protected WindowsApps folder can't be changed.
+- **Some games need one extra restart.** If a game, often a Game Pass one, skips OptiScaler, the widget sets it up a
+  different way by itself and a notification asks you to restart the game. Games in Windows' protected WindowsApps
+  folder can't be changed.
 - **Most testing happens on ROG Ally hardware.** Other AMD handhelds are supported by chip.
 - **RivaTuner (RTSS) can crash some games** together with OptiScaler, Red Dead Redemption 2 among them. If a game
   crashes at startup, close RTSS (or MSI Afterburner) and try again.
@@ -257,8 +258,10 @@ would skip this; the widget is free, so it uses its own.
 <details>
 <summary><strong>My game says "Restart the game to load it" after I restarted.</strong></summary>
 
-Press **Try another loader** if it appears, then restart again. Some games, often Game Pass ones, ignore OptiScaler's
-default loader name.
+Some games, often Game Pass ones, skip the file OptiScaler starts from. About 30 seconds into the game, the widget
+notices, sets FSR 4.1 Lite up a different way and asks you to restart the game. If that happens more than once, it's
+trying the next way each time; it remembers the one that works. You can also press **Try another loader** on the card
+to switch straight away.
 </details>
 
 <details>
@@ -324,8 +327,8 @@ When you install into a game, the helper:
 1. Finds the game window under Game Bar and the folder holding its exe (`<Project>\Binaries\Win64` or `WinGDK` for
    Unreal Engine games). Launchers, the Xbox app and Windows apps are never treated as games.
 2. Blocks games with anti-cheat, and leaves alone games with a manual OptiScaler install.
-3. Copies the current OptiScaler nightly into that folder, with `OptiScaler.dll` renamed to `dxgi.dll` (or the next
-   free loader name).
+3. Copies the current OptiScaler nightly into that folder, with `OptiScaler.dll` renamed to a loader name (see
+   [Loader names](#loader-names)), usually `dxgi.dll`.
 4. Copies the FSR 4.1.2 files (`amdxcffx64.dll`, `amdvkffx64.dll`) into the `OptiScaler` subfolder.
 5. Writes `OptiScaler.ini`: `Dx12Upscaler=ffx`, `Dx11Upscaler=ffx_12`, `VulkanUpscaler=ffx_12` (Vulkan through the
    DX12 bridge, where FSR 4.1.2 is listed first), `Fsr4GpuSupport=4` and `Fsr4Model=3` (INT8 Lite), frame generation
@@ -340,6 +343,16 @@ Values live in `src\Core\InstallConfig.cs`; anti-cheat lists in `src\Core\GameAn
 session). Green means the widget's own FSR 4.1.2 file is loaded and the log shows the Lite model hooked. The render
 resolution comes from Streamline's `color_in extents` when present (the size really handed over), otherwise from
 OptiScaler's feature setup.
+
+<a id="loader-names"></a>**Loader names.** OptiScaler starts from a DLL with a Windows name the game loads from its own
+folder: `dxgi.dll`, `winmm.dll`, `version.dll`, `dbghelp.dll`, `d3d12.dll`, `wininet.dll` or `winhttp.dll`, never one
+the game ships. The first name is, in order: the game's rule (`winmm.dll` for Red Dead Redemption 2), the name that
+worked the last time the game was installed, for Game Pass games whose exe doesn't import `dxgi.dll` a name it does
+import (read from the exe's import table, since Windows loads those from the game folder at startup), else `dxgi.dll`.
+When the game's own exe runs for 30 seconds with its graphics started and no process from its folder has loaded
+OptiScaler, the helper renames the loader to the next untried name (names the exe imports first), records the skipped
+names in the install record and asks for a restart; with none left it says the game can't be set up. A name that then
+works is remembered per exe. Frame generation settings are kept through a switch.
 
 **Frame generation.** Written into `OptiScaler.ini` from `src\Core\FrameGen.cs` (key names checked against the v10
 nightly's `OptiScaler.ini`): `[FrameGen] Enabled, FGInput, FGOutput, FGNvngxReplacement`, `[OptiFG] HUDFix, HUDLimit,

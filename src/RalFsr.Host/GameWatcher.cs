@@ -17,6 +17,68 @@ public sealed class GameWatcher
         public LoadedModules.Stage Stage { get; set; } = LoadedModules.Stage.None;
         public DateTime StageSince { get; set; } = DateTime.UtcNow;
         public bool Notified { get; set; }
+        public bool LoaderRemembered { get; set; }
+    }
+
+    private static readonly string[] GraphicsDlls = { "dxgi.dll", "d3d11.dll", "d3d12.dll", "vulkan-1.dll" };
+
+    private const string ManualFix = "Open the widget, press Try another loader and restart the game.";
+
+    /// <summary>
+    /// The game ignored OptiScaler's loader name. When that's certain (this is the game's own exe, it has started its
+    /// graphics, and no other process from its folder loaded OptiScaler), rename the loader to the next likely name so
+    /// the next launch works, with no button to press. Otherwise, or with no name left, just tell the player.
+    /// </summary>
+    private static void SwitchLoaderOrTell(int pid, string exePath, string dir, InstallManifest manifest, string game)
+    {
+        var exe = Path.GetFileName(exePath);
+        if (manifest.ExeName.Length > 0 && !manifest.ExeName.Equals(exe, StringComparison.OrdinalIgnoreCase))
+            return; // a launcher or helper from the game's folder, not the game itself
+        if (ProxyLoadedElsewhere(dir, manifest.ProxyName))
+            return; // another process from the folder runs OptiScaler: this one is a helper
+
+        var rendering = LoadedModules.List(pid).Any(m => GraphicsDlls.Contains(Path.GetFileName(m), StringComparer.OrdinalIgnoreCase));
+        if (!rendering)
+        {
+            Log.Info($"{exe} didn't load {manifest.ProxyName} and has no graphics loaded yet; not switching");
+            Toasts.Show($"FSR 4.1 Lite didn't load in {game}", ManualFix);
+            return;
+        }
+
+        string? next;
+        try { next = Installer.SwitchProxy(dir, automatic: true); }
+        catch (Exception ex)
+        {
+            Log.Warn($"Automatic loader switch failed in {dir}: {ex.Message}");
+            Toasts.Show($"FSR 4.1 Lite didn't load in {game}", ManualFix);
+            return;
+        }
+
+        if (next is not null)
+            Toasts.Show($"Restart {game} to finish setting up",
+                "The game skipped FSR 4.1 Lite, so the widget set it up a different way. Restart the game to use it.");
+        else
+            Toasts.Show($"FSR 4.1 Lite can't load in {game}",
+                "The game skipped every way OptiScaler can start. Uninstall it from this game in the widget.");
+    }
+
+    private static bool ProxyLoadedElsewhere(string dir, string proxy)
+    {
+        var prefix = dir.TrimEnd('\\') + "\\";
+        var windowsDir = Environment.GetFolderPath(Environment.SpecialFolder.Windows);
+        foreach (var p in Process.GetProcesses())
+        {
+            using (p)
+            {
+                var path = ForegroundGame.ProcessPath(p.Id);
+                if (path is null || !path.StartsWith(prefix, StringComparison.OrdinalIgnoreCase)) continue;
+                // The Windows copy of the same name (System32\dxgi.dll) doesn't count, only OptiScaler's.
+                if (LoadedModules.List(p.Id).Any(m => Path.GetFileName(m).Equals(proxy, StringComparison.OrdinalIgnoreCase) &&
+                                                      !m.StartsWith(windowsDir, StringComparison.OrdinalIgnoreCase)))
+                    return true;
+            }
+        }
+        return false;
     }
 
     private static readonly TimeSpan Interval = TimeSpan.FromSeconds(5);
@@ -71,6 +133,13 @@ public sealed class GameWatcher
                 if (t.Notified) continue;
 
                 var status = LoadedModules.Check(p.Id, dir, manifest);
+                if (!t.LoaderRemembered && manifest.TriedLoaders.Count > 0 && status.Stage is LoadedModules.Stage.WaitingForFsr
+                        or LoadedModules.Stage.Active or LoadedModules.Stage.NotLite or LoadedModules.Stage.Fsr3Fallback)
+                {
+                    // A switched loader just worked: start with it if the game is ever installed again.
+                    LoaderMemory.Remember(manifest.ExeName.Length > 0 ? manifest.ExeName : Path.GetFileName(path), manifest.ProxyName);
+                    t.LoaderRemembered = true;
+                }
                 if (status.Stage != t.Stage)
                 {
                     t.Stage = status.Stage;
@@ -96,8 +165,7 @@ public sealed class GameWatcher
                         break;
 
                     case LoadedModules.Stage.NotLoaded when held >= ProblemGrace:
-                        Toasts.Show($"FSR 4.1 Lite didn't load in {t.Game}",
-                            "This game ignores OptiScaler's loader. Open the widget, press Try another loader and restart the game.");
+                        SwitchLoaderOrTell(p.Id, path, dir, manifest, t.Game);
                         t.Notified = true;
                         break;
 

@@ -85,7 +85,7 @@ public static class OtherLaunchers
     /// <summary>
     /// Xbox app installs into an XboxGames folder on any drive, with the game files under Content.
     /// Confirmed with Valor Mortis. The game reports its files under C:\Program Files\WindowsApps\..., which the
-    /// live checks handle by matching file names. A game that ignores dxgi.dll gets "Try another loader".
+    /// live checks handle by matching file names. A game that ignores dxgi.dll gets another loader name automatically (GameWatcher).
     /// </summary>
     private static IEnumerable<GameEntry> Xbox()
     {

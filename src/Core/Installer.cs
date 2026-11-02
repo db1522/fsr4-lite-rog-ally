@@ -14,13 +14,14 @@ public static class Installer
         if (!fsr4.IsUsable) throw new InvalidOperationException("Import the FSR 4 files first.");
         if (InstallManifest.TryLoad(exeDir) is not null) throw new InvalidOperationException("Already installed.");
 
-        var proxy = PickProxyName(exeDir, scan.ExeName);
+        var proxy = PickProxyName(exeDir, scan.ExeName, scan.Game.Source);
         var manifest = new InstallManifest
         {
             GameKey = scan.Game.Key,
             Source = scan.Game.Source.ToString(),
             GameName = scan.Game.Name,
             ProxyName = proxy,
+            ExeName = Path.GetFileName(scan.ExeName ?? ""),
             OptiBuild = opti.Build,
             Fsr4Version = fsr4.VersionLabel,
         };
@@ -218,22 +219,37 @@ public static class Installer
     }
 
     /// <summary>
-    /// Renames OptiScaler's loader to the next name the game doesn't already use (dxgi.dll, winmm.dll, version.dll, ...).
-    /// Some games, often Game Pass ones, ignore one name and load another. Returns the new name.
+    /// Renames OptiScaler's loader to another name the game doesn't already use. Some games, often Game Pass ones,
+    /// ignore one name and load another. Names the game's exe loads at startup come first, since Windows always looks
+    /// for those in the game's folder. Automatic switches skip every name the game already ignored and return null when
+    /// none is left; the manual button starts over once all were tried. Frame generation settings stay as they are:
+    /// OptiScaler never ran under the old name, so they can't be what stopped it.
     /// </summary>
-    public static string SwitchProxy(string exeDir)
+    public static string? SwitchProxy(string exeDir, bool automatic = false)
     {
         var manifest = InstallManifest.TryLoad(exeDir) ?? throw new InvalidOperationException("FSR 4.1 Lite isn't installed here.");
-        var names = InstallConfig.ProxyNames;
-        var start = Array.FindIndex(names, n => n.Equals(manifest.ProxyName, StringComparison.OrdinalIgnoreCase));
-        string? next = null;
-        for (var i = 1; i <= names.Length; i++)
+        if (!manifest.TriedLoaders.Contains(manifest.ProxyName, StringComparer.OrdinalIgnoreCase))
+            manifest.TriedLoaders.Add(manifest.ProxyName);
+
+        var free = OrderForExe(exeDir, manifest.ExeName)
+            .Where(n => !n.Equals(manifest.ProxyName, StringComparison.OrdinalIgnoreCase))
+            .Where(n => !File.Exists(Path.Combine(exeDir, n)))
+            .ToList();
+        var next = free.FirstOrDefault(n => !manifest.TriedLoaders.Contains(n, StringComparer.OrdinalIgnoreCase));
+        if (next is null && !automatic)
         {
-            var candidate = names[(start + i + names.Length) % names.Length];
-            if (candidate.Equals(manifest.ProxyName, StringComparison.OrdinalIgnoreCase)) continue;
-            if (!File.Exists(Path.Combine(exeDir, candidate))) { next = candidate; break; }
+            // Every name was tried: the manual button goes round again, after the current one.
+            var names = InstallConfig.ProxyNames;
+            var start = Array.FindIndex(names, n => n.Equals(manifest.ProxyName, StringComparison.OrdinalIgnoreCase));
+            next = Enumerable.Range(1, names.Length).Select(i => names[(start + i + names.Length) % names.Length])
+                .FirstOrDefault(free.Contains);
+            if (next is null) throw new InvalidOperationException("Every loader name is already used by the game.");
         }
-        if (next is null) throw new InvalidOperationException("Every loader name is already used by the game.");
+        if (next is null)
+        {
+            manifest.Save(exeDir);
+            return null;
+        }
 
         var from = Path.Combine(exeDir, manifest.ProxyName);
         if (File.Exists(from)) File.Move(from, Path.Combine(exeDir, next));
@@ -242,12 +258,25 @@ public static class Installer
         if (index >= 0) manifest.CreatedFiles[index] = next; else manifest.CreatedFiles.Add(next);
         manifest.ProxyName = next;
         manifest.InstalledAt = DateTime.Now; // the next launch counts as "after the change"
-        // A different loader is a fresh start for the game, so frame generation goes back to off (choices are kept).
-        TurnOffFrameGen(exeDir, manifest);
         manifest.Save(exeDir);
-        Log.Info($"Switched OptiScaler loader in {exeDir} to {next}");
+        Log.Info($"Switched OptiScaler loader in {exeDir} to {next} ({(automatic ? "automatic" : "button")}, " +
+                 $"ignored: {string.Join(", ", manifest.TriedLoaders)})");
         return next;
     }
+
+    /// <summary>
+    /// Loader names in the order to try for this exe: names the exe imports (Windows loads those from the game folder
+    /// at startup, before anything else can skip it) first, then the usual order.
+    /// </summary>
+    private static IEnumerable<string> OrderForExe(string exeDir, string? exeName)
+    {
+        var imports = ImportsOf(exeDir, exeName);
+        return InstallConfig.ProxyNames.Where(n => imports.Dlls.Contains(n))
+            .Concat(InstallConfig.ProxyNames.Where(n => !imports.Dlls.Contains(n)));
+    }
+
+    private static ExeImports ImportsOf(string exeDir, string? exeName) =>
+        string.IsNullOrEmpty(exeName) ? new ExeImports() : ExeImports.Read(Path.Combine(exeDir, Path.GetFileName(exeName)));
 
     /// <summary>
     /// Brings an installed game up to a newer OptiScaler build: copies the package's files over the old ones, keeping the
@@ -356,13 +385,31 @@ public static class Installer
     }
 
     /// <summary>
-    /// The loader name a game needs (see GameRules, e.g. winmm.dll for Red Dead Redemption 2) if it's free, otherwise
-    /// the first proxy name that doesn't clash with a file the game already ships.
+    /// The loader name to install as, the first of these that's free in the folder:
+    /// 1. the name a game needs (GameRules, e.g. winmm.dll for Red Dead Redemption 2);
+    /// 2. the name that worked last time this game was installed (LoaderMemory);
+    /// 3. for Game Pass games whose exe doesn't import dxgi.dll (they often skip it), a name the exe does import;
+    /// 4. the usual order, dxgi.dll first. If the game ignores it, the game watcher switches by itself.
     /// </summary>
-    public static string PickProxyName(string exeDir, string? exeName = null)
+    public static string PickProxyName(string exeDir, string? exeName = null, GameSource source = GameSource.Manual)
     {
-        if (GameRules.LoaderFor(exeName) is { } wanted && !File.Exists(Path.Combine(exeDir, wanted))) return wanted;
-        return InstallConfig.ProxyNames.FirstOrDefault(n => !File.Exists(Path.Combine(exeDir, n)))
+        bool Free(string n) => !File.Exists(Path.Combine(exeDir, n));
+
+        if (GameRules.LoaderFor(exeName) is { } wanted && Free(wanted)) return wanted;
+        if (LoaderMemory.Recall(exeName) is { } remembered && Free(remembered)) return remembered;
+
+        if (source == GameSource.Xbox)
+        {
+            var imports = ImportsOf(exeDir, exeName);
+            if (!imports.Dlls.Contains("dxgi.dll") &&
+                InstallConfig.ProxyNames.FirstOrDefault(n => imports.Dlls.Contains(n) && Free(n)) is { } imported)
+            {
+                Log.Info($"{exeName} doesn't import dxgi.dll; starting with {imported}, which it does");
+                return imported;
+            }
+        }
+
+        return InstallConfig.ProxyNames.FirstOrDefault(Free)
                ?? throw new InvalidOperationException("Every OptiScaler file name is already taken in this folder.");
     }
 

@@ -326,7 +326,7 @@ public sealed class HostService
             canSwitchLoader = live.Stage == LoadedModules.Stage.NotLoaded,
             loaderName = manifest?.ProxyName ?? "",
             activeStage = live.Stage.ToString(),
-            activeText = ActiveText(live, scan.Game.Name),
+            activeText = ActiveText(live, scan.Game.Name, manifest?.TriedLoaders.Count > 0),
             frameGen,
         };
     }
@@ -484,7 +484,7 @@ public sealed class HostService
         return scan;
     }
 
-    private static string ActiveText(LoadedModules.Status live, string game) => live.Stage switch
+    private static string ActiveText(LoadedModules.Status live, string game, bool loaderSwitched) => live.Stage switch
     {
         LoadedModules.Stage.Active => live.Confirmed
             ? $"FSR 4.1 Lite active ({live.Api})"
@@ -499,10 +499,12 @@ public sealed class HostService
         LoadedModules.Stage.Fsr3Fallback =>
             "Running FSR 3, not FSR 4: the game's upscaler started, but the FSR 4 file didn't load. " +
             "Uninstall from this game, install again, and restart it.",
+        LoadedModules.Stage.NeedsRestart when loaderSwitched =>
+            $"{game} skipped FSR 4.1 Lite, so it's now set up a different way. Restart the game to use it.",
         LoadedModules.Stage.NeedsRestart => $"Installed. Restart {game} to load it.",
         LoadedModules.Stage.NotLoaded =>
-            $"OptiScaler didn't load in {game}. Some games, often Game Pass ones, ignore this loader. " +
-            "Press Try another loader, then restart the game.",
+            $"FSR 4.1 Lite didn't load in {game}. The widget sets it up a different way within a minute, " +
+            "or press Try another loader now. Then restart the game.",
         _ => "",
     };
 
@@ -537,7 +539,7 @@ public sealed class HostService
     private static string StateText(GameScan s)
     {
         var xboxNote = s.Game.Source == GameSource.Xbox
-            ? " Game Pass game: if OptiScaler doesn't load after a restart, use Try another loader."
+            ? " Game Pass game: if it skips FSR 4.1 Lite, the widget sets it up a different way by itself."
             : "";
         return s.State switch
         {
@@ -1051,15 +1053,9 @@ public sealed class HostService
     {
         var manifest = InstallManifest.TryLoad(exeDir);
         if (manifest is null) return Fail("FSR 4.1 Lite isn't installed in this game.");
-        var hadFrameGen = manifest.FrameGen.Enabled;
-        var next = Installer.SwitchProxy(exeDir); // also turns frame generation off
+        var next = Installer.SwitchProxy(exeDir);
         Forget(exeDir);
-        return new
-        {
-            ok = true,
-            message = $"OptiScaler now loads as {next}. Restart {manifest.GameName} to try it." +
-                      (hadFrameGen ? " Frame generation is off again; turn it back on once FSR 4.1 Lite is running." : ""),
-        };
+        return new { ok = true, message = $"Set up a different way ({next}). Restart {manifest.GameName} to use it." };
     }
 
     private object RenderScale(string exeDir, string key)
