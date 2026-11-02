@@ -1,6 +1,7 @@
 {
+  "version": 2,
   "updated": "2026-11-01",
-  "about": "Recommended frame generation settings per game for FSR 4.1 Lite's Experimental section. A copy is built into the widget; the widget also reads this file from GitHub every 6 hours. output: fsrfg or xefg. hudFix, hudLimit (1 to 5) and immediate apply to OptiFG only. input (optional) overrides the automatic choice; xboxInput does the same for the Xbox app / Game Pass version. source: rogallylife (tested on a ROG Ally X) or wiki (OptiScaler's game page). The widget adds OptiScaler's own list of games where HUDFix doesn't work.",
+  "about": "Recommended frame generation settings per game for FSR 4.1 Lite's Experimental section. A copy is built into the widget; the widget also reads this file from GitHub every 6 hours and uses whichever copy has the higher version, so raise version with every change. output: fsrfg or xefg. hudFix, hudLimit (1 to 5) and immediate apply to OptiFG only. input (optional) overrides the automatic choice; xboxInput does the same for the Xbox app / Game Pass version. source: rogallylife (tested on a ROG Ally X) or wiki (OptiScaler's game page). The widget adds OptiScaler's own list of games where HUDFix doesn't work.",
   "games": [
     {
       "name": "Red Dead Redemption 2",

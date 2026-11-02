@@ -64,6 +64,8 @@ public static class FrameGenPresets
 
     private sealed class PresetFile
     {
+        /// <summary>Raised with every change to the list. The saved online copy and the built-in copy: the higher wins.</summary>
+        public int Version { get; set; }
         public List<FrameGenPreset> Games { get; set; } = new();
         public List<string> HudFixIncompatible { get; set; } = new();
     }
@@ -117,7 +119,11 @@ public static class FrameGenPresets
     private static void Load()
     {
         if (_presets is not null && _hudFixIncompatible is not null) return;
-        var file = ReadCached(PresetCache) is { } cached && Parse(cached) is { Games.Count: > 0 } fromCache ? fromCache : Parse(BuiltIn()) ?? new PresetFile();
+        // The saved online copy, unless the copy built into this widget version is newer (a release can carry a list
+        // change before the 6-hourly check fetches it).
+        var saved = ReadCached(PresetCache) is { } cached && Parse(cached) is { Games.Count: > 0 } fromCache ? fromCache : null;
+        var builtIn = Parse(BuiltIn());
+        var file = saved is not null && (builtIn is null || saved.Version >= builtIn.Version) ? saved : builtIn ?? new PresetFile();
 
         _presets = new Dictionary<string, FrameGenPreset>();
         foreach (var preset in file.Games)
