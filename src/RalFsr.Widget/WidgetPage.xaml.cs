@@ -748,7 +748,7 @@ namespace RalFsr.Widget
         /// <paramref name="above"/> and the last row down to <paramref name="below"/> (a single element, or the
         /// nearest button of another chip row).
         /// </summary>
-        private static void LinkChips(List<List<Button>> rows, DependencyObject above, object below)
+        private static void LinkChips(List<List<Button>> rows, object above, object below)
         {
             for (var r = 0; r < rows.Count; r++)
             {
@@ -758,12 +758,16 @@ namespace RalFsr.Widget
                     var chip = row[c];
                     chip.XYFocusLeft = c > 0 ? row[c - 1] : null;
                     chip.XYFocusRight = c < row.Count - 1 ? row[c + 1] : null;
-                    chip.XYFocusUp = r > 0 ? Nearest(rows[r - 1], c, row.Count) : above;
+                    chip.XYFocusUp = r > 0 ? Nearest(rows[r - 1], c, row.Count) : Target(above, c, row.Count);
                     if (r < rows.Count - 1) chip.XYFocusDown = Nearest(rows[r + 1], c, row.Count);
-                    else chip.XYFocusDown = below is List<Button> next ? Nearest(next, c, row.Count) : below as DependencyObject;
+                    else chip.XYFocusDown = Target(below, c, row.Count);
                 }
             }
         }
+
+        /// <summary>A single element, or the nearest button of a chip row.</summary>
+        private static DependencyObject Target(object to, int c, int width) =>
+            to is List<Button> row ? Nearest(row, c, width) : to as DependencyObject;
 
         /// <summary>The button in <paramref name="row"/> under column <paramref name="c"/> of a row <paramref name="width"/> wide.</summary>
         private static Button Nearest(List<Button> row, int c, int width)
