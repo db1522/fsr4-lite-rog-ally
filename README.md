@@ -223,7 +223,8 @@ anti-cheat, and it recognises games protected by Riot Vanguard, Valve Anti-Cheat
 
 ## Uninstall
 
-- **One game:** press **Uninstall from this game** on its card, or open **Installed in**, select the game and confirm.
+- **One game:** while you play it, press **Uninstall when the game closes** on its card; Windows locks the files
+  until then, and FSR 4.1 Lite is removed the moment you quit. Or open **Installed in**, select the game and confirm.
 - **Everything:** press **Uninstall FSR 4.1 Lite** at the bottom of the widget. It restores every game folder, then
   opens Windows Settings for the final click.
 

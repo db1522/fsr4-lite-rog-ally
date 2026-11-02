@@ -179,6 +179,39 @@ public sealed class GameWatcher
         }
 
         foreach (var gone in _tracked.Keys.Where(id => !alive.Contains(id)).ToList()) _tracked.Remove(gone);
+        FinishPendingUninstalls();
+    }
+
+    private static readonly object UninstallGate = new();
+
+    /// <summary>
+    /// Uninstalls from every game the player set to "uninstall when the game closes" that no longer has a process
+    /// running from its folder, with a notification for each. Returns the folders it restored.
+    /// </summary>
+    public static List<string> FinishPendingUninstalls()
+    {
+        var done = new List<string>();
+        lock (UninstallGate)
+        {
+            foreach (var dir in InstallRegistry.Load())
+            {
+                var manifest = InstallManifest.TryLoad(dir);
+                if (manifest is not { RemoveOnExit: true } || ForegroundGame.AnyRunningFrom(dir)) continue;
+                try
+                {
+                    Installer.Uninstall(dir, manifest);
+                    InstallRegistry.Remove(dir);
+                    done.Add(dir);
+                    Log.Info($"Uninstalled from {manifest.GameName} after it closed");
+                    Toasts.Show($"Uninstalled from {manifest.GameName}", "Its folder is back to how it was.");
+                }
+                catch (Exception ex)
+                {
+                    Log.Warn($"Uninstall after close failed in {dir}: {ex.Message}");
+                }
+            }
+        }
+        return done;
     }
 
     private static string ResolutionLine(LoadedModules.Status s) =>

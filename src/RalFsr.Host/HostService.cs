@@ -66,6 +66,7 @@ public sealed class HostService
                 "updateFsr4" => StartFsr4Download(force: true),
                 "install" => Install(Arg(args, "exeDir") ?? ""),
                 "remove" => Remove(Arg(args, "exeDir") ?? ""),
+                "removeOnExit" => RemoveOnExit(Arg(args, "exeDir") ?? "", Arg(args, "on") == "true"),
                 "removeAll" => RemoveAll(),
                 "import" => Import(Arg(args, "paths") ?? "", Arg(args, "allowUnverified") == "true"),
                 "overlay" => Overlay(Arg(args, "on") == "true"),
@@ -161,6 +162,8 @@ public sealed class HostService
                 }
             }
         }
+        // Games set to uninstall when they close, in case the watcher wasn't running when they did.
+        foreach (var dir in GameWatcher.FinishPendingUninstalls()) Forget(dir);
         // Downloads the FSR 4 files if missing, otherwise a daily update check. A failed attempt retries once a minute.
         if (_fsr4Task is null ||
             (_fsr4Task.IsCompleted && !Fsr4Library.Load().IsUsable && DateTime.Now - _fsr4StartedAt > RetryEvery))
@@ -324,6 +327,9 @@ public sealed class HostService
             optiBuild = manifest is null ? "" : OptiPackage.Label(manifest.OptiBuild),
             optiOutdated = IsOutdated(manifest),
             canSwitchLoader = live.Stage == LoadedModules.Stage.NotLoaded,
+            // The card's game is normally the one being played, whose files are locked: uninstall waits for it to close.
+            running = manifest is not null && ForegroundGame.AnyRunningFrom(exeDir),
+            removeOnExit = manifest?.RemoveOnExit ?? false,
             loaderName = manifest?.ProxyName ?? "",
             activeStage = live.Stage.ToString(),
             activeText = ActiveText(live, scan.Game.Name, manifest?.TriedLoaders.Count > 0),
@@ -677,6 +683,26 @@ public sealed class HostService
         InstallRegistry.Remove(exeDir);
         Forget(exeDir);
         return new { ok = true, message = $"Uninstalled from {manifest.GameName}. Its folder is back to how it was." };
+    }
+
+    /// <summary>Uninstall from a running game as soon as it closes (or cancel that). Closed already: uninstall now.</summary>
+    private object RemoveOnExit(string exeDir, bool on)
+    {
+        var manifest = InstallManifest.TryLoad(exeDir);
+        if (manifest is null) return Fail("FSR 4.1 Lite isn't installed in this game.");
+        if (on && !ForegroundGame.AnyRunningFrom(exeDir)) return Remove(exeDir);
+
+        manifest.RemoveOnExit = on;
+        manifest.Save(exeDir);
+        Forget(exeDir);
+        Log.Info($"Uninstall when {manifest.GameName} closes: {on}");
+        return new
+        {
+            ok = true,
+            message = on
+                ? $"FSR 4.1 Lite will be uninstalled when you close {manifest.GameName}."
+                : $"FSR 4.1 Lite stays in {manifest.GameName}.",
+        };
     }
 
     /// <summary>

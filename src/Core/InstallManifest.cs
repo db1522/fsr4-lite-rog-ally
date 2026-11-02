@@ -19,6 +19,12 @@ public sealed class InstallManifest
 
     /// <summary>Loader names this game was seen ignoring, in order. The automatic switch never goes back to one.</summary>
     public List<string> TriedLoaders { get; set; } = new();
+
+    /// <summary>
+    /// The player asked to uninstall while the game was running (its files are locked then). The helper uninstalls as
+    /// soon as no process from the game's folder is left.
+    /// </summary>
+    public bool RemoveOnExit { get; set; }
     public string OptiBuild { get; set; } = "";
     public string Fsr4Version { get; set; } = "";
     public DateTime InstalledAt { get; set; } = DateTime.Now;

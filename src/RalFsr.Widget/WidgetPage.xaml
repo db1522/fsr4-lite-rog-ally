@@ -223,6 +223,15 @@
                                     <TextBlock x:Name="PrimaryText" Text="Install FSR 4.1 Lite" />
                                 </StackPanel>
                             </Button>
+                            <!-- Installed in the game being played: its files are locked, so uninstalling waits for it to close -->
+                            <Button x:Name="ExitUninstallButton" Style="{StaticResource QuietButton}" HorizontalAlignment="Stretch"
+                                    CornerRadius="8" Background="{StaticResource ChipBrush}" BorderThickness="0"
+                                    Visibility="Collapsed" Click="ExitUninstall_Click">
+                                <StackPanel Orientation="Horizontal" Spacing="8">
+                                    <FontIcon x:Name="ExitUninstallIcon" FontFamily="{StaticResource IconFont}" Glyph="&#xE74D;" FontSize="15" />
+                                    <TextBlock x:Name="ExitUninstallText" Text="Uninstall when the game closes" />
+                                </StackPanel>
+                            </Button>
                             <Button x:Name="SwitchLoaderButton" Grid.Column="1" Style="{StaticResource QuietButton}" CornerRadius="8"
                                     Background="{StaticResource ChipBrush}" BorderThickness="0" Visibility="Collapsed"
                                     Click="SwitchLoader_Click">

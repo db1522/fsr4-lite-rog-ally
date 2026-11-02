@@ -257,7 +257,18 @@ namespace RalFsr.Widget
             RenderScaleOptions(game);
             RenderFrameGen(Json.Obj(game, "frameGen"));
 
-            if (_gameInstalled)
+            // The game being played locks OptiScaler's files, so its uninstall waits until it closes.
+            var waitForExit = _gameInstalled && Json.Bool(game, "running");
+            _removeOnExit = Json.Bool(game, "removeOnExit");
+            PrimaryButton.Visibility = waitForExit ? Visibility.Collapsed : Visibility.Visible;
+            ExitUninstallButton.Visibility = waitForExit ? Visibility.Visible : Visibility.Collapsed;
+            if (waitForExit)
+            {
+                ExitUninstallText.Text = _removeOnExit ? "Keep FSR 4.1 Lite in this game" : "Uninstall when the game closes";
+                ExitUninstallIcon.Glyph = _removeOnExit ? "\uE7A7" : "\uE74D";
+                if (_removeOnExit) GameStatus.Text = "FSR 4.1 Lite will be uninstalled when you close the game.";
+            }
+            else if (_gameInstalled)
             {
                 PrimaryText.Text = "Uninstall from this game";
                 PrimaryIcon.Glyph = "\uE74D";
@@ -636,6 +647,28 @@ namespace RalFsr.Widget
             await RunCommandAsync(_gameInstalled ? "remove" : "install", "exeDir", _exeDir);
         }
 
+        private bool _removeOnExit;
+
+        /// <summary>"Uninstall when the game closes" (asks first), or cancels it.</summary>
+        private async void ExitUninstall_Click(object sender, RoutedEventArgs e)
+        {
+            if (string.IsNullOrEmpty(_exeDir)) return;
+            if (!_removeOnExit)
+            {
+                var dialog = new ContentDialog
+                {
+                    Title = "Uninstall when the game closes?",
+                    Content = "Windows locks FSR 4.1 Lite's files while the game is running. As soon as you close it, " +
+                              "FSR 4.1 Lite is removed and the game's folder goes back to how it was.",
+                    PrimaryButtonText = "Uninstall",
+                    CloseButtonText = "Cancel",
+                };
+                UseRedPrimaryButton(dialog);
+                if (await dialog.ShowAsync() != ContentDialogResult.Primary) return;
+            }
+            await RunCommandAsync("removeOnExit", "exeDir", _exeDir, "on", _removeOnExit ? "false" : "true");
+        }
+
         /// <summary>A row in the Installed list: asks first, since the whole row is the button.</summary>
         private async void Remove_Click(object sender, RoutedEventArgs e)
         {
@@ -864,6 +897,14 @@ namespace RalFsr.Widget
             // lands next (with a controller, often the bottom of the widget). Hold the scroll position and give focus
             // back afterwards.
             var focused = FocusManager.GetFocusedElement() as Control;
+            // A dropdown choice fires while focus is still on the item in its list, which closes right after. Give focus
+            // back to the dropdown itself, or it lands nowhere and the D-pad shows no highlight until Game Bar reopens.
+            var focusState = focused?.FocusState ?? FocusState.Programmatic;
+            if (focused is ComboBoxItem item)
+            {
+                focused = ItemsControl.ItemsControlFromItemContainer(item) as Control;
+                focusState = FocusState.Keyboard;
+            }
             var scroll = PageScroll.VerticalOffset;
             SetButtonsEnabled(false);
             StatusText.Text = "Working...";
@@ -883,8 +924,9 @@ namespace RalFsr.Widget
             await RefreshAsync(quiet: true);
             StatusText.Text = message;
 
+            // Keyboard focus (the D-pad's) shows the highlight; programmatic focus doesn't, so keep whichever it was.
             if (focused != null && focused.IsEnabled && focused.Visibility == Visibility.Visible)
-                focused.Focus(FocusState.Programmatic);
+                focused.Focus(focusState == FocusState.Keyboard ? FocusState.Keyboard : FocusState.Programmatic);
             PageScroll.ChangeView(null, scroll, null, disableAnimation: true);
             return result;
         }
