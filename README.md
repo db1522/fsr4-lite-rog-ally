@@ -123,7 +123,8 @@ corner, and pressing **Insert** in the game opens OptiScaler's menu, where the F
 
 ## Frame generation (experimental)
 
-For DirectX 12 games with FSR 4.1 Lite installed, the game card has an **Experimental** section. Its **Frame
+For DirectX 12 games with FSR 4.1 Lite installed, the game card has an **Experimental** section (not for Vulkan
+games such as Enshrouded, where it stops the Lite model from loading). Its **Frame
 generation** switch turns on OptiScaler's frame generation, which adds generated frames between the real ones for
 smoother motion.
 

@@ -292,7 +292,19 @@ public sealed class HostService
             : "";
 
         var compat = CompatList.Find(scan.Game.Name, scan.ExeName);
-        var frameGen = FrameGenJson(scan, manifest, window.ProcessId, exeDir, live);
+        // Frame generation is for DirectX 12 games. Vulkan games load d3d12.dll once OptiScaler runs, which let
+        // Enshrouded through before 1.1.30; there OptiFG made the game load AMD's own FSR 4 file, without the Lite model.
+        var api = LoadedModules.GraphicsApi(window.ProcessId, exeDir);
+        if (api == "Vulkan" && manifest is { FrameGen.Enabled: true })
+        {
+            Installer.TurnOffFrameGen(exeDir, manifest);
+            manifest.Save(exeDir);
+            Forget(exeDir);
+            Log.Info($"Frame generation turned off in {scan.Game.Name}: Vulkan game");
+            Toasts.Show($"Frame generation is off in {scan.Game.Name}",
+                "It's for DirectX 12 games, and in this Vulkan game it kept FSR 4.1 Lite from loading. Restart the game.");
+        }
+        var frameGen = api == "DX12" ? FrameGenJson(scan, manifest, window.ProcessId, exeDir, live) : null;
 
         return new
         {
@@ -343,7 +355,7 @@ public sealed class HostService
     /// </summary>
     private static object? FrameGenJson(GameScan scan, InstallManifest? manifest, int pid, string exeDir, LoadedModules.Status live)
     {
-        if (manifest is null || LoadedModules.GraphicsApi(pid) != "DX12") return null;
+        if (manifest is null) return null;
         var fg = manifest.FrameGen;
         var preset = FrameGenPresets.Find(scan.Game.Name);
         var input = fg.Input.Length > 0 ? fg.Input : preset?.InputFor(scan.Game.Source) ?? scan.FrameGen.Input;

@@ -65,9 +65,12 @@ public static class LoadedModules
 
         var log = ReadOptiLog(exeDir);
         var res = ParseResolution(log);
+        var vulkanGame = RendersWithVulkan(log);
 
-        foreach (var (file, api) in new[] { (InstallConfig.Dx12Fsr4File, "DX12"), (InstallConfig.VulkanFsr4File, "Vulkan") })
+        foreach (var (file, fileApi) in new[] { (InstallConfig.Dx12Fsr4File, "DX12"), (InstallConfig.VulkanFsr4File, "Vulkan") })
         {
+            // Vulkan games run FSR 4 through the DirectX 12 file (VulkanUpscaler=ffx_12), but they're still Vulkan games.
+            var api = vulkanGame ? "Vulkan" : fileApi;
             var loaded = modules.FirstOrDefault(m => Path.GetFileName(m).Equals(file, StringComparison.OrdinalIgnoreCase));
             if (loaded is null) continue;
 
@@ -196,6 +199,15 @@ public static class LoadedModules
     }
 
     /// <summary>OptiScaler.log from this session (next to the game exe). Empty when logging is off or the file is busy.</summary>
+    /// <summary>
+    /// This session's OptiScaler.log shows the game creating a Vulkan device or using Vulkan DLSS. DirectX 12 games
+    /// can create a Vulkan instance (Red Dead Redemption 2 does) but never a device; Enshrouded logs both.
+    /// </summary>
+    public static bool RendersWithVulkan(string log) =>
+        log.Contains("hkvkCreateDevice", StringComparison.Ordinal) ||
+        log.Contains("NVSDK_NGX_VULKAN_", StringComparison.Ordinal) ||
+        log.Contains("_Vk::CreateSwapchain", StringComparison.Ordinal);
+
     private static string ReadOptiLog(string exeDir)
     {
         var path = Path.Combine(exeDir, "OptiScaler.log");
@@ -217,10 +229,15 @@ public static class LoadedModules
     /// The game's graphics API from the system libraries it has loaded: "DX12", "Vulkan" or "DX11" (null if unknown).
     /// DX12 games often load d3d11.dll too, so DX12 is checked first.
     /// </summary>
-    public static string? GraphicsApi(int processId)
+    /// <param name="exeDir">
+    /// The game's folder, once OptiScaler runs there. Its Vulkan support loads d3d12.dll into Vulkan games (FSR 4 runs
+    /// through DirectX 12 there), so its log decides: only a Vulkan game makes OptiScaler hook vkCreateDevice.
+    /// </param>
+    public static string? GraphicsApi(int processId, string? exeDir = null)
     {
         var names = List(processId).Select(Path.GetFileName).ToHashSet(StringComparer.OrdinalIgnoreCase);
         if (names.Count == 0) return null;
+        if (names.Contains("vulkan-1.dll") && exeDir is not null && RendersWithVulkan(ReadOptiLog(exeDir))) return "Vulkan";
         if (names.Contains("d3d12.dll")) return "DX12";
         if (names.Contains("vulkan-1.dll")) return "Vulkan";
         if (names.Contains("d3d11.dll")) return "DX11";
