@@ -186,14 +186,8 @@ namespace RalFsr.Widget
             OverlaySwitch.IsOn = Json.Bool(state, "overlay");
             _overlaySize = Json.Str(state, "overlaySize", "large");
             _overlayPosition = Json.Str(state, "overlayPosition", "topleft");
-            foreach (var item in Json.Arr(state, "overlaySizes"))
-            {
-                if (item.ValueType != JsonValueType.Object) continue;
-                var o = item.GetObject();
-                _overlayShares[Json.Str(o, "key")] = Json.Num(o, "share");
-            }
             RenderOverlayChoices();
-            OverlayOptions.Visibility = OverlaySwitch.IsOn ? Visibility.Visible : Visibility.Collapsed;
+            ShowOverlayOptions(OverlaySwitch.IsOn);
             NotifySwitch.IsOn = Json.Bool(state, "notify");
             AutoUpdateSwitch.IsOn = Json.Bool(state, "autoUpdate");
             RenderWidgetVersion(Json.Obj(state, "widget"));
@@ -696,13 +690,7 @@ namespace RalFsr.Widget
         private string _overlaySize = "large";
         private string _overlayPosition = "topleft";
 
-        /// <summary>Text height of each overlay size as a share of the screen, from the helper (these are its defaults).</summary>
-        private readonly Dictionary<string, double> _overlayShares = new Dictionary<string, double>
-        {
-            ["small"] = 0.015, ["medium"] = 0.020, ["large"] = 0.026, ["xlarge"] = 0.033, ["huge"] = 0.041, ["max"] = 0.050,
-        };
-
-        /// <summary>Marks the chosen size and corner in red and redraws the preview.</summary>
+        /// <summary>Marks the chosen size and corner in red.</summary>
         private void RenderOverlayChoices()
         {
             foreach (var grid in new[] { OverlaySizeChips, OverlayPositionChips })
@@ -718,40 +706,70 @@ namespace RalFsr.Widget
                     chip.FontWeight = on ? Windows.UI.Text.FontWeights.SemiBold : Windows.UI.Text.FontWeights.Normal;
                 }
             }
-            RenderOverlayPreview();
         }
 
         /// <summary>
-        /// The preview is a 16:9 screen with the overlay's two lines drawn at the chosen size's share of its height, so
-        /// the steps between sizes look the same as they will in the game.
+        /// Shows or hides the size and corner buttons, with the D-pad routes into and out of them. The page's
+        /// distance-based D-pad navigation skipped these small buttons (as it did the Installed rows), so every route is
+        /// set by hand: the overlay switch leads down into Size, Size into Position, Position out to the support report.
         /// </summary>
-        private void RenderOverlayPreview()
+        private void ShowOverlayOptions(bool on)
         {
-            var width = OverlayPreview.ActualWidth;
-            if (width <= 0) return;
-            var height = Math.Round(width * 9 / 16);
-            if (Math.Abs(OverlayPreview.Height - height) > 0.5) OverlayPreview.Height = height;
+            OverlayOptions.Visibility = on ? Visibility.Visible : Visibility.Collapsed;
+            var sizes = ChipRows(OverlaySizeChips);
+            var corners = ChipRows(OverlayPositionChips);
+            if (sizes.Count == 0 || corners.Count == 0) return;
 
-            double share;
-            if (!_overlayShares.TryGetValue(_overlaySize, out share)) share = 0.026;
-            var line = Math.Max(2, share * height);      // one text line
-            PreviewLine1.Height = line;
-            PreviewLine1.Width = line * 20;              // the API, upscaler and FPS row, as long as it is in OptiScaler
-            PreviewLine2.Height = line;
-            PreviewLine2.Width = line * 13;              // the render to output resolution row
-            PreviewLine2.Margin = new Thickness(0, line * 0.45, 0, 0);
-            PreviewPanel.Padding = new Thickness(line * 0.5);
-            PreviewPanel.Margin = new Thickness(Math.Max(3, height * 0.02));
+            OverlaySwitch.XYFocusDown = on ? sizes[0][0] : null;
+            SupportReportButton.XYFocusUp = on ? corners[corners.Count - 1][0] : null;
+            if (!on) return;
 
-            var right = _overlayPosition.EndsWith("right");
-            var bottom = _overlayPosition.StartsWith("bottom");
-            PreviewPanel.HorizontalAlignment = right ? HorizontalAlignment.Right : HorizontalAlignment.Left;
-            PreviewPanel.VerticalAlignment = bottom ? VerticalAlignment.Bottom : VerticalAlignment.Top;
+            LinkChips(sizes, OverlaySwitch, corners[0]);
+            LinkChips(corners, sizes[sizes.Count - 1], SupportReportButton);
         }
 
-        private void OverlayPreview_SizeChanged(object sender, SizeChangedEventArgs e)
+        /// <summary>The chip buttons of a grid, row by row, each row left to right.</summary>
+        private static List<List<Button>> ChipRows(Grid grid)
         {
-            if (Math.Abs(e.NewSize.Width - e.PreviousSize.Width) > 0.5) RenderOverlayPreview();
+            var rows = new List<List<Button>>();
+            for (var r = 0; r < Math.Max(1, grid.RowDefinitions.Count); r++)
+            {
+                var row = new List<Button>();
+                for (var c = 0; c < Math.Max(1, grid.ColumnDefinitions.Count); c++)
+                    foreach (var child in grid.Children)
+                        if (child is Button b && Grid.GetRow(b) == r && Grid.GetColumn(b) == c) row.Add(b);
+                if (row.Count > 0) rows.Add(row);
+            }
+            return rows;
+        }
+
+        /// <summary>
+        /// Left and right within a row, up and down between rows (to the nearest column), the first row up to
+        /// <paramref name="above"/> and the last row down to <paramref name="below"/> (a single element, or the
+        /// nearest button of another chip row).
+        /// </summary>
+        private static void LinkChips(List<List<Button>> rows, DependencyObject above, object below)
+        {
+            for (var r = 0; r < rows.Count; r++)
+            {
+                var row = rows[r];
+                for (var c = 0; c < row.Count; c++)
+                {
+                    var chip = row[c];
+                    chip.XYFocusLeft = c > 0 ? row[c - 1] : null;
+                    chip.XYFocusRight = c < row.Count - 1 ? row[c + 1] : null;
+                    chip.XYFocusUp = r > 0 ? Nearest(rows[r - 1], c, row.Count) : above;
+                    if (r < rows.Count - 1) chip.XYFocusDown = Nearest(rows[r + 1], c, row.Count);
+                    else chip.XYFocusDown = below is List<Button> next ? Nearest(next, c, row.Count) : below as DependencyObject;
+                }
+            }
+        }
+
+        /// <summary>The button in <paramref name="row"/> under column <paramref name="c"/> of a row <paramref name="width"/> wide.</summary>
+        private static Button Nearest(List<Button> row, int c, int width)
+        {
+            var i = width <= 1 ? 0 : (int)Math.Round((double)c * (row.Count - 1) / (width - 1));
+            return row[Math.Max(0, Math.Min(row.Count - 1, i))];
         }
 
         private async void OverlaySizeChip_Click(object sender, RoutedEventArgs e)
@@ -775,7 +793,7 @@ namespace RalFsr.Widget
         private async void Overlay_Toggled(object sender, RoutedEventArgs e)
         {
             if (_suppressOverlayEvent) return;
-            OverlayOptions.Visibility = OverlaySwitch.IsOn ? Visibility.Visible : Visibility.Collapsed;
+            ShowOverlayOptions(OverlaySwitch.IsOn);
             await RunCommandAsync("overlay", "on", OverlaySwitch.IsOn ? "true" : "false");
         }
 

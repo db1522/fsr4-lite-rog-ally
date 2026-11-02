@@ -399,8 +399,7 @@ third bigger than the last on any handheld, docked screen or resolution. The hei
 while the game runs under Game Bar and remembered per game (the screen's resolution before the first run). With
 OptiScaler builds that read `FpsOverlayFontSize`, the widget sets the font to the text size itself (8 to 48 px), so it
 stays sharp, and `FpsScale` only takes it past 48 px; older builds get `FpsScale` alone, times the 14 px menu font,
-within OptiScaler's 0.5 to 3.0 range. Large, the default, is about 28 px at 1080p. The widget shows a preview of the
-size and corner.
+within OptiScaler's 0.5 to 3.0 range. Large, the default, is about 28 px at 1080p.
 **Overlay position** puts it in any corner (`FpsOverlayPos` 0 to 3), for example away from a game's own HUD.
 
 **Support report.** Setup's **Create support report** saves `FSR4Lite-report-<date>.zip` to the Desktop: a

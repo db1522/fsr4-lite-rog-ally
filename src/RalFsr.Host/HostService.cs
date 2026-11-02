@@ -215,8 +215,6 @@ public sealed class HostService
             },
             autoUpdate = _settings.AutoUpdateGames,
             overlaySize = _settings.OverlaySize,
-            // Each size's text height as a share of the screen, for the widget's preview.
-            overlaySizes = InstallConfig.OverlaySizes.Select(o => new { key = o.Key, label = o.Label, share = o.Share }).ToList(),
             overlayPosition = _settings.OverlayPosition,
             opti = new
             {

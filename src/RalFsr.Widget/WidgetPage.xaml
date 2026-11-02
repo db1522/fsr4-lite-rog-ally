@@ -458,26 +458,7 @@
                     </Grid>
                     <!-- Shown while the overlay is on: its size and corner -->
                     <StackPanel x:Name="OverlayOptions" Padding="14,0,14,12" Visibility="Collapsed">
-                        <!-- A small screen showing where the overlay goes and how much of the screen it takes -->
-                        <Border x:Name="OverlayPreview" CornerRadius="8" BorderThickness="1" BorderBrush="#33FFFFFF"
-                                Height="150" SizeChanged="OverlayPreview_SizeChanged" AutomationProperties.Name="Overlay preview">
-                            <Border.Background>
-                                <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
-                                    <GradientStop Color="#FF1B2433" Offset="0" />
-                                    <GradientStop Color="#FF2B1A22" Offset="0.6" />
-                                    <GradientStop Color="#FF120F14" Offset="1" />
-                                </LinearGradientBrush>
-                            </Border.Background>
-                            <Border x:Name="PreviewPanel" Background="#B3000000" CornerRadius="3" Margin="6"
-                                    HorizontalAlignment="Left" VerticalAlignment="Top">
-                                <StackPanel x:Name="PreviewLines">
-                                    <Rectangle x:Name="PreviewLine1" Fill="#FFE8ECF2" RadiusX="1" RadiusY="1" HorizontalAlignment="Left" />
-                                    <Rectangle x:Name="PreviewLine2" Fill="#FFB9BFCA" RadiusX="1" RadiusY="1" HorizontalAlignment="Left" />
-                                </StackPanel>
-                            </Border>
-                        </Border>
-
-                        <TextBlock Text="Size" FontSize="12" Foreground="{StaticResource MutedBrush}" Margin="0,12,0,6" />
+                        <TextBlock Text="Size" FontSize="12" Foreground="{StaticResource MutedBrush}" Margin="0,0,0,6" />
                         <Grid x:Name="OverlaySizeChips" ColumnSpacing="6" RowSpacing="6">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="*" />
