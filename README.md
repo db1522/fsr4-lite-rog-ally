@@ -66,6 +66,8 @@ game, and pick its upscaler. That's it.
 - **Always up to date.** OptiScaler's newest build and the FSR 4.1.2 Lite files download by themselves, and your
   installed games update automatically, each keeping its own settings.
 - **Notifications.** A notification confirms FSR 4.1 Lite each time a game starts with it, or tells you what to fix.
+- **Frame generation, experimental.** One switch on the game card adds OptiScaler's frame generation to DirectX 12
+  games, starting from recommended settings for tested games. See [Frame generation](#frame-generation-experimental).
 - **Nothing on screen you didn't ask for.** No startup message, no watermark. An optional FPS and resolution overlay
   is one switch away, in six sizes from Small to Maximum and any of the four corners.
 - **Clean uninstall.** Remove it from one game or all of them, and every game folder goes back exactly as it was.
@@ -76,8 +78,8 @@ game, and pick its upscaler. That's it.
    and unzip it.
 2. Double-click **Install.cmd**. Windows asks for administrator permission once, to trust the ROG Ally Life
    certificate. The widget is free, so it's signed with ROG Ally Life's own certificate rather than a paid one.
-3. Open Game Bar (the **Armoury Crate** button on ROG handhelds, **Win + G** elsewhere), open the **Widgets** menu
-   and pick **FSR 4.1 Lite**. Pin it to keep it close.
+3. Open Game Bar (the **Xbox** button on the ROG Xbox Ally and Ally X, the **Armoury Crate** button on the ROG Ally
+   and Ally X, **Win + G** elsewhere), open the **Widgets** menu and pick **FSR 4.1 Lite**. Pin it to keep it close.
 
 The first time it opens, the widget downloads OptiScaler and the FSR 4.1.2 Lite files on its own.
 
@@ -119,6 +121,42 @@ corner, and pressing **Insert** in the game opens OptiScaler's menu, where the F
 > If the card says a game is rendering at full resolution, change the game's resolution once and back. Some games,
 > like Forza Horizon 6, only apply their upscaler preset after a resolution change.
 
+## Frame generation (experimental)
+
+For DirectX 12 games with FSR 4.1 Lite installed, the game card has an **Experimental** section. Its **Frame
+generation** switch turns on OptiScaler's frame generation, which adds generated frames between the real ones for
+smoother motion.
+
+1. Open **Experimental** on the game card and turn on **Frame generation**.
+2. **Restart the game.** OptiScaler only reads its frame generation settings when a game starts, so an amber reminder
+   stays on the card until you restart.
+3. Once it's running, a green **Frame generation active** badge appears on the card.
+
+The widget picks the right method for each game, following OptiScaler's own advice:
+
+| The game has... | Method | What to do |
+| --- | --- | --- |
+| Its own FSR frame generation | None needed | Turn it on in the game's graphics settings; it works alongside FSR 4.1 Lite |
+| DLSS frame generation | The game's DLSS frame generation, through OptiScaler | Also turn on DLSS frame generation in the game |
+| No frame generation | OptiFG, OptiScaler's own frame generation | Nothing else |
+
+**Output:** choose **FSR (more FPS)**, the default, or **XeSS (cleaner image)**. XeSS needs borderless or windowed
+fullscreen, and one extra restart the first time.
+
+**Fine-tune (OptiFG):** if menus or subtitles smear, try a higher **HUDFix limit** or **Immediate Capture**, then
+restart the game. **Reset to recommended** goes back to the game's recommended settings.
+
+**Recommended settings:** games tested by ROG Ally Life, or covered on OptiScaler's wiki, start with their best
+settings, for example XeSS for Control. The list is
+[`data/framegen-presets.json`](data/framegen-presets.json) and updates without a new widget version. Games where
+OptiScaler's HUD fix can't work, from OptiScaler's own list, show a warning on the card.
+
+**Unreal Engine games** using OptiFG with DLSS get OptiScaler's recommended fix for smearing
+(`r.NGX.DLSS.DilateMotionVectors=0` in the game's `Engine.ini`), removed again when you turn frame generation off.
+
+Your controller and the Steam overlay keep working with frame generation on. Turning the switch off, **Try another
+loader** or uninstalling turns frame generation off and undoes every change it made.
+
 ## Tested games
 
 Confirmed on ROG Ally hardware:
@@ -150,7 +188,7 @@ Support is decided by the graphics chip, so it isn't limited to ROG hardware.
 | | Handhelds |
 | --- | --- |
 | ✅ **Supported** | ROG Ally, ROG Ally X, Legion Go, Legion Go 2, MSI Claw A8, and GPD, AYANEO and OneXPlayer handhelds with Ryzen 7040/8040 or Ryzen AI 300 chips |
-| ✅ **Supported, with a note** | ROG Xbox Ally X / X20. ASUS's Armoury Crate FSR 4.1 toggle only upgrades games with FSR 3.1 or newer; the widget also covers DLSS, XeSS and FSR 2 games |
+| ✅ **Supported, with a note** | ROG Xbox Ally X / X20. ASUS's Armoury Crate FSR 4.1 toggle only upgrades games with FSR 3.1 or newer; the widget also covers DLSS, XeSS and FSR 2 games. The widget's note about this can be hidden |
 | ⚠️ **Experimental** | ROG Xbox Ally, Legion Go S, Steam Deck on Windows and other RDNA 2 handhelds. Lite runs, but can be slower than FSR 3 on these chips |
 | ❌ **Not supported** | Handhelds without AMD graphics, such as Intel-based MSI Claw models |
 
@@ -177,12 +215,14 @@ anti-cheat, and it recognises games protected by Riot Vanguard, Valve Anti-Cheat
   crashes at startup, close RTSS (or MSI Afterburner) and try again.
 - **OptiScaler nightlies** update automatically and can occasionally break a game. If that happens, turn off
   **Update games automatically** and let me know.
+- **Frame generation is experimental.** OptiFG adds frame generation to games that never had it, and some games
+  crash or show HUD ghosting with it. Turn it off on the card if a game misbehaves.
 - **Notifications during fullscreen games** are held by Windows unless you add FSR 4.1 Lite under Settings > System >
   Notifications > Set priority notifications.
 
 ## Uninstall
 
-- **One game:** press **Uninstall from this game** on its card, or find it under **Installed in**.
+- **One game:** press **Uninstall from this game** on its card, or open **Installed in**, select the game and confirm.
 - **Everything:** press **Uninstall FSR 4.1 Lite** at the bottom of the widget. It restores every game folder, then
   opens Windows Settings for the final click.
 
@@ -225,7 +265,8 @@ default loader name.
 <summary><strong>Does frame generation work with it?</strong></summary>
 
 Yes. If your game has its own FSR frame generation, turn it on in the game's graphics settings as usual. It works
-alongside FSR 4.1.2 Lite, so you get the sharper upscaling and smoother motion together.
+alongside FSR 4.1.2 Lite, so you get the sharper upscaling and smoother motion together. For other DirectX 12 games,
+use the **Experimental** section on the game card; see [Frame generation](#frame-generation-experimental).
 </details>
 
 <details>
@@ -300,6 +341,18 @@ session). Green means the widget's own FSR 4.1.2 file is loaded and the log show
 resolution comes from Streamline's `color_in extents` when present (the size really handed over), otherwise from
 OptiScaler's feature setup.
 
+**Frame generation.** Written into `OptiScaler.ini` from `src\Core\FrameGen.cs` (key names checked against the v10
+nightly's `OptiScaler.ini`): `[FrameGen] Enabled, FGInput, FGOutput, FGNvngxReplacement`, `[OptiFG] HUDFix, HUDLimit,
+HUDFixImmediate` and `[Hotfix] DisableOverlays`. Inputs follow the priority on OptiScaler's Frame-Generation-Options
+page: `FGInput=dlssg` (with `Enabled=auto`, following the game's own DLSS frame generation switch) for games that ship
+`nvngx_dlssg.dll` or `sl.dlss_g.dll`, Nukem's (`FGInput=nvngxfg`, `FGNvngxReplacement=Nukems`) for the wiki's Streamline
+1 games, and OptiFG (`FGInput=upscaler`) otherwise. `DisableOverlays=false`, because OptiScaler's default with OptiFG
+also blocks Steam Input; OptiScaler still blocks the Epic overlay by itself. Off is `Enabled=false` with `nofg` input
+and output. Per-game recommendations come from `data\framegen-presets.json` (built in, and read from GitHub every 6 hours;
+the copy with the higher `version` wins) and the HUDFix-incompatible list from OptiScaler's wiki (daily). The badge
+reads `OptiScaler.log`: FSR frame generation counts as running after `FSRFG_Dx12::CreateContext D3D12_CreateContext
+result: 0` or `D3D12_Configure Enabled: true`, XeSS after `SetEnabled: true`, until a matching off line.
+
 **REFramework.** For games whose Compatibility List entry says "Requires REFramework", the widget adds
 [REFramework](https://github.com/praydog/REFramework-nightly)'s `dinput8.dll` next to the exe. It comes from praydog's
 official nightly `REFramework.zip` (one build for every supported RE Engine game; only `dinput8.dll` is used, as its
@@ -337,7 +390,9 @@ ROG Ally family) is 0.8; the default size is Maximum (2.0 at 1080p). It's OptiSc
 **Support report.** Setup's **Create support report** saves `FSR4Lite-report-<date>.zip` to the Desktop: a
 `summary.txt` (device, versions, settings, installed games, the current game's card text, install record and
 OptiScaler errors), the last 3,000 lines of `helper.log` and `widget.log`, and for the current game its
-`OptiScaler.log`, `OptiScaler.ini`, install record and a list of the file names in its folder. The Windows user name is
+`OptiScaler.log`, every frame generation line from the whole log (`OptiScaler-framegen.log`), `OptiScaler.ini`,
+install record and a list of the file names in its folder. `summary.txt` also lists the game's frame generation
+settings. The Windows user name is
 replaced with `<user>`, and nothing is sent anywhere.
 
 **Updates.** OptiScaler: looked for when the widget opens and hourly, GitHub asked at most every 6 hours. FSR 4
@@ -346,7 +401,8 @@ fallback source. Compatibility list: raw wiki Markdown once a day. Game updates
 copy the new OptiScaler package over the old one, keep each game's loader name and never replace `OptiScaler.ini`.
 
 **Network access:** OptiScaler's GitHub releases, ROG Ally Life's R2 bucket (FSR 4 files), OptiScaler's wiki
-(compatibility list) and REFramework's GitHub releases (only for games that need it). Nothing else, and no telemetry.
+(compatibility list and the HUDFix-incompatible list), this repository's `data/framegen-presets.json` and
+REFramework's GitHub releases (only for games that need it). Nothing else, and no telemetry.
 </details>
 
 <details>
@@ -384,5 +440,6 @@ tools\GameBarProxyStub\         registers the Game Bar SDK's interfaces in the m
 src\Core\                       install engine (no UI)
 src\RalFsr.Host\                full-trust helper: app service, detection, downloads, updates
 src\RalFsr.Widget\              Game Bar widget (UWP)
+data\framegen-presets.json      recommended frame generation settings per game (read online too)
 ```
 </details>
