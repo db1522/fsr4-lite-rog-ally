@@ -27,7 +27,7 @@
 
 <p align="center">
   <a href="https://github.com/db1522/fsr4-lite-rog-ally/releases/latest/download/FSR4Lite_x64.zip"><b>⬇ Download</b></a> ·
-  <a href="https://rogallylife.com/2026/10/25/fsr-4-1-2-lite-on-the-rog-ally/">Full guide</a> ·
+  <a href="https://rogallylife.com/2026/10/26/fsr-4-1-2-lite-on-the-rog-ally/">Full guide</a> ·
   <a href="#install">Install</a> ·
   <a href="#tested-games">Tested games</a> ·
   <a href="#faq">FAQ</a> ·
