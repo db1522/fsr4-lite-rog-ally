@@ -148,6 +148,15 @@ public sealed class HostService
                 {
                     Installer.ApplyOverlay(dir, _settings.ShowResolutionOverlay, OverlayLookFor(dir), _settings.OverlayPosition);
                     Installer.ApplyWatermark(dir, _settings.ShowFsr4Watermark);
+                    // Before 1.1.33 the widget forced Quality (1.5x) on games it saw at full resolution. The game's own
+                    // setting does that job (after a resolution change, in Forza Horizon 6), so those go back to it once.
+                    if (InstallManifest.TryLoad(dir) is { AutoFixedNativeAA: true } fixedManifest)
+                    {
+                        if (fixedManifest.RenderScale == "quality") fixedManifest.RenderScale = "game";
+                        fixedManifest.AutoFixedNativeAA = false;
+                        fixedManifest.Save(dir);
+                        Log.Info($"Render resolution back to the game's own setting in {dir}");
+                    }
                     Installer.ApplyRenderScale(dir, InstallManifest.TryLoad(dir)?.RenderScale ?? "game");
                     // Frame generation too, so a setting OptiScaler wrote back can't leave it on (or off) by surprise. Only
                     // in games where the player has used the switch: frame generation set up by hand in OptiScaler's own
@@ -264,7 +273,6 @@ public sealed class HostService
         // Auto-fix: a game on "Game decides" that's rendering at full resolution isn't upscaling at all (Forza
         // Horizon 6 stays on Native AA whatever its preset says). Switch it to Quality once; an explicit picker
         // choice, including Native AA, is never overridden.
-        string? autoFix = null;
         var manifest = InstallManifest.TryLoad(exeDir);
 
         // The game's window height sizes its overlay. Remember it, and re-size the overlay when it changes (a new
@@ -277,29 +285,12 @@ public sealed class HostService
             Forget(exeDir);
             Log.Info($"{manifest.GameName} draws at {window.ClientHeight} px tall; overlay sized for it");
         }
-        if (manifest is not null && manifest.RenderScale == "game" && !manifest.AutoFixedNativeAA &&
-            live.Stage == LoadedModules.Stage.Active && live.AtFullResolution)
-        {
-            Installer.ApplyRenderScale(exeDir, "quality");
-            manifest = InstallManifest.TryLoad(exeDir)!;
-            manifest.AutoFixedNativeAA = true;
-            manifest.Save(exeDir);
-            Forget(exeDir);
-            autoFix = $"Fixed: {scan.Game.Name} was rendering at full resolution " +
-                      $"({live.DisplayWidth}x{live.DisplayHeight}), so FSR 4 wasn't upscaling. Render resolution is now " +
-                      "Quality (1.5x). Restart the game to apply it.";
-            Log.Info($"Auto-fixed Native AA in {exeDir}");
-        }
-
         // The game is rendering at full resolution even though FSR 4.1 Lite is running. Often the game simply hasn't
         // applied its upscaler preset yet: Forza Horizon 6 keeps the full-size upscaler it created at startup until its
         // display resolution changes. Switching resolution once (and back) makes it set the upscaler up again.
-        var nativeOnly = live.Stage == LoadedModules.Stage.Active && live.AtFullResolution && autoFix is null;
+        var nativeOnly = live.Stage == LoadedModules.Stage.Active && live.AtFullResolution;
         var overrideNote = nativeOnly
-            ? $"{scan.Game.Name} is rendering at full resolution ({live.RenderWidth}x{live.RenderHeight}), so FSR 4.1 Lite " +
-              "isn't upscaling yet. Fix: in the game's display settings, change the resolution once and then back. Some " +
-              "games, like Forza Horizon 6, only apply the upscaler preset after a resolution change. If it stays at full " +
-              "resolution, try the game's other upscaler options (FSR, DLSS, XeSS)."
+            ? $"Rendering at full resolution, so FSR 4.1 Lite isn't upscaling yet. In the game, change the resolution once and back."
             : "";
 
         var compat = CompatList.Find(scan.Game.Name, scan.ExeName);
@@ -335,7 +326,6 @@ public sealed class HostService
             installed = scan.State == GameState.Installed,
             upscalers = scan.Upscalers,
             renderScale = manifest?.RenderScale ?? scan.Manifest?.RenderScale ?? "game",
-            autoFix = autoFix ?? "",
             resolutionText = live.HasResolution
                 ? (live.RenderHeight > 0 && live.DisplayHeight > 0
                     ? $"Rendering {live.RenderWidth}x{live.RenderHeight} → {live.DisplayWidth}x{live.DisplayHeight}"

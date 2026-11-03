@@ -301,13 +301,21 @@ namespace RalFsr.Widget
         /// Fills the render resolution chips for an installed game and marks its current choice in red. The chips are
         /// built once; later refreshes only move the highlight, so controller focus stays on the chip just pressed.
         /// </summary>
+        private string _scaleShownFor = "";
+
         private void RenderScaleOptions(JsonObject game)
         {
-            if (!Json.Bool(game, "installed"))
+            // The game's own graphics settings pick the render resolution. The override is only shown for games that
+            // already have one, so it can be changed or undone; it stays up for that game once shown, so focus isn't
+            // lost when "Game decides" is picked.
+            var exeDir = Json.Str(game, "exeDir");
+            var overridden = Json.Str(game, "renderScale", "game") != "game";
+            if (!Json.Bool(game, "installed") || (!overridden && _scaleShownFor != exeDir))
             {
                 ScalePanel.Visibility = Visibility.Collapsed;
                 return;
             }
+            _scaleShownFor = exeDir;
 
             var options = Json.Arr(game, "renderScales");
             if (ScaleChips.Children.Count != options.Count)

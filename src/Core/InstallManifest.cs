@@ -35,7 +35,8 @@ public sealed class InstallManifest
     /// <summary>Render resolution choice for this game, a key from InstallConfig.RenderScales.</summary>
     public string RenderScale { get; set; } = "game";
 
-    /// <summary>Set once the widget has auto-fixed a game stuck at full resolution, so it never overrides again.</summary>
+    /// <summary>Set by versions before 1.1.33, which forced Quality on games stuck at full resolution. Cleared (and the
+    /// render resolution handed back to the game) the next time the widget opens.</summary>
     public bool AutoFixedNativeAA { get; set; }
 
     /// <summary>REFramework nightly installed alongside OptiScaler ("" = none). Its dinput8.dll is in CreatedFiles.</summary>

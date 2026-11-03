@@ -192,7 +192,7 @@
                             <TextBlock x:Name="AutoFixText" FontSize="13" TextWrapping="Wrap" />
                         </Border>
 
-                        <!-- Per-game render resolution: fixes games that stay on Native AA whatever preset they're set to -->
+                        <!-- Per-game render resolution override: only shown for games that already have one (code) -->
                         <StackPanel x:Name="ScalePanel" Visibility="Collapsed" Spacing="6">
                             <TextBlock Text="Render resolution" FontSize="12" Foreground="{StaticResource MutedBrush}" />
                             <Grid x:Name="ScaleChips" ColumnSpacing="6" />
