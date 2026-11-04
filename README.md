@@ -205,6 +205,10 @@ anti-cheat, and it recognises games protected by Riot Vanguard, Valve Anti-Cheat
 > No list catches everything. **Use FSR 4.1 Lite in single-player games only**, and don't install it into anything
 > you play online.
 
+**Why a single-player campaign can still be blocked:** many games start their anti-cheat every time they launch,
+before you pick a mode. Gears of War: E-Day is one: on Steam it always starts through Easy Anti-Cheat's launcher, and
+the anti-cheat service runs even for the offline campaign. The block stays for those games.
+
 ## Current limitations
 
 - **Image quality first.** FSR 4.1.2 Lite costs more GPU time than FSR 3, so at the same preset it can be a little
