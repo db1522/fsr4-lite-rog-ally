@@ -10,7 +10,7 @@ public enum DeviceSupport
     /// <summary>Z2 Extreme in a ROG Xbox Ally X / X20: ASUS ships FSR 4.1 officially, but only for FSR 3.1+ games.</summary>
     OfficialDriver,
 
-    /// <summary>AMD RDNA 2 graphics (Z2 A, Z2 Go, Steam Deck, 6000-series APUs). Lite runs; the GPU may not gain FPS.</summary>
+    /// <summary>AMD RDNA 2 graphics (Steam Deck, 6000-series APUs; not the Z2 A or Z2 Go, which are Supported). Lite runs; the GPU may not gain FPS.</summary>
     Experimental,
 
     /// <summary>No AMD Radeon graphics (Intel, NVIDIA). FSR 4's INT8 models need an AMD GPU.</summary>
@@ -74,10 +74,11 @@ public static class DeviceCheck
         }
 
         var rdna2 = Rdna2Apus.Any(c.Contains) || Rdna2Gpus.Any(g.Contains);
-        // ROG Xbox Ally (Z2 A): RDNA 2, but tested by ROG Ally Life and supported (2026-11-04). Steam Deck reports the
-        // same "Custom APU 0405", so the ASUS maker check keeps it apart.
+        // ROG Xbox Ally (Z2 A) and Legion Go S (Z2 Go): RDNA 2, but supported (Drew, 2026-11-04). Steam Deck reports
+        // the same "Custom APU 0405" as the Xbox Ally, so the ASUS maker check keeps it apart.
         var xboxAllyZ2A = isAsus && (c.Contains("ryzen z2 a") || c.Contains("amd custom apu 0405"));
-        if (xboxAllyZ2A)
+        var legionGoSZ2Go = c.Contains("ryzen z2 go");
+        if (xboxAllyZ2A || legionGoSZ2Go)
         {
             return new DeviceInfo(model, cpu, gpu, DeviceSupport.Supported,
                 "Supported. FSR 4.1 Lite runs through OptiScaler on this handheld.", isAsus);

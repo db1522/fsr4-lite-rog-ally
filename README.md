@@ -183,9 +183,9 @@ Support is decided by the graphics chip, so it isn't limited to ROG hardware.
 
 | | Handhelds |
 | --- | --- |
-| ✅ **Supported** | ROG Ally, ROG Ally X, ROG Xbox Ally, Legion Go, Legion Go 2, MSI Claw A8, and GPD, AYANEO and OneXPlayer handhelds with Ryzen 7040/8040 or Ryzen AI 300 chips |
+| ✅ **Supported** | ROG Ally, ROG Ally X, ROG Xbox Ally, Legion Go, Legion Go S, Legion Go 2, MSI Claw A8, and GPD, AYANEO and OneXPlayer handhelds with Ryzen 7040/8040 or Ryzen AI 300 chips |
 | ✅ **Supported, with a note** | ROG Xbox Ally X / X20. ASUS's Armoury Crate FSR 4.1 toggle only upgrades games with FSR 3.1 or newer; the widget also covers DLSS, XeSS and FSR 2 games. The widget's note about this can be hidden |
-| ⚠️ **Experimental** | Legion Go S, Steam Deck on Windows and other RDNA 2 handhelds. Lite runs, but can be slower than FSR 3 on these chips |
+| ⚠️ **Experimental** | Steam Deck on Windows and other RDNA 2 handhelds. Lite runs, but can be slower than FSR 3 on these chips |
 | ❌ **Not supported** | Handhelds without AMD graphics, such as Intel-based MSI Claw models |
 
 ## Anti-cheat and online games
