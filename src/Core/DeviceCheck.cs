@@ -74,6 +74,14 @@ public static class DeviceCheck
         }
 
         var rdna2 = Rdna2Apus.Any(c.Contains) || Rdna2Gpus.Any(g.Contains);
+        // ROG Xbox Ally (Z2 A): RDNA 2, but tested by ROG Ally Life and supported (2026-11-04). Steam Deck reports the
+        // same "Custom APU 0405", so the ASUS maker check keeps it apart.
+        var xboxAllyZ2A = isAsus && (c.Contains("ryzen z2 a") || c.Contains("amd custom apu 0405"));
+        if (xboxAllyZ2A)
+        {
+            return new DeviceInfo(model, cpu, gpu, DeviceSupport.Supported,
+                "Supported. FSR 4.1 Lite runs through OptiScaler on this handheld.", isAsus);
+        }
         if (rdna2)
         {
             return new DeviceInfo(model, cpu, gpu, DeviceSupport.Experimental,
