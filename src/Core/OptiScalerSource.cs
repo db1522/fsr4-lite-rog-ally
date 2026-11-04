@@ -81,17 +81,16 @@ public static class OptiScalerSource
             await DownloadAsync(asset.Value.Url, archive, asset.Value.Size, progress, ct);
 
             progress.Report("Unpacking OptiScaler...");
-            var temp = dir + ".tmp";
-            if (Directory.Exists(temp)) Directory.Delete(temp, true);
+            // A fresh folder name each time: a .tmp folder left by an earlier try may still be held open.
+            var temp = $"{dir}.{Guid.NewGuid():N}.tmp";
             await Task.Run(() => ArchiveUtil.ExtractAll(archive, temp), ct);
-            File.Delete(archive);
+            TryDelete(() => File.Delete(archive));
             if (FindPackageRoot(temp) is null)
             {
-                Directory.Delete(temp, true);
-                throw new InvalidDataException("the download doesn't contain OptiScaler.dll");
+                TryDelete(() => Directory.Delete(temp, true));
+                throw new InvalidDataException("the download doesn't contain OptiScaler.dll. If your antivirus removed it, allow the RAL FSR Helper folder");
             }
-            if (Directory.Exists(dir)) Directory.Delete(dir, true);
-            Directory.Move(temp, dir);
+            await Task.Run(() => MoveIntoPlace(temp, dir), ct);
 
             WriteText(LatestMarker, build);
             DeleteOldBuilds(keep: build);
@@ -210,6 +209,46 @@ public static class OptiScalerSource
     }
 
     /// <summary>Removes older downloaded builds. Games keep their own copies, so nothing in use is affected.</summary>
+    /// <summary>
+    /// Renames the unpacked folder to its final name. Antivirus scanners open the new DLLs right after they're unpacked,
+    /// and Windows refuses to rename a folder while a file in it is open ("Access to the path ... is denied"). So the
+    /// rename is retried for up to 15 seconds, then the files are copied instead, which works while they're being read.
+    /// </summary>
+    private static void MoveIntoPlace(string temp, string dir)
+    {
+        if (Directory.Exists(dir)) Retry(() => Directory.Delete(dir, true));
+        try
+        {
+            Retry(() => Directory.Move(temp, dir));
+            return;
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        {
+            Log.Warn($"Couldn't rename {temp} ({ex.Message}); copying the files instead");
+        }
+        foreach (var file in Directory.EnumerateFiles(temp, "*", SearchOption.AllDirectories))
+        {
+            var target = Path.Combine(dir, Path.GetRelativePath(temp, file));
+            Directory.CreateDirectory(Path.GetDirectoryName(target)!);
+            Retry(() => File.Copy(file, target, overwrite: true));
+        }
+        TryDelete(() => Directory.Delete(temp, true)); // left over? DeleteOldBuilds removes it next time
+    }
+
+    private static void Retry(Action action, int tries = 30)
+    {
+        for (var i = 1; ; i++)
+        {
+            try { action(); return; }
+            catch (Exception ex) when (i < tries && ex is IOException or UnauthorizedAccessException) { Thread.Sleep(500); }
+        }
+    }
+
+    private static void TryDelete(Action delete)
+    {
+        try { Retry(delete, tries: 6); } catch { /* best effort */ }
+    }
+
     private static void DeleteOldBuilds(string keep)
     {
         foreach (var dir in Directory.GetDirectories(AppPaths.OptiCache))
