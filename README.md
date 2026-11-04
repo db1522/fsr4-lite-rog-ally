@@ -5,7 +5,7 @@
 <p align="center">
   <a href="https://github.com/db1522/fsr4-lite-rog-ally/releases/latest"><img alt="Latest release" src="https://img.shields.io/github/v/release/db1522/fsr4-lite-rog-ally?style=for-the-badge&labelColor=161616&label=Release&color=C8102E"></a>
   <a href="https://github.com/db1522/fsr4-lite-rog-ally/releases"><img alt="Total downloads" src="https://img.shields.io/github/downloads/db1522/fsr4-lite-rog-ally/total?style=for-the-badge&labelColor=161616&label=Downloads&color=1F8A3B"></a>
-  <img alt="GPU: AMD RDNA 3 and 3.5" src="https://img.shields.io/badge/GPU-AMD%20RDNA%203%20%7C%203.5-6F42C1?style=for-the-badge&labelColor=161616">
+  <img alt="GPU: AMD RDNA 2, 3 and 3.5" src="https://img.shields.io/badge/GPU-AMD%20RDNA%202%20%7C%203%20%7C%203.5-6F42C1?style=for-the-badge&labelColor=161616">
   <img alt="Requires Xbox Game Bar" src="https://img.shields.io/badge/Requires-Xbox%20Game%20Bar-0078D4?style=for-the-badge&labelColor=161616">
 </p>
 <p align="center">
