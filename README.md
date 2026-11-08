@@ -57,6 +57,8 @@ game, and pick its upscaler. That's it.
 - **Capcom RE Engine games handled.** Games that need REFramework for OptiScaler to work, like Resident Evil Requiem,
   Monster Hunter Wilds, Dragon's Dogma 2, Onimusha: Way of the Sword and PRAGMATA, get REFramework installed
   automatically too.
+- **DLSS shown where AMD needs help.** Some games, like DOOM Eternal, only offer DLSS on AMD with OptiPatcher. Games
+  the Compatibility List marks for it get OptiPatcher installed automatically, so FSR 4.1 Lite can take over DLSS.
 - **Always up to date.** OptiScaler's newest build and the FSR 4.1.2 Lite files download by themselves, and your
   installed games update automatically, each keeping its own settings.
 - **Notifications.** A notification confirms FSR 4.1 Lite each time a game starts with it, or tells you what to fix.
@@ -300,7 +302,9 @@ helps you, please consider [supporting the OptiScaler developer](https://github.
 
 FSR 4 is by AMD. Thanks to **TheRazerMD** for sharing the FSR 4.1.2 Lite driver files, to the OptiScaler community
 for the [Compatibility List](https://github.com/optiscaler/OptiScaler/wiki/Compatibility-List) shown on game cards, and
-to **praydog** for [REFramework](https://github.com/praydog/REFramework), which RE Engine games need.
+to **praydog** for [REFramework](https://github.com/praydog/REFramework), which RE Engine games need, and to the
+OptiScaler team for [OptiPatcher](https://github.com/optiscaler/OptiPatcher) (MIT licence), which shows DLSS on AMD in
+the games that need it. Both are downloaded from their official releases on your device, never bundled.
 
 <p align="center">
   <strong>FSR 4.1 Lite is free and always will be.</strong><br />
@@ -378,6 +382,15 @@ so the widget sets `REFrameworkConfig_RememberMenuState=true` and `REFrameworkCo
 `re2_fw_config.txt` (games it set REFramework up for only) and it starts closed; Insert still opens it. OptiScaler's own game profiles already apply the other
 settings these games need (`RestoreComputeSignature=true`, `Dxgi=false`).
 
+**OptiPatcher.** For games the Compatibility List marks with ✨, the widget adds
+[OptiPatcher](https://github.com/optiscaler/OptiPatcher), OptiScaler's official ASI plugin, which makes the game show
+DLSS on AMD without spoofing an NVIDIA card. It goes in the plugins folder OptiScaler reads (`OptiScaler\plugins\OptiPatcher.asi`)
+with `[Plugins] LoadAsiPlugins=true`. It's the newest published release from GitHub's API, checked against the
+asset's SHA-256 digest and refused if it isn't a Windows DLL, downloaded the first time a game needs it and checked for
+updates once a day; if GitHub's API can't be reached, the pinned v0.42 is used. Games set up earlier get it with the
+automatic game updates, which also put it back if a game update removes it. Uninstall removes it, and the plugins
+folder if the widget made it and it's empty; the player's own files in that folder are never touched.
+
 **Widget updates.** The helper reads the newest release from the redirect of
 `github.com/db1522/fsr4-lite-rog-ally/releases/latest` (no GitHub API, so no rate limit) whenever the widget is
 opened (at most every 30 minutes) and every 6 hours in the background, and compares it with the installed package
@@ -415,7 +428,7 @@ copy the new OptiScaler package over the old one, keep each game's loader name a
 
 **Network access:** OptiScaler's GitHub releases, ROG Ally Life's R2 bucket (FSR 4 files), OptiScaler's wiki
 (compatibility list and the HUDFix-incompatible list), this repository's `data/framegen-presets.json` and
-REFramework's GitHub releases (only for games that need it). Nothing else, and no telemetry.
+REFramework's and OptiPatcher's GitHub releases (only for games that need them). Nothing else, and no telemetry.
 </details>
 
 <details>

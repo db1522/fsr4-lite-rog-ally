@@ -22,6 +22,10 @@ jobs:
         with:
           dotnet-version: '8.0.x'
 
+      - name: Run the tests
+        shell: powershell
+        run: dotnet test tests\RalFsr.Tests -c Release --nologo
+
       - name: Load the permanent signing certificate
         shell: powershell
         env:

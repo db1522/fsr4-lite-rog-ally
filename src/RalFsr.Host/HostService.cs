@@ -17,6 +17,7 @@ public sealed class HostService
     private OptiPackage? _opti = OptiScalerSource.Cached();
     private bool _compatRefreshStarted;
     private RefPackage? _ref = REFrameworkSource.Cached();
+    private OptiPatcherFile? _op = OptiPatcherSource.Cached();
 
     // Widget self-update: the newest release when it's newer than this one, and a one-time message after an update.
     private (string Tag, Version Version)? _widgetUpdate;
@@ -133,6 +134,8 @@ public sealed class HostService
             _ = Task.Run(FrameGenPresets.RefreshAsync);
             // REFramework, for RE Engine games that need it: kept current in the background, once a day.
             _ = Task.Run(async () => { var pkg = await REFrameworkSource.EnsureLatestAsync(); if (pkg is not null) _ref = pkg; });
+            // OptiPatcher, once a game has needed it: a newer release looked for at most once a day.
+            _ = Task.Run(async () => { var op = await OptiPatcherSource.UpdateAsync(); if (op is not null) _op = op; });
         }
 
         // OptiScaler can write its own settings back to OptiScaler.ini when a game closes. Re-apply the widget's
@@ -321,7 +324,7 @@ public sealed class HostService
             exeDir,
             exeName = Path.GetFileName(exe),
             state = scan.State.ToString(),
-            stateText = StateText(scan) + REFrameworkText(scan, compat) + GameRules.TipFor(scan.ExeName),
+            stateText = StateText(scan) + REFrameworkText(scan, compat) + OptiPatcherText(scan, compat) + GameRules.TipFor(scan.ExeName),
             canInstall = scan.State is GameState.Ready or GameState.NoUpscalerFound,
             installed = scan.State == GameState.Installed,
             upscalers = scan.Upscalers,
@@ -546,6 +549,15 @@ public sealed class HostService
         return "";
     }
 
+    private static string OptiPatcherText(GameScan s, CompatEntry? compat)
+    {
+        if (s.State is GameState.Ready or GameState.NoUpscalerFound && compat?.OptiPatcher == true)
+            return " On AMD this game only offers DLSS with OptiPatcher, so the widget adds it too.";
+        if (s.State == GameState.Installed && s.Manifest?.OptiPatcherVersion.Length > 0)
+            return " OptiPatcher is installed too, so pick DLSS in the game's settings.";
+        return "";
+    }
+
     /// <summary>One line on the game card: the upscaler inputs that work, or a warning for "not working" entries.</summary>
     private static string CompatText(CompatEntry e) => e.Status switch
     {
@@ -656,8 +668,12 @@ public sealed class HostService
 
         // Capcom RE Engine games the OptiScaler community says need REFramework get it too.
         var refNote = "";
-        if (CompatList.NeedsREFramework(CompatList.Find(scan.Game.Name, scan.ExeName), scan.ExeName))
+        var compatEntry = CompatList.Find(scan.Game.Name, scan.ExeName);
+        if (CompatList.NeedsREFramework(compatEntry, scan.ExeName))
             refNote = AddREFramework(exeDir);
+        // Games the Compatibility List marks for OptiPatcher only show DLSS on AMD with it.
+        if (compatEntry?.OptiPatcher == true)
+            refNote += AddOptiPatcher(exeDir);
 
         // FSR 2 games: pick OptiScaler's FSR 2 input settings for this game's graphics API.
         int pid;
@@ -891,6 +907,40 @@ public sealed class HostService
         }
     }
 
+    /// <summary>Adds OptiPatcher to an installed game. Returns a sentence for the install message.</summary>
+    private string AddOptiPatcher(string exeDir)
+    {
+        var op = _op ?? OptiPatcherSource.ForGameAsync().GetAwaiter().GetResult();
+        if (op is null) return "OptiPatcher, which this game needs to show DLSS on AMD, couldn't be downloaded right now; the widget adds it on the next update check. ";
+        _op = op;
+        try
+        {
+            Installer.AddOptiPatcher(exeDir, op);
+            return "OptiPatcher was added too, so DLSS shows in this game's settings: pick it. ";
+        }
+        catch (Exception ex)
+        {
+            Log.Error("Adding OptiPatcher failed", ex);
+            return "OptiPatcher, which this game needs to show DLSS on AMD, couldn't be added; the log has details. ";
+        }
+    }
+
+    /// <summary>
+    /// OptiPatcher in a set-up game the Compatibility List marks for it (not running): added to games set up before the
+    /// widget had it, brought to a newer release, or put back when a game update removed it.
+    /// </summary>
+    private void RefreshOptiPatcher(string dir)
+    {
+        var m = InstallManifest.TryLoad(dir);
+        if (m is null) return;
+        if (m.OptiPatcherVersion.Length == 0 && CompatList.Find(m.GameName, m.ExeName)?.OptiPatcher != true) return;
+        var op = _op ?? OptiPatcherSource.ForGameAsync().GetAwaiter().GetResult();
+        if (op is null) return;
+        _op = op;
+        try { Installer.AddOptiPatcher(dir, op); }
+        catch (Exception ex) { Log.Warn($"Couldn't update OptiPatcher in {dir}: {ex.Message}"); }
+    }
+
     /// <summary>Brings REFramework up to the cached nightly in a game that has it from FSR 4.1 Lite (not running).</summary>
     private void RefreshREFramework(string dir)
     {
@@ -1009,6 +1059,7 @@ public sealed class HostService
             try
             {
                 RefreshREFramework(dir);
+                RefreshOptiPatcher(dir);
                 if (Installer.UpdateOpti(dir, _opti)) updated++;
                 Forget(dir);
             }
@@ -1061,6 +1112,7 @@ public sealed class HostService
                 {
                     if (ForegroundGame.AnyRunningFrom(dir)) continue;
                     RefreshREFramework(dir); // REFramework nightlies move independently of OptiScaler's
+                    RefreshOptiPatcher(dir); // so do OptiPatcher's releases; also puts it back if it's gone
                     if (!IsOutdated(InstallManifest.TryLoad(dir))) continue;
                     if (Installer.UpdateOpti(dir, opti)) updated++;
                     Forget(dir);

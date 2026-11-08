@@ -108,10 +108,18 @@ public static class Installer
             }
         }
 
+        // OptiPatcher's plugins folder, when FSR 4.1 Lite made it and nothing else is in it (its .asi went with
+        // CreatedFiles above). A plugins folder with the player's own files stays.
+        if (manifest.OptiPatcherMadePluginsDir && manifest.OptiPatcherFile.Length > 0)
+        {
+            var plugins = Path.Combine(exeDir, Path.GetDirectoryName(manifest.OptiPatcherFile)!);
+            if (Directory.Exists(plugins) && !Directory.EnumerateFileSystemEntries(plugins).Any()) Directory.Delete(plugins);
+        }
+
         foreach (var rel in manifest.CreatedDirs.OrderByDescending(d => d.Length))
         {
             var dir = Path.Combine(exeDir, rel);
-            if (Directory.Exists(dir)) Directory.Delete(dir, recursive: true);
+            if (Directory.Exists(dir)) DeleteCreatedDir(dir);
         }
 
         var backupRoot = InstallManifest.BackupDir(exeDir);
@@ -486,6 +494,84 @@ public static class Installer
             manifest.CreatedDirs.Add(current);
             manifest.Save(exeDir);
         }
+    }
+
+    /// <summary>
+    /// Removes a folder FSR 4.1 Lite created, with everything in it, except a plugins folder holding the player's own
+    /// files (ASI plugins or ReShade they added for OptiScaler to load): that one and the folders above it stay.
+    /// </summary>
+    private static void DeleteCreatedDir(string dir)
+    {
+        var plugins = Path.Combine(dir, "plugins");
+        if (!Directory.Exists(plugins) || !Directory.EnumerateFileSystemEntries(plugins).Any())
+        {
+            Directory.Delete(dir, recursive: true);
+            return;
+        }
+        foreach (var entry in Directory.EnumerateFileSystemEntries(dir).ToList())
+        {
+            if (Path.GetFileName(entry).Equals("plugins", StringComparison.OrdinalIgnoreCase)) continue;
+            if (Directory.Exists(entry)) Directory.Delete(entry, recursive: true);
+            else DeleteFile(entry);
+        }
+        Log.Info($"Kept {plugins}: it has files FSR 4.1 Lite didn't add");
+    }
+
+    public const string OptiPatcherName = "OptiPatcher.asi";
+
+    /// <summary>
+    /// Where OptiPatcher goes in a game: the plugins folder OptiScaler reads ASI plugins from. OptiScaler v10 looks in
+    /// "plugins" under its OptiDllPath, which is the OptiScaler folder next to the exe when that exists (OptiScaler's
+    /// dllmain.cpp: PluginPath defaults to MainDllPath\plugins); older installs without it use the exe folder's plugins.
+    /// </summary>
+    public static string OptiPatcherRel(string exeDir) =>
+        Directory.Exists(Path.Combine(exeDir, InstallConfig.OptiSubfolder))
+            ? Path.Combine(InstallConfig.OptiSubfolder, "plugins", OptiPatcherName)
+            : Path.Combine("plugins", OptiPatcherName);
+
+    public static readonly InstallConfig.IniValue LoadAsiPlugins = new("Plugins", "LoadAsiPlugins", "true");
+
+    /// <summary>
+    /// Adds OptiPatcher to a game FSR 4.1 Lite set up, brings it to another release, or puts it back when it's gone
+    /// (a game update or file check removed it). Turns on LoadAsiPlugins in OptiScaler.ini. Tracked in the manifest so
+    /// uninstall removes it, and its plugins folder if FSR 4.1 Lite made it and it's empty. A player's own
+    /// OptiPatcher.asi in that folder is left as is. Returns true when the file was added or replaced.
+    /// The game must not be running.
+    /// </summary>
+    public static bool AddOptiPatcher(string exeDir, OptiPatcherFile op)
+    {
+        var manifest = InstallManifest.TryLoad(exeDir) ?? throw new InvalidOperationException("FSR 4.1 Lite isn't installed here.");
+        var rel = manifest.OptiPatcherFile.Length > 0 ? manifest.OptiPatcherFile : OptiPatcherRel(exeDir);
+        var target = Path.Combine(exeDir, rel);
+        var ini = Path.Combine(exeDir, "OptiScaler.ini");
+        var ours = manifest.CreatedFiles.Contains(rel, StringComparer.OrdinalIgnoreCase);
+
+        if (File.Exists(target) && (!ours || manifest.OptiPatcherVersion.Equals(op.Tag, StringComparison.Ordinal)))
+        {
+            // Current, or the player's own copy: only make sure OptiScaler loads it.
+            if (File.Exists(ini)) IniFile.SetValues(ini, new[] { LoadAsiPlugins });
+            return false;
+        }
+
+        var plugins = Path.GetDirectoryName(target)!;
+        if (!Directory.Exists(plugins))
+        {
+            Directory.CreateDirectory(plugins);
+            if (!ours) manifest.OptiPatcherMadePluginsDir = true;
+        }
+        if (!ours) manifest.CreatedFiles.Add(rel);
+        manifest.OptiPatcherFile = rel;
+        manifest.Save(exeDir); // recorded before the file lands, so a failed copy still uninstalls cleanly
+
+        File.Copy(op.AsiPath, target, overwrite: true);
+        if (File.Exists(ini)) IniFile.SetValues(ini, new[] { LoadAsiPlugins });
+        var previous = manifest.OptiPatcherVersion;
+        manifest.OptiPatcherVersion = op.Tag;
+        manifest.Save(exeDir);
+        Log.Info(!ours ? $"OptiPatcher {op.Tag} added to {exeDir} ({rel})"
+            : previous == op.Tag ? $"OptiPatcher {op.Tag} put back in {exeDir}"
+            : $"OptiPatcher in {exeDir}: {previous} -> {op.Tag}");
+        return true;
     }
 
     private static void DeleteFile(string path)

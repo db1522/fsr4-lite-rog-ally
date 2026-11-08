@@ -45,6 +45,15 @@ public sealed class InstallManifest
     /// <summary>REFramework's runtime files and folders that already existed before install, so uninstall leaves them.</summary>
     public List<string> REFrameworkPreexisting { get; set; } = new();
 
+    /// <summary>OptiPatcher release installed alongside OptiScaler ("" = none). Its .asi is in CreatedFiles.</summary>
+    public string OptiPatcherVersion { get; set; } = "";
+
+    /// <summary>Where OptiPatcher.asi went, relative to the exe folder (OptiScaler\plugins\OptiPatcher.asi in v10).</summary>
+    public string OptiPatcherFile { get; set; } = "";
+
+    /// <summary>The plugins folder didn't exist before OptiPatcher; uninstall removes it if it's empty.</summary>
+    public bool OptiPatcherMadePluginsDir { get; set; }
+
     /// <summary>The Experimental frame generation option for this game (off unless the player turned it on).</summary>
     public FrameGenSettings FrameGen { get; set; } = new();
 
