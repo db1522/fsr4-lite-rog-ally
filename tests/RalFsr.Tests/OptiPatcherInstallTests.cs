@@ -191,3 +191,43 @@ public class CompatListOptiPatcherTests
     [Fact]
     public void Many_games_are_marked() => Assert.InRange(Entries.Count(e => e.OptiPatcher), 150, 1000);
 }
+
+public class GamePassNameTests
+{
+    private static readonly List<CompatEntry> Entries =
+        CompatList.Parse(File.ReadAllText(Path.Combine(AppContext.BaseDirectory, "data", "Compatibility-List.md")));
+
+    /// <summary>CompatList.Find's loose match, on the bundled list.</summary>
+    private static CompatEntry? Loose(string storeName) =>
+        Entries.FirstOrDefault(e => CompatList.Key(e.Name) == CompatList.Key(storeName))
+        ?? Entries.FirstOrDefault(e => CompatList.BaseKey(e.Name) == CompatList.BaseKey(storeName));
+
+    [Theory]
+    [InlineData("Doom Eternal - PC")]
+    [InlineData("DOOM Eternal (PC)")]
+    [InlineData("DOOM Eternal for Windows 10")]
+    [InlineData("DOOM Eternal Windows Edition")]
+    public void Game_pass_platform_tags_still_find_the_game(string storeName)
+    {
+        var entry = Loose(storeName);
+        Assert.NotNull(entry);
+        Assert.Equal("doometernal", CompatList.Key(entry!.Name));
+        Assert.True(entry.OptiPatcher);
+    }
+
+    [Theory]
+    [InlineData("PC Building Simulator", "pcbuildingsimulator")]
+    [InlineData("Windows Defender Test", "windowsdefendertest")]
+    [InlineData("Arcade Spirits PCX", "arcadespiritspcx")]
+    public void Names_that_only_contain_pc_or_windows_are_untouched(string name, string key) =>
+        Assert.Equal(key, CompatList.BaseKey(name));
+
+    [Theory]
+    [InlineData("DLSS", "DLSS")]
+    [InlineData("DLSS,FSR 3.1", "FSR")]
+    [InlineData("DLSS,XeSS", "DLSS")]
+    [InlineData("XeSS", "XeSS")]
+    [InlineData("", "FSR")]
+    public void The_card_names_an_upscaler_the_game_has(string found, string pick) =>
+        Assert.Equal(pick, GameScan.UpscalerToPick(found.Split(',', StringSplitOptions.RemoveEmptyEntries)));
+}

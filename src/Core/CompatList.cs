@@ -212,7 +212,16 @@ public static class CompatList
         "standard edition", "gold edition", "premium edition",
     };
 
-    /// <summary>Loose key: edition suffixes, years in brackets and trademark signs removed, so "Ghost of Tsushima" finds
+    /// <summary>
+    /// A platform tag at the end of a store name: Game Pass calls DOOM Eternal "Doom Eternal - PC", and other games
+    /// "(PC)", "for Windows 10" or "Windows Edition". Only at the end, after a separator or bracket, so names that merely
+    /// contain "PC" or "Windows" are untouched.
+    /// </summary>
+    private static readonly Regex PlatformSuffix = new(
+        @"(\s*[-–:]\s*|\s*\(\s*|\s+)(pc|windows|for windows( 1[01])?|windows( 1[01])? edition|pc edition)\s*\)?$",
+        RegexOptions.IgnoreCase);
+
+    /// <summary>Loose key: edition suffixes, platform tags, years in brackets and trademark signs removed, so "Ghost of Tsushima" finds
     /// "Ghost of Tsushima DIRECTOR'S CUT" and "Control" finds "Control Ultimate Edition", never "CONTROL Resonant".</summary>
     public static string BaseKey(string name)
     {
@@ -220,6 +229,7 @@ public static class CompatList
         s = Regex.Replace(s, @"\((19|20)\d\d\)", " ");
         foreach (var w in EditionWords) s = s.Replace(w, " ");
         s = Regex.Replace(s, @"[™®©]", " ");
+        s = PlatformSuffix.Replace(s.Trim(), "");
         return Key(s);
     }
 }

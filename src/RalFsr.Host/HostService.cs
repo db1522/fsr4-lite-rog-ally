@@ -348,7 +348,7 @@ public sealed class HostService
             removeOnExit = manifest?.RemoveOnExit ?? false,
             loaderName = manifest?.ProxyName ?? "",
             activeStage = live.Stage.ToString(),
-            activeText = ActiveText(live, scan.Game.Name, manifest?.TriedLoaders.Count > 0),
+            activeText = ActiveText(live, scan.Game.Name, manifest?.TriedLoaders.Count > 0, GameScan.UpscalerToPick(scan.Upscalers)),
             frameGen,
         };
     }
@@ -506,7 +506,7 @@ public sealed class HostService
         return scan;
     }
 
-    private static string ActiveText(LoadedModules.Status live, string game, bool loaderSwitched) => live.Stage switch
+    private static string ActiveText(LoadedModules.Status live, string game, bool loaderSwitched, string pick) => live.Stage switch
     {
         LoadedModules.Stage.Active => live.Confirmed
             ? $"FSR 4.1 Lite active ({live.Api})"
@@ -517,7 +517,7 @@ public sealed class HostService
         LoadedModules.Stage.NotLite when live.Detail.Length > 0 && !live.Detail.Contains('\\') =>
             $"FSR 4.1 Lite isn't running: {live.Detail}.",
         LoadedModules.Stage.NotLite => $"FSR 4 is running, but not Lite: it loaded {live.Detail}.",
-        LoadedModules.Stage.WaitingForFsr => "OptiScaler running. Turn on FSR in the game's graphics settings.",
+        LoadedModules.Stage.WaitingForFsr => $"OptiScaler running. Turn on {pick} in the game's graphics settings.",
         LoadedModules.Stage.Fsr3Fallback =>
             "Running FSR 3, not FSR 4: the game's upscaler started, but the FSR 4 file didn't load. " +
             "Uninstall from this game, install again, and restart it.",
@@ -690,7 +690,7 @@ public sealed class HostService
         return new
         {
             ok = true,
-            message = $"Installed. Restart {scan.Game.Name}, then turn on FSR in its graphics settings. " + refNote +
+            message = $"Installed. Restart {scan.Game.Name}, then turn on {GameScan.UpscalerToPick(scan.Upscalers)} in its graphics settings. " + refNote +
                       "FSR 4.1 Lite loads automatically, no OptiScaler menu needed.",
         };
     }

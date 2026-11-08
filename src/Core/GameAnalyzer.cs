@@ -30,6 +30,17 @@ public sealed class GameScan
     public string? ExeName { get; init; }
     public bool IsUnreal { get; init; }
     public List<string> Upscalers { get; init; } = new();
+
+    /// <summary>
+    /// The upscaler to tell the player to turn on: FSR when the game has it, else DLSS, else XeSS ("FSR" when no files
+    /// were found, since those games build FSR into the exe). DOOM Eternal only has DLSS, so "turn on FSR" misled there.
+    /// </summary>
+    public static string UpscalerToPick(IReadOnlyCollection<string> upscalers) =>
+        upscalers.Any(u => u.StartsWith("FSR", StringComparison.Ordinal)) ? "FSR"
+        : upscalers.Contains("DLSS") ? "DLSS"
+        : upscalers.Contains("XeSS") ? "XeSS"
+        : "FSR";
+
     public string? AntiCheat { get; init; }
     public InstallManifest? Manifest { get; init; }
     public GameState State { get; init; }
