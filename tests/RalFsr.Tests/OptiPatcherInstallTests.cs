@@ -231,3 +231,46 @@ public class GamePassNameTests
     public void The_card_names_an_upscaler_the_game_has(string found, string pick) =>
         Assert.Equal(pick, GameScan.UpscalerToPick(found.Split(',', StringSplitOptions.RemoveEmptyEntries)));
 }
+
+public class OptiPatcherCardTests
+{
+    private static readonly string[] DlssOnly = { "DLSS" };
+    private static readonly string[] Everything = { "DLSS", "FSR 3.1", "XeSS" }; // Black Myth: Wukong ships all three
+
+    [Fact]
+    public void Before_install_a_dlss_only_game_is_told_to_pick_dlss() =>
+        Assert.Equal(" On AMD this game only offers DLSS with OptiPatcher, so the widget adds it. Pick DLSS in the game.",
+            GameScan.OptiPatcherTip(GameState.Ready, DlssOnly, listMarksOptiPatcher: true, installedWithOptiPatcher: false));
+
+    [Fact]
+    public void Before_install_a_game_with_fsr_and_xess_is_told_it_doesnt_need_dlss() =>
+        Assert.Equal(" The widget also adds OptiPatcher, so the game offers DLSS on AMD. You don't need it: FSR or XeSS runs FSR 4.1 Lite too.",
+            GameScan.OptiPatcherTip(GameState.Ready, Everything, true, false));
+
+    [Fact]
+    public void Installed_in_a_dlss_only_game_keeps_the_pick_dlss_line() =>
+        Assert.Equal(" OptiPatcher is installed too, so pick DLSS in the game's settings.",
+            GameScan.OptiPatcherTip(GameState.Installed, DlssOnly, true, true));
+
+    [Fact]
+    public void Installed_in_a_game_with_fsr_and_xess_names_them_too() =>
+        Assert.Equal(" OptiPatcher is installed too, so DLSS shows on AMD. FSR or XeSS runs FSR 4.1 Lite as well.",
+            GameScan.OptiPatcherTip(GameState.Installed, Everything, true, true));
+
+    [Theory]
+    [InlineData("DLSS,FSR 2", "FSR")]
+    [InlineData("DLSS,FSR 3.1", "FSR")]
+    [InlineData("DLSS,XeSS", "XeSS")]
+    [InlineData("DLSS,FSR 2,FSR 3.1,XeSS", "FSR or XeSS")]
+    [InlineData("DLSS", "")]
+    public void Only_the_upscalers_the_game_ships_are_named(string found, string named) =>
+        Assert.Equal(named, GameScan.OtherUpscalers(found.Split(',')));
+
+    [Fact]
+    public void No_line_for_games_the_list_doesnt_mark_or_installs_without_optipatcher()
+    {
+        Assert.Equal("", GameScan.OptiPatcherTip(GameState.Ready, DlssOnly, false, false));
+        Assert.Equal("", GameScan.OptiPatcherTip(GameState.Installed, DlssOnly, true, false));
+        Assert.Equal("", GameScan.OptiPatcherTip(GameState.AntiCheat, DlssOnly, true, false));
+    }
+}

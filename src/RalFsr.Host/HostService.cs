@@ -549,14 +549,8 @@ public sealed class HostService
         return "";
     }
 
-    private static string OptiPatcherText(GameScan s, CompatEntry? compat)
-    {
-        if (s.State is GameState.Ready or GameState.NoUpscalerFound && compat?.OptiPatcher == true)
-            return " On AMD this game only offers DLSS with OptiPatcher, so the widget adds it too.";
-        if (s.State == GameState.Installed && s.Manifest?.OptiPatcherVersion.Length > 0)
-            return " OptiPatcher is installed too, so pick DLSS in the game's settings.";
-        return "";
-    }
+    private static string OptiPatcherText(GameScan s, CompatEntry? compat) =>
+        GameScan.OptiPatcherTip(s.State, s.Upscalers, compat?.OptiPatcher == true, s.Manifest?.OptiPatcherVersion.Length > 0);
 
     /// <summary>One line on the game card: the upscaler inputs that work, or a warning for "not working" entries.</summary>
     private static string CompatText(CompatEntry e) => e.Status switch
@@ -673,7 +667,7 @@ public sealed class HostService
             refNote = AddREFramework(exeDir);
         // Games the Compatibility List marks for OptiPatcher only show DLSS on AMD with it.
         if (compatEntry?.OptiPatcher == true)
-            refNote += AddOptiPatcher(exeDir);
+            refNote += AddOptiPatcher(exeDir, scan.Upscalers);
 
         // FSR 2 games: pick OptiScaler's FSR 2 input settings for this game's graphics API.
         int pid;
@@ -908,20 +902,23 @@ public sealed class HostService
     }
 
     /// <summary>Adds OptiPatcher to an installed game. Returns a sentence for the install message.</summary>
-    private string AddOptiPatcher(string exeDir)
+    private string AddOptiPatcher(string exeDir, IReadOnlyCollection<string> upscalers)
     {
         var op = _op ?? OptiPatcherSource.ForGameAsync().GetAwaiter().GetResult();
-        if (op is null) return "OptiPatcher, which this game needs to show DLSS on AMD, couldn't be downloaded right now; the widget adds it on the next update check. ";
+        if (op is null) return "OptiPatcher, which shows DLSS on AMD in this game, couldn't be downloaded right now; the widget adds it on the next update check. ";
         _op = op;
         try
         {
             Installer.AddOptiPatcher(exeDir, op);
-            return "OptiPatcher was added too, so DLSS shows in this game's settings: pick it. ";
+            var other = GameScan.OtherUpscalers(upscalers);
+            return other.Length == 0
+                ? "OptiPatcher was added too, so DLSS shows in this game's settings: pick it. "
+                : $"OptiPatcher was added too, so DLSS shows on AMD; {other} runs FSR 4.1 Lite as well. ";
         }
         catch (Exception ex)
         {
             Log.Error("Adding OptiPatcher failed", ex);
-            return "OptiPatcher, which this game needs to show DLSS on AMD, couldn't be added; the log has details. ";
+            return "OptiPatcher, which shows DLSS on AMD in this game, couldn't be added; the log has details. ";
         }
     }
 

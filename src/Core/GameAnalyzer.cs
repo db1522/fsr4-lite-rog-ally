@@ -41,6 +41,36 @@ public sealed class GameScan
         : upscalers.Contains("XeSS") ? "XeSS"
         : "FSR";
 
+    /// <summary>
+    /// The upscalers besides DLSS that also run FSR 4.1 Lite, as the card names them: "FSR", "XeSS" or "FSR or XeSS"
+    /// (any FSR version counts as FSR). "" when the game ships neither (DLSS only).
+    /// </summary>
+    public static string OtherUpscalers(IReadOnlyCollection<string> upscalers)
+    {
+        var fsr = upscalers.Any(u => u.StartsWith("FSR", StringComparison.Ordinal));
+        var xess = upscalers.Contains("XeSS");
+        return fsr && xess ? "FSR or XeSS" : fsr ? "FSR" : xess ? "XeSS" : "";
+    }
+
+    /// <summary>
+    /// The game card's OptiPatcher line. OptiPatcher only makes DLSS show up on AMD, so it matters only when DLSS is the
+    /// game's sole upscaler: in a game that also ships FSR or XeSS (Black Myth: Wukong), those run FSR 4.1 Lite too.
+    /// </summary>
+    public static string OptiPatcherTip(GameState state, IReadOnlyCollection<string> upscalers, bool listMarksOptiPatcher,
+        bool installedWithOptiPatcher)
+    {
+        var other = OtherUpscalers(upscalers);
+        if (state is GameState.Ready or GameState.NoUpscalerFound && listMarksOptiPatcher)
+            return other.Length == 0
+                ? " On AMD this game only offers DLSS with OptiPatcher, so the widget adds it. Pick DLSS in the game."
+                : $" The widget also adds OptiPatcher, so the game offers DLSS on AMD. You don't need it: {other} runs FSR 4.1 Lite too.";
+        if (state == GameState.Installed && installedWithOptiPatcher)
+            return other.Length == 0
+                ? " OptiPatcher is installed too, so pick DLSS in the game's settings."
+                : $" OptiPatcher is installed too, so DLSS shows on AMD. {other} runs FSR 4.1 Lite as well.";
+        return "";
+    }
+
     public string? AntiCheat { get; init; }
     public InstallManifest? Manifest { get; init; }
     public GameState State { get; init; }
