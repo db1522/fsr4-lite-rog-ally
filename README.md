@@ -175,6 +175,7 @@ Confirmed on ROG Ally hardware:
 | Valor Mortis | Game Pass | FSR |
 | Forza Motorsport | Game Pass | DLSS |
 | No Man's Sky | Game Pass | DLSS (its FSR is built into the game) |
+| DOOM Eternal | Game Pass | DLSS (Vulkan; OptiPatcher added automatically so DLSS shows on AMD) |
 
 Hundreds more games work with OptiScaler; see the community
 [Compatibility List](https://github.com/optiscaler/OptiScaler/wiki/Compatibility-List).
