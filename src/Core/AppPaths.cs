@@ -3,7 +3,8 @@ namespace RalFsrHelper.Core;
 /// <summary>Where the app keeps its own files. Nothing here is ever written into a game folder.</summary>
 public static class AppPaths
 {
-    public static string Root { get; } = Path.Combine(
+    /// <summary>The helper's own folder. Tests point it at a temporary folder, so they never write the real log.</summary>
+    public static string Root { get; set; } = Path.Combine(
         Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "RAL FSR Helper");
 
     /// <summary>Downloaded OptiScaler nightly packages, one subfolder per build.</summary>

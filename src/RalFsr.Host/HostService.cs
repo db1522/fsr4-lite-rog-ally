@@ -109,6 +109,10 @@ public sealed class HostService
 
     private object State(string? targetName, bool targetIsGame)
     {
+        // Which processes are running, looked up once for this whole refresh (the Installed list, the card), and only if
+        // something asks.
+        var running = new Lazy<List<string>>(ForegroundGame.RunningPaths);
+
         // OptiScaler: retry a failed download at most once a minute, and once one is cached, look for a newer nightly when
         // the widget opens and hourly while it stays open. OptiScalerSource only asks GitHub once a day (its own marker),
         // so the hourly look is free; without it a cached build was used forever and "Update N games" never appeared.
@@ -146,7 +150,7 @@ public sealed class HostService
             _settingsReapplied = true;
             foreach (var dir in InstallRegistry.Load())
             {
-                if (ForegroundGame.AnyRunningFrom(dir)) continue;
+                if (ForegroundGame.AnyRunningFrom(dir, running.Value)) continue;
                 try
                 {
                     Installer.ApplyOverlay(dir, _settings.ShowResolutionOverlay, OverlayLookFor(dir), _settings.OverlayPosition);
@@ -184,7 +188,7 @@ public sealed class HostService
         }
 
         var fsr4 = Fsr4Library.Load();
-        var game = CurrentGame(targetName, targetIsGame);
+        var game = CurrentGame(targetName, targetIsGame, running);
 
         var installed = InstallRegistry.Load().Select(dir =>
         {
@@ -193,7 +197,7 @@ public sealed class HostService
             {
                 name = m?.GameName ?? Path.GetFileName(dir),
                 exeDir = dir,
-                running = ForegroundGame.AnyRunningFrom(dir),
+                running = ForegroundGame.AnyRunningFrom(dir, running.Value),
                 outdated = IsOutdated(m),
                 build = OptiPackage.Label(m?.OptiBuild ?? ""),
             };
@@ -252,7 +256,7 @@ public sealed class HostService
         };
     }
 
-    private object? CurrentGame(string? targetName, bool targetIsGame)
+    private object? CurrentGame(string? targetName, bool targetIsGame, Lazy<List<string>> running)
     {
         var window = ForegroundGame.Find();
         if (window is null) return null;
@@ -344,7 +348,7 @@ public sealed class HostService
             optiOutdated = IsOutdated(manifest),
             canSwitchLoader = live.Stage == LoadedModules.Stage.NotLoaded,
             // The card's game is normally the one being played, whose files are locked: uninstall waits for it to close.
-            running = manifest is not null && ForegroundGame.AnyRunningFrom(exeDir),
+            running = manifest is not null && ForegroundGame.AnyRunningFrom(exeDir, running.Value),
             removeOnExit = manifest?.RemoveOnExit ?? false,
             loaderName = manifest?.ProxyName ?? "",
             activeStage = live.Stage.ToString(),
