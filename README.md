@@ -20,12 +20,14 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/db1522/fsr4-lite-rog-ally/releases/latest/download/FSR4Lite_x64.zip"><b>⬇ Download</b></a> ·
-  <a href="https://rogallylife.com/2026/10/26/fsr-4-1-2-lite-on-the-rog-ally/">Full guide</a> ·
-  <a href="#install">Install</a> ·
-  <a href="#tested-games">Tested games</a> ·
-  <a href="#faq">FAQ</a> ·
-  <a href="https://ko-fi.com/rogallylife">Support on Ko-fi</a>
+  <a href="https://github.com/db1522/fsr4-lite-rog-ally/releases/latest/download/FSR4Lite_x64.zip"><img alt="Download FSR 4.1 Lite" src="https://img.shields.io/badge/-Download%20FSR%204.1%20Lite-C8102E?style=for-the-badge" height="36"></a>
+</p>
+<p align="center">
+  <a href="https://rogallylife.com/2026/10/26/fsr-4-1-2-lite-on-the-rog-ally/"><img alt="Full guide" src="https://img.shields.io/badge/-Full%20guide-2B2B2B?style=for-the-badge" height="36"></a>
+  <a href="#install"><img alt="Install" src="https://img.shields.io/badge/-Install-2B2B2B?style=for-the-badge" height="36"></a>
+  <a href="#tested-games"><img alt="Tested games" src="https://img.shields.io/badge/-Tested%20games-2B2B2B?style=for-the-badge" height="36"></a>
+  <a href="#faq"><img alt="FAQ" src="https://img.shields.io/badge/-FAQ-2B2B2B?style=for-the-badge" height="36"></a>
+  <a href="https://ko-fi.com/rogallylife"><img alt="Support on Ko-fi" src="https://img.shields.io/badge/-Support%20on%20Ko--fi-FF5E5B?style=for-the-badge&logo=kofi&logoColor=white" height="36"></a>
 </p>
 
 ---
