@@ -2,10 +2,10 @@ namespace RalFsrHelper.Core;
 
 /// <summary>
 /// Folders that are never a game's own folder, so OptiScaler is never put there, and a program running from one is
-/// never taken for the game: Windows and its shared program files (the touch keyboard, TabTip.exe, runs from
-/// Common Files\microsoft shared\ink and can fill a handheld's screen), the top of Program Files and of a drive, and
-/// the user's own folders themselves (Content Manager, Assetto Corsa's launcher, often sits on the Desktop).
-/// Games in subfolders of Desktop, Documents or Downloads are still fine.
+/// never taken for the game: Windows, Windows' shared program files (the touch keyboard, TabTip.exe, runs from
+/// Common Files\microsoft shared\ink and can fill a handheld's screen), and the top of Program Files itself.
+/// Everywhere else is allowed, because players keep games in all sorts of places: the Desktop, Downloads, the top of
+/// a microSD card. Launchers that sit in such places (Content Manager on the Desktop) are skipped by name instead.
 /// </summary>
 public static class InstallFolders
 {
@@ -16,7 +16,6 @@ public static class InstallFolders
         try { full = Norm(Path.GetFullPath(dir)); }
         catch { return true; }
 
-        if (Path.GetPathRoot(full) is { } root && Norm(root).Equals(full, StringComparison.OrdinalIgnoreCase)) return true;
         foreach (var under in Below())
             if (full.Equals(under, StringComparison.OrdinalIgnoreCase) ||
                 full.StartsWith(under + Path.DirectorySeparatorChar, StringComparison.OrdinalIgnoreCase)) return true;
@@ -31,23 +30,10 @@ public static class InstallFolders
         Environment.GetFolderPath(Environment.SpecialFolder.CommonProgramFiles),
         Environment.GetFolderPath(Environment.SpecialFolder.CommonProgramFilesX86));
 
-    /// <summary>Folders that hold games in subfolders but are never a game's folder themselves.</summary>
-    private static IEnumerable<string> Exactly()
-    {
-        var home = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
-        var oneDrive = Environment.GetEnvironmentVariable("OneDrive");
-        return Clean(
-            home,
-            Environment.GetFolderPath(Environment.SpecialFolder.Desktop),
-            Environment.GetFolderPath(Environment.SpecialFolder.CommonDesktopDirectory),
-            Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments),
-            Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles),
-            Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86),
-            Join(home, "Desktop"), Join(home, "Documents"), Join(home, "Downloads"),
-            oneDrive, Join(oneDrive, "Desktop"), Join(oneDrive, "Documents"));
-    }
-
-    private static string? Join(string? a, string b) => string.IsNullOrEmpty(a) ? null : Path.Combine(a, b);
+    /// <summary>Folders that hold games in subfolders but never have a game's exe directly inside.</summary>
+    private static IEnumerable<string> Exactly() => Clean(
+        Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles),
+        Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86));
 
     private static IEnumerable<string> Clean(params string?[] dirs) =>
         dirs.Where(d => !string.IsNullOrWhiteSpace(d)).Select(d => Norm(d!));

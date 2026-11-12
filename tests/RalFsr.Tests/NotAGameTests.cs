@@ -17,34 +17,28 @@ public class InstallFolderTests
     }
 
     [Fact]
-    public void Windows_and_the_top_of_program_files_and_drives_are_refused()
+    public void Windows_and_the_top_of_program_files_are_refused()
     {
         Assert.True(InstallFolders.IsUnsafe(Environment.GetFolderPath(Environment.SpecialFolder.Windows)));
         Assert.True(InstallFolders.IsUnsafe(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Windows), "System32")));
         Assert.True(InstallFolders.IsUnsafe(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles)));
-        Assert.True(InstallFolders.IsUnsafe(@"C:\"));
+        Assert.True(InstallFolders.IsUnsafe(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86) + @"\"));
         Assert.True(InstallFolders.IsUnsafe(""));
     }
 
     [Fact]
-    public void The_users_own_folders_are_refused_with_or_without_a_trailing_slash()
+    public void Games_in_unusual_places_are_fine()
     {
-        Assert.True(InstallFolders.IsUnsafe(Environment.GetFolderPath(Environment.SpecialFolder.Desktop)));
-        Assert.True(InstallFolders.IsUnsafe(Environment.GetFolderPath(Environment.SpecialFolder.Desktop) + @"\"));
-        Assert.True(InstallFolders.IsUnsafe(Path.Combine(Home, "Downloads")));
-        Assert.True(InstallFolders.IsUnsafe(Path.Combine(Home, "Documents")));
-        Assert.True(InstallFolders.IsUnsafe(Home));
-    }
-
-    [Fact]
-    public void Real_game_folders_are_fine_even_under_the_users_folders()
-    {
+        var desktop = Environment.GetFolderPath(Environment.SpecialFolder.Desktop);
         Assert.False(InstallFolders.IsUnsafe(@"C:\Program Files (x86)\Steam\steamapps\common\assettocorsa"));
         Assert.False(InstallFolders.IsUnsafe(@"C:\Program Files\WindowsApps\BethesdaSoftworks.DOOMEternal-PC_1.0.56.0_x64__3275kfvn8vcwc"));
         Assert.False(InstallFolders.IsUnsafe(@"C:\Games\Fight Night Champion"));
         Assert.False(InstallFolders.IsUnsafe(@"D:\XboxGames\Forza Horizon 6\Content"));
+        Assert.False(InstallFolders.IsUnsafe(@"D:\"));                 // a game unpacked to the top of a microSD card
+        Assert.False(InstallFolders.IsUnsafe(desktop));                 // or straight onto the Desktop
+        Assert.False(InstallFolders.IsUnsafe(Path.Combine(desktop, "Portable Game")));
+        Assert.False(InstallFolders.IsUnsafe(Path.Combine(Home, "Downloads")));
         Assert.False(InstallFolders.IsUnsafe(Path.Combine(Home, "Downloads", "SomeGame")));
-        Assert.False(InstallFolders.IsUnsafe(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Desktop), "Portable Game")));
     }
 }
 
