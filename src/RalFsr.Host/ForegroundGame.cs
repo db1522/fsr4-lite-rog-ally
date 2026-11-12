@@ -1,5 +1,6 @@
 using System.Runtime.InteropServices;
 using System.Text;
+using RalFsrHelper.Core;
 
 namespace RalFsrHelper.Host;
 
@@ -28,6 +29,9 @@ public static class ForegroundGame
         "EABackgroundService.exe", "Battle.net.exe", "Agent.exe", "RiotClientServices.exe", "Playnite.DesktopApp.exe",
         "Playnite.FullscreenApp.exe", "LegionSpace.exe", "LegionGo.exe", "MSI Center M.exe", "HandheldCompanion.exe",
         "ArmouryCrateSESvc.exe", "msedge.exe", "chrome.exe", "firefox.exe", "Discord.exe",
+
+        // The touch keyboard can cover most of a handheld's screen. Content Manager launches Assetto Corsa (and No Hesi).
+        "TabTip.exe", "Content Manager.exe", "Content Manager Safe.exe",
     };
 
     /// <summary>
@@ -64,6 +68,7 @@ public static class ForegroundGame
             if (SkipExes.Contains(Path.GetFileName(exe))) return true;
             if (IsProtectedAppPath(exe)) return true;
             if (exe.StartsWith(windowsDir, StringComparison.OrdinalIgnoreCase)) return true;
+            if (InstallFolders.IsUnsafe(Path.GetDirectoryName(exe) ?? "")) return true;
 
             found = new Window((int)pid, exe, Title(hwnd), ClientHeight(hwnd));
             return false; // stop at the top-most match

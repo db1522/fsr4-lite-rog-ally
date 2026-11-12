@@ -88,6 +88,16 @@ public static class CompatList
         }
     }
 
+    /// <summary>True when the list could be read and has entries (false offline before the first download).</summary>
+    public static bool IsLoaded
+    {
+        get
+        {
+            EnsureLoaded();
+            lock (Gate) return _byKey is { Count: > 0 };
+        }
+    }
+
     private static void EnsureLoaded()
     {
         lock (Gate)

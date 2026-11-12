@@ -314,6 +314,7 @@ public sealed class HostService
                 "It's for DirectX 12 games, and in this Vulkan game it kept FSR 4.1 Lite from loading. Restart the game.");
         }
         var frameGen = api == "DX12" ? FrameGenJson(scan, manifest, window.ProcessId, exeDir, live) : null;
+        var nothingToUpgrade = GameScan.NothingToUpgrade(scan.State, CompatList.IsLoaded, compat is not null, api);
 
         return new
         {
@@ -328,8 +329,8 @@ public sealed class HostService
             exeDir,
             exeName = Path.GetFileName(exe),
             state = scan.State.ToString(),
-            stateText = StateText(scan) + REFrameworkText(scan, compat) + OptiPatcherText(scan, compat) + GameRules.TipFor(scan.ExeName),
-            canInstall = scan.State is GameState.Ready or GameState.NoUpscalerFound,
+            stateText = nothingToUpgrade ? GameScan.NothingToUpgradeText : StateText(scan) + REFrameworkText(scan, compat) + OptiPatcherText(scan, compat) + GameRules.TipFor(scan.ExeName),
+            canInstall = scan.State is GameState.Ready or GameState.NoUpscalerFound && !nothingToUpgrade,
             installed = scan.State == GameState.Installed,
             upscalers = scan.Upscalers,
             renderScale = manifest?.RenderScale ?? scan.Manifest?.RenderScale ?? "game",
@@ -659,7 +660,15 @@ public sealed class HostService
         // was treated as a game on the ROG Xbox Ally X).
         if (ForegroundGame.IsProtectedAppPath(exeDir) || exeDir.StartsWith(Environment.GetFolderPath(Environment.SpecialFolder.Windows), StringComparison.OrdinalIgnoreCase))
             return Fail("That's a Windows or Xbox app, not a game, so FSR 4.1 Lite won't install there.");
+        if (InstallFolders.IsUnsafe(exeDir))
+            return Fail("That isn't a game's own folder, so FSR 4.1 Lite won't install there.");
         if (scan.State is not (GameState.Ready or GameState.NoUpscalerFound)) return Fail(StateText(scan));
+
+        int pid;
+        lock (_seen) _seenPid.TryGetValue(exeDir, out pid);
+        var api = pid > 0 ? LoadedModules.GraphicsApi(pid) : null;
+        if (GameScan.NothingToUpgrade(scan.State, CompatList.IsLoaded, CompatList.Find(scan.Game.Name, scan.ExeName) is not null, api))
+            return Fail(GameScan.NothingToUpgradeText);
 
         Installer.Install(scan, _opti, fsr4, _settings, OverlayLookFor(exeDir));
         InstallRegistry.Add(exeDir);
@@ -674,9 +683,6 @@ public sealed class HostService
             refNote += AddOptiPatcher(exeDir, scan.Upscalers);
 
         // FSR 2 games: pick OptiScaler's FSR 2 input settings for this game's graphics API.
-        int pid;
-        lock (_seen) _seenPid.TryGetValue(exeDir, out pid);
-        var api = pid > 0 ? LoadedModules.GraphicsApi(pid) : null;
         var fsr2 = InstallConfig.Fsr2Inputs(api, scan.Upscalers.Contains("FSR 2"), scan.State == GameState.NoUpscalerFound);
         if (fsr2.Count > 0)
         {

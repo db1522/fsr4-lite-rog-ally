@@ -42,6 +42,18 @@ public sealed class GameScan
         : "FSR";
 
     /// <summary>
+    /// True when a game clearly has nothing for FSR 4.1 Lite to upgrade: no upscaler files, not on OptiScaler's
+    /// Compatibility List (which could be read), and running on DirectX 11. Assetto Corsa (No Hesi) is the example: the
+    /// install loaded, nothing was upscaled, and frame generation on top crashed it. DirectX 12 and Vulkan games stay
+    /// allowed, since many build FSR 2 or 3 into the exe, and so does any game whose API isn't known yet.
+    /// </summary>
+    public static bool NothingToUpgrade(GameState state, bool listLoaded, bool onList, string? api) =>
+        state == GameState.NoUpscalerFound && listLoaded && !onList && api == "DX11";
+
+    public const string NothingToUpgradeText =
+        "Nothing to upgrade here: this DirectX 11 game has no FSR 2, FSR 3, DLSS or XeSS, and it isn't on OptiScaler's compatibility list.";
+
+    /// <summary>
     /// The upscalers besides DLSS that also run FSR 4.1 Lite, as the card names them: "FSR", "XeSS" or "FSR or XeSS"
     /// (any FSR version counts as FSR). "" when the game ships neither (DLSS only).
     /// </summary>
