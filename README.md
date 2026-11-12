@@ -24,7 +24,6 @@
 </p>
 <p align="center">
   <a href="https://rogallylife.com/2026/10/26/fsr-4-1-2-lite-on-the-rog-ally/"><img alt="Full guide" src="https://img.shields.io/badge/-Full%20guide-0078D4?style=for-the-badge" height="36"></a>
-  <a href="#install"><img alt="Install" src="https://img.shields.io/badge/-Install-2B2B2B?style=for-the-badge" height="36"></a>
   <a href="#tested-games"><img alt="Tested games" src="https://img.shields.io/badge/-Tested%20games-2B2B2B?style=for-the-badge" height="36"></a>
   <a href="#faq"><img alt="FAQ" src="https://img.shields.io/badge/-FAQ-2B2B2B?style=for-the-badge" height="36"></a>
   <a href="https://ko-fi.com/rogallylife"><img alt="Support on Ko-fi" src="https://img.shields.io/badge/-Support%20on%20Ko--fi-FF5E5B?style=for-the-badge&logo=kofi&logoColor=white" height="36"></a>
